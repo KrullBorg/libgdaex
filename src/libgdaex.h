@@ -1,22 +1,22 @@
 /*
- *  libgdaobj.h
+ *  libgdaex.h
  *
- *  Copyright (C) 2005-2006 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2009 Andrea Zagli <azagli@libero.it>
  *
- *  This file is part of libgdaobj.
+ *  This file is part of libgdaex.
  *  
- *  libgdaobj is free software; you can redistribute it and/or modify
+ *  libgdaex is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *  
- *  libgdaobj is distributed in the hope that it will be useful,
+ *  libgdaex is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *  
  *  You should have received a copy of the GNU General Public License
- *  along with libgdaobj; if not, write to the Free Software
+ *  along with libgdaexbj; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *  
  */
@@ -25,103 +25,99 @@
 #include <glib-object.h>
 #include <libgda/libgda.h>
 
-#ifndef __GDAO_H__
-#define __GDAO_H__
+#ifndef __GDAEX_H__
+#define __GDAEX_H__
 
 G_BEGIN_DECLS
 
 
-#define TYPE_GDAO                 (gdao_get_type ())
-#define GDAO(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_GDAO, GdaO))
-#define GDAO_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_GDAO, GdaOClass))
-#define IS_GDAO(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_GDAO))
-#define IS_GDAO_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_GDAO))
-#define GDAO_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_GDAO, GdaOClass))
+#define TYPE_GDAEX                 (gdaex_get_type ())
+#define GDAEX(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_GDAEX, GdaEx))
+#define GDAEX_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_GDAEX, GdaExClass))
+#define IS_GDAEX(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_GDAEX))
+#define IS_GDAEX_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_GDAEX))
+#define GDAEX_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_GDAEX, GdaExClass))
 
 
-typedef struct _GdaO GdaO;
-typedef struct _GdaOClass GdaOClass;
+typedef struct _GdaEx GdaEx;
+typedef struct _GdaExClass GdaExClass;
 
-struct _GdaO
+struct _GdaEx
 	{
 		GObject parent;
 	};
 
-struct _GdaOClass
+struct _GdaExClass
 	{
 		GObjectClass parent_class;
 	};
 
-GType gdao_get_type (void) G_GNUC_CONST;
+GType gdaex_get_type (void) G_GNUC_CONST;
 
 
-GdaO *gdao_new (GdaClient *gda_client,
-                const gchar *datasource,
-                const gchar *username,
-                const gchar *password);
-GdaO *gdao_new_from_string (GdaClient *gda_client,
-                            const gchar *provider_id,
-                            const gchar *cnc_string);
-GdaO *gdao_new_from_connection (GdaConnection *conn);
+GdaEx *gdaex_new_from_dsn (const gchar *dsn,
+                           const gchar *username,
+                           const gchar *password);
+GdaEx *gdaex_new_from_string (const gchar *cnc_string);
+GdaEx *gdaex_new_from_connection (GdaConnection *conn);
 
-const GdaClient *gdao_get_gdaclient (GdaO *gdao);
-const GdaConnection *gdao_get_gdaconnection (GdaO *gdao);
-const gchar *gdao_get_provider (GdaO *gdao);
+const GdaConnection *gdaex_get_gdaconnection (GdaEx *gdaex);
+const gchar *gdaex_get_provider (GdaEx *gdaex);
 
-GdaDataModel *gdao_query (GdaO *gdao, const gchar *sql);
+GdaDataModel *gdaex_query (GdaEx *gdaex, const gchar *sql);
 
-gchar *gdao_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
+gchar *gdaex_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
                                                      gint row,
                                                      const gchar *field_name);
-gint gdao_data_model_get_field_value_integer_at (GdaDataModel *data_model,
+gint gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
-gfloat gdao_data_model_get_field_value_float_at (GdaDataModel *data_model,
+gfloat gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
-gdouble gdao_data_model_get_field_value_double_at (GdaDataModel *data_model,
+gdouble gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
                                                    gint row,
                                                    const gchar *field_name);
-gboolean gdao_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
+gboolean gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
                                                      gint row,
                                                      const gchar *field_name);
-GDate *gdao_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
+GDate *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
 
-gchar *gdao_data_model_get_value_stringify_at (GdaDataModel *data_model,
+gchar *gdaex_data_model_get_value_stringify_at (GdaDataModel *data_model,
                                                gint row,
                                                gint col);
-gint gdao_data_model_get_value_integer_at (GdaDataModel *data_model,
+gint gdaex_data_model_get_value_integer_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
-gfloat gdao_data_model_get_value_float_at (GdaDataModel *data_model,
+gfloat gdaex_data_model_get_value_float_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
-gdouble gdao_data_model_get_value_double_at (GdaDataModel *data_model,
+gdouble gdaex_data_model_get_value_double_at (GdaDataModel *data_model,
                                              gint row,
                                              gint col);
-gboolean gdao_data_model_get_value_boolean_at (GdaDataModel *data_model,
+gboolean gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model,
                                                gint row,
                                                gint col);
-GDate *gdao_data_model_get_value_gdate_at (GdaDataModel *data_model,
+GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
 
-gboolean gdao_begin (GdaO *gdao);
+gboolean gdaex_begin (GdaEx *gdaex);
 
-gint gdao_execute (GdaO *gdao, const gchar *sql);
+gint gdaex_execute (GdaEx *gdaex, const gchar *sql);
 
-gboolean gdao_commit (GdaO *gdao);
-gboolean gdao_rollback (GdaO *gdao);
+gboolean gdaex_commit (GdaEx *gdaex);
+gboolean gdaex_rollback (GdaEx *gdaex);
 
-void gdao_free (GdaO *gdao);
+void gdaex_free (GdaEx *gdaex);
 
-gchar *gdao_strescape (const gchar *source, const gchar *exceptions);
+gchar *gdaex_strescape (const gchar *source, const gchar *exceptions);
 
-gchar gdao_get_chr_quoting (GdaO *gdao);
+gchar gdaex_get_chr_quoting (GdaEx *gdaex);
 
 
 G_END_DECLS
 
-#endif /* __GDAO_H__ */
+#endif /* __GDAEX_H__ */

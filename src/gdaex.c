@@ -5,18 +5,18 @@
  *
  *  This file is part of libgdaex.
  *  
- *  libgdaobj is free software; you can redistribute it and/or modify
+ *  libgdaex is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  *  
- *  libgdaobj is distributed in the hope that it will be useful,
+ *  libgdaex is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *  
  *  You should have received a copy of the GNU General Public License
- *  along with libgdaobj; if not, write to the Free Software
+ *  along with libgdaexbj; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -29,285 +29,216 @@
 
 #include "libgdaex.h"
 
-static void gdao_class_init (GdaOClass *klass);
-static void gdao_init (GdaO *gdao);
+static void gdaex_class_init (GdaExClass *klass);
+static void gdaex_init (GdaEx *gdaex);
 
-static void gdao_set_property (GObject *object,
+static void gdaex_set_property (GObject *object,
                                guint property_id,
                                const GValue *value,
                                GParamSpec *pspec);
-static void gdao_get_property (GObject *object,
+static void gdaex_get_property (GObject *object,
                                guint property_id,
                                GValue *value,
                                GParamSpec *pspec);
 
-static void get_errors (GdaConnection *connection);
+#define GDAEX_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX, GdaExPrivate))
 
-#define GDAO_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAO, GdaOPrivate))
-
-typedef struct _GdaOPrivate GdaOPrivate;
-struct _GdaOPrivate
+typedef struct _GdaExPrivate GdaExPrivate;
+struct _GdaExPrivate
 	{
-		GdaClient *gda_client;
 		GdaConnection *gda_conn;
 		GdaTransaction *gda_trans;
 	};
 
-GType
-gdao_get_type (void)
-{
-	static GType gdao_type = 0;
-
-	if (!gdao_type)
-		{
-			static const GTypeInfo gdao_info =
-			{
-				sizeof (GdaOClass),
-				NULL,	/* base_init */
-				NULL,	/* base_finalize */
-				(GClassInitFunc) gdao_class_init,
-				NULL,	/* class_finalize */
-				NULL,	/* class_data */
-				sizeof (GdaO),
-				0,	/* n_preallocs */
-				(GInstanceInitFunc) gdao_init,
-				NULL
-			};
-
-			gdao_type = g_type_register_static (G_TYPE_OBJECT, "GdaO",
-			                                    &gdao_info, 0);
-		}
-
-	return gdao_type;
-}
+G_DEFINE_TYPE (GdaEx, gdaex, G_TYPE_OBJECT)
 
 static void
-gdao_class_init (GdaOClass *klass)
+gdaex_class_init (GdaExClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-	g_type_class_add_private (object_class, sizeof (GdaOPrivate));
+	g_type_class_add_private (object_class, sizeof (GdaExPrivate));
 
-	object_class->set_property = gdao_set_property;
-	object_class->get_property = gdao_get_property;
+	object_class->set_property = gdaex_set_property;
+	object_class->get_property = gdaex_get_property;
 }
 
 static void
-gdao_init (GdaO *gdao)
+gdaex_init (GdaEx *gdaex)
 {
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	priv->gda_trans = NULL;
 }
 
-static GdaO
-*gdao_new_ (GdaClient *gda_client)
+static GdaEx
+*gdaex_new_ ()
 {
-	GdaO *gdao = GDAO (g_object_new (gdao_get_type (), NULL));
+	GdaEx *gdaex = GDAEX (g_object_new (gdaex_get_type (), NULL));
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
-	if (gda_client == NULL)
-		{
-		  /* create a new GdaClient */
-			priv->gda_client = gda_client_new ();
-			if (priv->gda_client == NULL)
-				{
-					g_warning ("Unable to create a libgda's client.");
-					return NULL;
-				}
-		}
-	else
-		{
-			priv->gda_client = gda_client;
-		}
-
-	return gdao;
+	return gdaex;
 }
 
 /**
- * gdao_new:
- * @gda_client: a #GdaClient object. If it's %NULL, it will be created a new one.
- * @datasource: GDA data source name to connect to.
+ * gdaex_new_from_dsn:
+ * @dsn: GDA data source name to connect to.
  * @username: user name to use to connect.
  * @password: password for @username.
  *
  * If @username and @password are both NULL or empty, it will be used those
  * defined into datasource.
  *
- * Return value: the newly created #GdaO.
+ * Return value: the newly created #GdaEx.
  */
-GdaO
-*gdao_new (GdaClient *gda_client,
-           const gchar *datasource,
-           const gchar *username,
-           const gchar *password)
+GdaEx
+*gdaex_new_from_dsn (const gchar *dsn,
+                     const gchar *username,
+                     const gchar *password)
 {
-	GdaO *gdao;
-	GdaOPrivate *priv;
+	GdaEx *gdaex;
+	GdaExPrivate *priv;
 
-	if (datasource == NULL || strcmp (g_strstrip (g_strdup (datasource)), "") == 0)
+	GError *error;
+
+	if (dsn == NULL || strcmp (g_strstrip (g_strdup (dsn)), "") == 0)
 		{
-		  /* TO DO */
+			/* TO DO */
 			g_warning ("datasource must not be empty.");
 			return NULL;
 		}
 
-	gdao = gdao_new_ (gda_client);
-	if (gdao == NULL)
+	gdaex = gdaex_new_ ();
+	if (gdaex == NULL)
 		{
 			/* TO DO */
 			return NULL;
 		}
 
-	priv = GDAO_GET_PRIVATE (gdao);
+	priv = GDAEX_GET_PRIVATE (gdaex);
 
 	/* open database connection */
-	priv->gda_conn = gda_client_open_connection (priv->gda_client,
-                                         datasource,
-																				 username,
-																				 password,
-                                         0);
-	if (priv->gda_conn == NULL)
+	error = NULL;
+	priv->gda_conn = gda_connection_open_from_dsn (dsn,
+	                                               username,
+                                                   password,
+	                                               GDA_CONNECTION_OPTIONS_NONE,
+	                                               &error);
+	if (error != NULL)
 		{
-			g_warning ("Unable to create the connection.");
+			g_warning ("Errror creating database connection: %s\n",
+			           error->message);
 			return NULL;
 		}
 
-	return gdao;
+	return gdaex;
 }
 
 /**
- * gdao_new_from_string:
- * @gda_client: a #GdaClient object. If it's %NULL, it will be created a new one.
- * @provider_id: the provider id.
+ * gdaex_new_from_string:
  * @cnc_string: the connection string.
  *
- * Return value: the newly created #GdaO.
+ * Return value: the newly created #GdaEx.
  */
-GdaO
-*gdao_new_from_string (GdaClient *gda_client,
-                       const gchar *provider_id,
-                       const gchar *cnc_string)
+GdaEx
+*gdaex_new_from_string (const gchar *cnc_string)
 {
-	GdaO *gdao;
-	GdaOPrivate *priv;
-
-	if (provider_id == NULL || strcmp (g_strstrip (g_strdup (provider_id)), "") == 0)
-		{
-		  /* TO DO */
-			g_warning ("provider_id must not be empty.");
-			return NULL;
-		}
+	GdaEx *gdaex;
+	GdaExPrivate *priv;
 
 	if (cnc_string == NULL || strcmp (g_strstrip (g_strdup (cnc_string)), "") == 0)
 		{
-		  /* TO DO */
+			/* TO DO */
 			g_warning ("cnc_string must not be empty.");
 			return NULL;
 		}
 
-	gdao = gdao_new_ (gda_client);
-	if (gdao == NULL)
+	gdaex = gdaex_new_ ();
+	if (gdaex == NULL)
 		{
 			/* TO DO */
 			return NULL;
 		}
 
-	priv = GDAO_GET_PRIVATE (gdao);
+	priv = GDAEX_GET_PRIVATE (gdaex);
 
 	/* open database connection */
-	priv->gda_conn = gda_client_open_connection_from_string (priv->gda_client,
-                                                           provider_id,
-										                                       cnc_string,
-                                                           0);
-	if (priv->gda_conn == NULL)
+	priv->gda_conn = gda_connection_open_from_string (NULL,
+	                                                  cnc_string,
+	                                                  NULL,
+	                                                  GDA_CONNECTION_OPTIONS_NONE
+                                                      &error);
+	if (error != NULL)
 		{
-			g_warning ("Unable to create the connection.\n"
-			           "provider_id: %s\tcnc_string: %s\n",
-			           provider_id, cnc_string);
+			g_warning ("Errror creating database connection: %s\n",
+			           error->message);
 			return NULL;
 		}
 
-	return gdao;
+	return gdaex;
 }
 
 /**
- * gdao_new_from_connection:
+ * gdaex_new_from_connection:
  * @conn: a #GdaConnection.
  *
- * Returns a #GdaO from an existing #GdaConnection.
+ * Returns a #GdaEx from an existing #GdaConnection.
  *
- * Return value: the newly created #GdaO.
+ * Return value: the newly created #GdaEx.
  */
-GdaO
-*gdao_new_from_connection (GdaConnection *conn)
+GdaEx
+*gdaex_new_from_connection (GdaConnection *conn)
 {
-	GdaO *gdao;
+	GdaEx *gdaex;
+	GdaExPrivate *priv;
 
-	if (conn == NULL) return NULL;
+	g_return_val_if_fail (IS_GDA_CONNECTION (conn), NULL);
 
-	gdao = gdao_new_ (gda_connection_get_client (conn));
+	gdaex = gdaex_new_ ();
 
-	return gdao;
+	priv = GDAEX_GET_PRIVATE (gdaex);
+
+	priv->gda_conn = conn;
+
+	return gdaex;
 }
 
 /**
- * gdao_get_gdaclient:
- * @gdao: a #GdaO object.
+ * gdaex_get_gdaconnection:
+ * @gdaex: a #GdaEx object.
  *
- * Return value: the #GdaClient associated to the #GdaO.
- */
-const GdaClient
-*gdao_get_gdaclient (GdaO *gdao)
-{
-	if (gdao == NULL)
-		{
-			return NULL;
-		}
-	else
-		{
-			GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
-			return priv->gda_client;
-		}
-}
-
-/**
- * gdao_get_gdaconnection:
- * @gdao: a #GdaO object.
- *
- * Return value: the #GdaConnection associated to the #GdaO.
+ * Return value: the #GdaConnection associated to the #GdaEx.
  */
 const GdaConnection
-*gdao_get_gdaconnection (GdaO *gdao)
+*gdaex_get_gdaconnection (GdaEx *gdaex)
 {
-	if (gdao == NULL)
-		{
-			return NULL;
-		}
-	else
-		{
-			GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
-			return priv->gda_conn;
-		}
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	return priv->gda_conn;
 }
 
 /**
- * gdao_get_provider:
- * @gdao: a #GdaO object.
+ * gdaex_get_provider:
+ * @gdaex: a #GdaEx object.
  *
- * Return value: the provider id associated to the #GdaO.
+ * Return value: the provider id associated to the #GdaEx.
  */
 const gchar
-*gdao_get_provider (GdaO *gdao)
+*gdaex_get_provider (GdaEx *gdaex)
 {
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
 	return gda_connection_get_provider (priv->gda_conn);
 }
 
 /**
- * gdao_query:
- * @gdao: a #GdaO object.
+ * gdaex_query:
+ * @gdaex: a #GdaEx object.
  * @sql: the sql text.
  *
  * Execute a selection query (SELECT).
@@ -315,11 +246,11 @@ const gchar
  * Return value: a #GdaDataModel, or NULL if query fails.
  */
 GdaDataModel
-*gdao_query (GdaO *gdao, const gchar *sql)
+*gdaex_query (GdaEx *gdaex, const gchar *sql)
 {
-	if (gdao == NULL) return NULL;
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	GdaCommand *gda_comm = gda_command_new (sql, GDA_COMMAND_TYPE_SQL, GDA_COMMAND_OPTION_STOP_ON_ERRORS);
 	GdaDataModel *dm = gda_connection_execute_single_command (priv->gda_conn, gda_comm, NULL);
@@ -341,7 +272,7 @@ GdaDataModel
  * return the field_name's GdaValue as gchar (stringify)
  */
 gchar
-*gdao_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
+*gdaex_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
                                                gint row,
                                                const gchar *field_name)
 {
@@ -352,7 +283,7 @@ gchar
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_stringify_at (data_model, row, col);
+			value = gdaex_data_model_get_value_stringify_at (data_model, row, col);
 		}
 
 	return value;
@@ -364,7 +295,7 @@ gchar
  * return the field_name's GdaValue as gint
  */
 gint
-gdao_data_model_get_field_value_integer_at (GdaDataModel *data_model,
+gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
                                             gint row,
                                             const gchar *field_name)
 {
@@ -375,7 +306,7 @@ gdao_data_model_get_field_value_integer_at (GdaDataModel *data_model,
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_integer_at (data_model, row, col);
+			value = gdaex_data_model_get_value_integer_at (data_model, row, col);
 		}
 
 	return value;
@@ -387,7 +318,7 @@ gdao_data_model_get_field_value_integer_at (GdaDataModel *data_model,
  * return the field_name's GdaValue as gfloat
  */
 gfloat
-gdao_data_model_get_field_value_float_at (GdaDataModel *data_model,
+gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
                                           gint row,
                                           const gchar *field_name)
 {
@@ -398,7 +329,7 @@ gdao_data_model_get_field_value_float_at (GdaDataModel *data_model,
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_float_at (data_model, row, col);
+			value = gdaex_data_model_get_value_float_at (data_model, row, col);
 		}
 
 	return value;
@@ -410,7 +341,7 @@ gdao_data_model_get_field_value_float_at (GdaDataModel *data_model,
  * return the field_name's GdaValue as gdouble
  */
 gdouble
-gdao_data_model_get_field_value_double_at (GdaDataModel *data_model,
+gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
                                            gint row,
                                            const gchar *field_name)
 {
@@ -421,7 +352,7 @@ gdao_data_model_get_field_value_double_at (GdaDataModel *data_model,
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_double_at (data_model, row, col);
+			value = gdaex_data_model_get_value_double_at (data_model, row, col);
 		}
 
 	return value;
@@ -433,7 +364,7 @@ gdao_data_model_get_field_value_double_at (GdaDataModel *data_model,
  * return the field_name's GdaValue as gboolean
  */
 gboolean
-gdao_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
+gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
                                             gint row,
                                             const gchar *field_name)
 {
@@ -444,7 +375,7 @@ gdao_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_boolean_at (data_model, row, col);
+			value = gdaex_data_model_get_value_boolean_at (data_model, row, col);
 		}
 
 	return value;
@@ -456,7 +387,7 @@ gdao_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
  * return the field_name's GdaValue as GDate
  */
 GDate
-*gdao_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
+*gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                            gint row,
                                            const gchar *field_name)
 {
@@ -467,14 +398,14 @@ GDate
 
 	if (col >= 0)
 		{
-			value = gdao_data_model_get_value_gdate_at (data_model, row, col);
+			value = gdaex_data_model_get_value_gdate_at (data_model, row, col);
 		}
 
 	return value;
 }
 
 /**
- * gdao_data_model_get_value_stringify_at:
+ * gdaex_data_model_get_value_stringify_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -482,7 +413,7 @@ GDate
  * Return value: the #GdaValue as #gchar (stringify).
  */
 gchar
-*gdao_data_model_get_value_stringify_at (GdaDataModel *data_model, gint row, gint col)
+*gdaex_data_model_get_value_stringify_at (GdaDataModel *data_model, gint row, gint col)
 {
 	gchar *ret = "";
 
@@ -496,7 +427,7 @@ gchar
 }
 
 /**
- * gdao_data_model_get_value_integer_at:
+ * gdaex_data_model_get_value_integer_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -504,7 +435,7 @@ gchar
  * Return value: the #GdaValue as #gint.
  */
 gint
-gdao_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint col)
+gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint col)
 {
 	gint ret = 0;
 
@@ -530,7 +461,7 @@ gdao_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint c
 }
 
 /**
- * gdao_data_model_get_value_float_at:
+ * gdaex_data_model_get_value_float_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -538,7 +469,7 @@ gdao_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint c
  * Return value: the #GdaValue as #gfloat.
  */
 gfloat
-gdao_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint col)
+gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint col)
 {
 	gfloat ret = 0.0f;
 
@@ -552,7 +483,7 @@ gdao_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint col
 }
 
 /**
- * gdao_data_model_get_value_double_at:
+ * gdaex_data_model_get_value_double_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -560,7 +491,7 @@ gdao_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint col
  * Return value: the #GdaValue as #gdouble.
  */
 gdouble
-gdao_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint col)
+gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint col)
 {
 	gdouble ret = 0.0;
 
@@ -574,7 +505,7 @@ gdao_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint co
 }
 
 /**
- * gdao_data_model_get_value_boolean_at:
+ * gdaex_data_model_get_value_boolean_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -582,7 +513,7 @@ gdao_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint co
  * Return value: the #GdaValue as #gboolean.
  */
 gboolean
-gdao_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint col)
+gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint col)
 {
 	gboolean ret = FALSE;
 
@@ -616,7 +547,7 @@ gdao_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint c
 }
 
 /**
- * gdao_data_model_get_value_gdate_at:
+ * gdaex_data_model_get_value_gdate_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
  * @col: col number.
@@ -624,7 +555,7 @@ gdao_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint c
  * Return value: the #GdaValue as #GDate.
  */
 GDate
-*gdao_data_model_get_value_gdate_at (GdaDataModel *data_model, gint row, gint col)
+*gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model, gint row, gint col)
 {
 	GDate *ret = NULL;
 	const GdaDate *gdadate;
@@ -643,19 +574,19 @@ GDate
 }
 
 /**
- * gdao_begin:
- * @gdao: a #GdaO object.
+ * gdaex_begin:
+ * @gdaex: a #GdaEx object.
  *
  * Begin a new transaction.
  */
 gboolean
-gdao_begin (GdaO *gdao)
+gdaex_begin (GdaEx *gdaex)
 {
-	if (gdao == NULL) return FALSE;
+	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
-	priv->gda_trans = gda_transaction_new ("gdao");
+	priv->gda_trans = gda_transaction_new ("gdaex");
 	gda_transaction_set_isolation_level (priv->gda_trans,
 	                                     GDA_TRANSACTION_ISOLATION_SERIALIZABLE);
 
@@ -663,8 +594,8 @@ gdao_begin (GdaO *gdao)
 }
 
 /**
- * gdao_execute:
- * @gdao: a #GdaO object.
+ * gdaex_execute:
+ * @gdaex: a #GdaEx object.
  * @sql: the sql text.
  *
  * Execute a command query (INSERT, UPDATE, DELETE).
@@ -672,14 +603,14 @@ gdao_begin (GdaO *gdao)
  * Return value: number of records affected by the query execution.
  */
 gint
-gdao_execute (GdaO *gdao, const gchar *sql)
+gdaex_execute (GdaEx *gdaex, const gchar *sql)
 {
 	GdaCommand *gda_comm;
 	gint nrecs;
 
-	if (gdao == NULL) return -1;
+	g_return_val_if_fail (IS_GDAEX (gdaex), -1);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	gda_comm = gda_command_new (sql, GDA_COMMAND_TYPE_SQL, GDA_COMMAND_OPTION_STOP_ON_ERRORS);
 	if (priv->gda_trans != NULL)
@@ -700,19 +631,19 @@ gdao_execute (GdaO *gdao, const gchar *sql)
 }
 
 /**
- * gdao_commit:
- * @gdao: a #GdaO object.
+ * gdaex_commit:
+ * @gdaex: a #GdaEx object.
  *
  * Commit a transaction.
  */
 gboolean
-gdao_commit (GdaO *gdao)
+gdaex_commit (GdaEx *gdaex)
 {
 	gboolean ret;
 
-	if (gdao == NULL) return FALSE;
+	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	if (priv->gda_trans == NULL)
 		{
@@ -729,19 +660,19 @@ gdao_commit (GdaO *gdao)
 }
 
 /**
- * gdao_rollback:
- * @gdao: a #GdaO object.
+ * gdaex_rollback:
+ * @gdaex: a #GdaEx object.
  *
  * Rollback a transaction.
  */
 gboolean
-gdao_rollback (GdaO *gdao)
+gdaex_rollback (GdaEx *gdaex)
 {
 	gboolean ret;
 
-	if (gdao == NULL) return FALSE;
+	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	if (priv->gda_trans == NULL)
 		{
@@ -759,11 +690,11 @@ gdao_rollback (GdaO *gdao)
 
 /* TO DO */
 void
-gdao_free (GdaO *gdao)
+gdaex_free (GdaEx *gdaex)
 {
-	if (gdao == NULL) return;
+	g_return_if_fail (IS_GDAEX (gdaex));
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	/* close connection */
 	if (gda_connection_is_open (priv->gda_conn))
@@ -771,63 +702,44 @@ gdao_free (GdaO *gdao)
 			gda_connection_close (priv->gda_conn);
 		}
 
-	/*g_free (gdao);*/
+	/*g_free (gdaex);*/
 }
 
 /* UTILITY'S FUNCTIONS */
 /**
- * gdao_strescape:
+ * gdaex_strescape:
  * @source: a string to escape.
  * @exceptions: a string of characters not to escape in @source.
  *
  * As g_strescape(), but it escapes also '.
  */
 gchar
-*gdao_strescape (const gchar *source, const gchar *exceptions)
+*gdaex_strescape (const gchar *source, const gchar *exceptions)
 {
-	gchar *ret = "", *nsource;
-	gint l = strlen (source);
+	gchar *nsource;
+	gint l;
+
+	l = strlen (source);
 
 	if (source == NULL || l == 0) return "";
 
-	nsource = g_strescape (g_strstrip (g_strdup (source)), exceptions);
+	nsource = g_strstrip (g_strdup (source));
+	nsource = g_strescape (nsource, exceptions);
 
-	/* escape di ' */
-	if (strchr (nsource, '\'') != NULL)
-		{
-			while (*nsource)
-				{
-					if (*nsource == '\'')
-						{
-							ret = g_strconcat (ret, "'", g_strdup_printf ("%c", *nsource), NULL);
-						}
-					else
-						{
-							ret = g_strconcat (ret, g_strdup_printf ("%c", *nsource), NULL);
-						}
-				
-					*nsource++;
-				}
-
-			return g_strdup (ret);
-		}
-	else
-		{
-			return g_strdup (nsource);
-		}
+	return gda_default_escape_string (nsource);
 }
 
 /**
- * gdao_get_chr_quoting:
- * @gdao: a #GdaO object.
+ * gdaex_get_chr_quoting:
+ * @gdaex: a #GdaEx object.
  *
  */
 gchar
-gdao_get_chr_quoting (GdaO *gdao)
+gdaex_get_chr_quoting (GdaEx *gdaex)
 {
 	gchar chr = '\"';
 
-	const gchar *provider = gdao_get_provider (gdao);
+	const gchar *provider = gdaex_get_provider (gdaex);
 
 	if (strcmp (provider, "MySQL") == 0)
 		{
@@ -839,30 +751,11 @@ gdao_get_chr_quoting (GdaO *gdao)
 
 /* PRIVATE */
 static void
-get_errors (GdaConnection *connection)
+gdaex_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
-	GList *list;
-	GList *node;
-	GdaError *error;
+	GdaEx *gdaex = GDAEX (object);
 
-	list = (GList *) gda_connection_get_errors (connection);
-
-	for (node = g_list_first (list); node != NULL; node = g_list_next (node))
-		{
-			error = (GdaError *) node->data;
-			g_fprintf (stderr, "Error no: %d\t", gda_error_get_number (error));
-			g_fprintf (stderr, "desc: %s\t", gda_error_get_description (error));
-			g_fprintf (stderr, "source: %s\t", gda_error_get_source (error));
-			g_fprintf (stderr, "sqlstate: %s\n", gda_error_get_sqlstate (error));
-		}
-}
-
-static void
-gdao_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
-{
-	GdaO *gdao = GDAO (object);
-
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	switch (property_id)
 		{
@@ -873,11 +766,11 @@ gdao_set_property (GObject *object, guint property_id, const GValue *value, GPar
 }
 
 static void
-gdao_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
+gdaex_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
-	GdaO *gdao = GDAO (object);
+	GdaEx *gdaex = GDAEX (object);
 
-	GdaOPrivate *priv = GDAO_GET_PRIVATE (gdao);
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	switch (property_id)
 		{
