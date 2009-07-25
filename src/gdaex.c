@@ -1,9 +1,9 @@
 /*
- *  gdaobj.c
+ *  gdaex.c
  *
- *  Copyright (C) 2005-2006 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2009 Andrea Zagli <azagli@libero.it>
  *
- *  This file is part of libgdaobj.
+ *  This file is part of libgdaex.
  *  
  *  libgdaobj is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "libgdaobj.h"
+#include "libgdaex.h"
 
 static void gdao_class_init (GdaOClass *klass);
 static void gdao_init (GdaO *gdao);

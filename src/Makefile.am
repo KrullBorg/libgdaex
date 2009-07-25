@@ -1,12 +1,12 @@
 AM_CPPFLAGS = -I$(top_srcdir) \
-              $(GDAOBJ_CFLAGS)
+              $(GDAEX_CFLAGS)
 
-LIBS = $(GDAOBJ_LIBS)
+LIBS = $(GDAEX_LIBS)
 
-lib_LTLIBRARIES = libgdaobj.la
+lib_LTLIBRARIES = libgdaex.la
 
-libgdaobj_la_SOURCES = gdaobj.c
+libgdaex_la_SOURCES = gdaex.c
 
-libgdaobj_la_LDFLAGS = -no-undefined
+libgdaex_la_LDFLAGS = -no-undefined
 
-include_HEADERS = libgdaobj.h
+include_HEADERS = libgdaex.h

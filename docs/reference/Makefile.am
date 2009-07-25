@@ -9,7 +9,7 @@ AUTOMAKE_OPTIONS = 1.6
 # of using the various options.
 
 # The name of the module, e.g. 'glib'.
-DOC_MODULE=libgdaoj
+DOC_MODULE=libgdaex
 
 # The top-level SGML file. You can change this if you want to.
 DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
@@ -67,8 +67,8 @@ expand_content_files=
 # signals and properties.
 # e.g. INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GTK_DEBUG_FLAGS)
 # e.g. GTKDOC_LIBS=$(top_builddir)/gtk/$(gtktargetlib)
-INCLUDES=-I$(top_srcdir)/src $(GDAOBJ_CFLAGS)
-GTKDOC_LIBS=$(top_builddir)/src/libgdaobj.la $(GDAOBJ_LIBS)
+INCLUDES=-I$(top_srcdir)/src $(GDAEX_CFLAGS)
+GTKDOC_LIBS=$(top_builddir)/src/libgdaex.la $(GDAEX_LIBS)
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make

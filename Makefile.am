@@ -2,7 +2,9 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 
 SUBDIRS = src docs
 
-EXTRA_DIST = libgdaobj.pc.in
+ACLOCAL_AMFLAGS = -I m4
+
+EXTRA_DIST = libgdaex.pc.in
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libgdaobj.pc
+pkgconfig_DATA = libgdaex.pc
