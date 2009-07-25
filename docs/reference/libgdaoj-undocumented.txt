@@ -1,0 +1,30 @@
+30% symbol docs coverage.
+8 symbols documented.
+3 symbols incomplete.
+19 not documented.
+
+
+GdaO
+gdao_begin (Returns)
+gdao_commit (Returns)
+gdao_data_model_get_field_value_boolean_at
+gdao_data_model_get_field_value_double_at
+gdao_data_model_get_field_value_float_at
+gdao_data_model_get_field_value_gdate_at
+gdao_data_model_get_field_value_integer_at
+gdao_data_model_get_field_value_stringify_at
+gdao_data_model_get_value_boolean_at
+gdao_data_model_get_value_double_at
+gdao_data_model_get_value_float_at
+gdao_data_model_get_value_gdate_at
+gdao_data_model_get_value_integer_at
+gdao_data_model_get_value_stringify_at
+gdao_free
+gdao_get_gdaclient
+gdao_get_gdaconnection
+gdao_get_provider
+gdao_new_from_string
+gdao_rollback (Returns)
+
+
+libgdaobj:Short_Description

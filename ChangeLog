@@ -1,0 +1,27 @@
+2006-11-01: Andrea Zagli <azagli@inwind.it>
+
+	* gdaobj.c: added function gdao_get_chr_quoting to solve a problem about
+	  quoting reserved words
+
+2006-09-06 Andrea Zagli <azagli@inwind.it>
+
+	* gdaobj.c: some bugfixes
+
+2006-09-03 Andrea Zagli <azagli@inwind.it>
+
+	* gdaobj.c: gdao_strescape(): escaped ' with a double '
+
+2006-08-19 Andrea Zagli <azagli@inwind.it>
+
+	* libgdaobj.h:
+	* gdaobj.c: converted GdaO into a GObject
+
+2006-08-18 Andrea Zagli <azagli@inwind.it>
+
+	* libgdaobj.h:
+	* gdaobj.c: added function gdao_strescape
+	* configure.ac: some improvement
+
+2006-07-28 Andrea Zagli <azagli@inwind.it>
+
+	* gdaobj.c: added trap for gdao NULL into gdao_query
