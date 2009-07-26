@@ -189,7 +189,7 @@ GdaEx
 	GdaEx *gdaex;
 	GdaExPrivate *priv;
 
-	g_return_val_if_fail (IS_GDA_CONNECTION (conn), NULL);
+	g_return_val_if_fail (GDA_IS_CONNECTION (conn), NULL);
 
 	gdaex = gdaex_new_ ();
 
@@ -906,7 +906,7 @@ gdaex_free (GdaEx *gdaex)
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	/* close connection */
-	if (gda_connection_is_open (priv->gda_conn))
+	if (gda_connection_is_opened (priv->gda_conn))
 		{
 			gda_connection_close (priv->gda_conn);
 		}
