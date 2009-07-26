@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: @PACKAGE_NAME@
 Description: A libgda's "subclass"
 Version: @PACKAGE_VERSION@
-Requires: libgda
-Libs: -L${libdir} -lgdaobj
+Requires: libgda-4.0
+Libs: -L${libdir} -lgdaex
 Cflags: -I${includedir}
