@@ -27,3 +27,11 @@ src/.deps/
 src/Makefile
 src/Makefile.in
 stamp-h1
+*.stamp
+docs/reference/html/
+docs/reference/xml/
+src/.libs/
+src/gdaex.lo
+src/gdaex.o
+src/libgdaex.la
+*.bak

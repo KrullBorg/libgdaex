@@ -55,9 +55,7 @@ struct _GdaExClass
 GType gdaex_get_type (void) G_GNUC_CONST;
 
 
-GdaEx *gdaex_new_from_dsn (const gchar *dsn,
-                           const gchar *username,
-                           const gchar *password);
+GdaEx *gdaex_new_from_dsn (const gchar *dsn);
 GdaEx *gdaex_new_from_string (const gchar *cnc_string);
 GdaEx *gdaex_new_from_connection (GdaConnection *conn);
 
@@ -81,6 +79,9 @@ gdouble gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
 gboolean gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
                                                      gint row,
                                                      const gchar *field_name);
+GdaTimestamp *gdaex_data_model_get_field_value_gdatimestamp_at (GdaDataModel *data_model,
+                                                 gint row,
+                                                 const gchar *field_name);
 GDate *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
@@ -100,6 +101,9 @@ gdouble gdaex_data_model_get_value_double_at (GdaDataModel *data_model,
 gboolean gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model,
                                                gint row,
                                                gint col);
+GdaTimestamp *gdaex_data_model_get_value_gdatimestamp_at (GdaDataModel *data_model,
+                                                          gint row,
+                                                          gint col);
 GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
