@@ -506,9 +506,16 @@ gchar
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v != NULL && error == NULL)
+	if (error == NULL)
 		{
-			ret = g_strdup (gda_value_stringify (v));
+			if (!gda_value_is_null (v))
+				{
+					ret = gda_value_stringify (v);
+				}
+			else
+				{
+					ret = g_strdup ("");
+				}
 		}
 	else
 		{
@@ -538,12 +545,12 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (gda_value_is_null (v) || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
 			if (gda_value_isa (v, G_TYPE_INT))
 				{
@@ -551,7 +558,7 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 				}
 			else
 				{
-					ret = atol (gda_value_stringify (v));
+					ret = strtol (gda_value_stringify (v), NULL, 10);
 				}
 		}
 
@@ -576,12 +583,12 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (gda_value_is_null (v) || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
 			if (gda_value_isa (v, G_TYPE_FLOAT))
 				{
@@ -614,12 +621,12 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (gda_value_is_null (v) || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
 			if (gda_value_isa (v, G_TYPE_DOUBLE))
 				{
@@ -652,12 +659,12 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (gda_value_is_null (v) || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
 			if (gda_value_isa (v, G_TYPE_BOOLEAN))
 				{
@@ -667,10 +674,10 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 				{
 					gchar *vstr = g_strstrip (gda_value_stringify (v));
 					if (strcasecmp (vstr, "true") == 0 ||
-					    strcasecmp (vstr, "t") == 0 ||
-					    strcasecmp (vstr, "yes") == 0 ||
-					    strcasecmp (vstr, "y") == 0 ||
-					    atol (vstr) != 0)
+						strcasecmp (vstr, "t") == 0 ||
+						strcasecmp (vstr, "yes") == 0 ||
+						strcasecmp (vstr, "y") == 0 ||
+						strtol (vstr, NULL, 10) != 0)
 						{
 							ret = TRUE;
 						}
@@ -924,16 +931,17 @@ gchar
 *gdaex_strescape (const gchar *source, const gchar *exceptions)
 {
 	gchar *nsource;
-	gint l;
 
-	l = strlen (source);
+	if (source == NULL)
+		{
+			nsource = g_strdup ("");
+		}
+	else
+		{
+			nsource = gda_default_escape_string (source);
+		}
 
-	if (source == NULL || l == 0) return "";
-
-	nsource = g_strstrip (g_strdup (source));
-	nsource = g_strescape (nsource, exceptions);
-
-	return gda_default_escape_string (nsource);
+	return nsource;
 }
 
 /**
@@ -946,7 +954,11 @@ gdaex_get_chr_quoting (GdaEx *gdaex)
 {
 	gchar chr = '\"';
 
-	const gchar *provider = gdaex_get_provider (gdaex);
+	const gchar *provider;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), chr);
+
+	provider = gdaex_get_provider (gdaex);
 
 	if (strcmp (provider, "MySQL") == 0)
 		{

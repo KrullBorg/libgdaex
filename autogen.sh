@@ -14,7 +14,7 @@ DIE=0
 
 have_libtool=false
 if libtoolize --version < /dev/null > /dev/null 2>&1 ; then
-	libtool_version=`libtoolize --version | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
+	libtool_version=`libtoolize --version | sed 's/^.*[  ]\([0-9.]*[a-z]*\).*$/\1/'`
 	case $libtool_version in
 	    2.*)
 		have_libtool=true
