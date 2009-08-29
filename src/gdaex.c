@@ -121,7 +121,7 @@ GdaEx
 	                                               &error);
 	if (error != NULL)
 		{
-			g_warning ("Errror creating database connection: %s\n",
+			g_warning ("Error creating database connection: %s\n",
 			           error->message);
 			return NULL;
 		}
@@ -167,7 +167,7 @@ GdaEx
                                                       &error);
 	if (error != NULL)
 		{
-			g_warning ("Errror creating database connection: %s\n",
+			g_warning ("Error creating database connection: %s\n",
 			           error->message);
 			return NULL;
 		}
@@ -255,7 +255,7 @@ GdaDataModel
 
 	if (error != NULL)
 		{
-			g_warning ("Errror executing selection query: %s\n%s\n",
+			g_warning ("Error executing selection query: %s\n%s\n",
 			           error->message, sql);
 			return NULL;
 		}
@@ -545,7 +545,7 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (gda_value_is_null (v) || error != NULL)
+	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
@@ -583,7 +583,7 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (gda_value_is_null (v) || error != NULL)
+	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
@@ -621,7 +621,7 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (gda_value_is_null (v) || error != NULL)
+	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
@@ -659,7 +659,7 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (gda_value_is_null (v) || error != NULL)
+	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
 			           error->message);
@@ -785,7 +785,7 @@ gdaex_begin (GdaEx *gdaex)
 
 	if (error != NULL)
 		{
-			g_warning ("Errror opening transaction: %s\n",
+			g_warning ("Error opening transaction: %s\n",
 			           error->message);
 		}
 
@@ -816,7 +816,7 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	if (error != NULL)
 		{
-			g_warning ("Errror executing command query: %s\n%s\n",
+			g_warning ("Error executing command query: %s\n%s\n",
 			           error->message, sql);
 			return -1;
 		}
@@ -855,7 +855,7 @@ gdaex_commit (GdaEx *gdaex)
 
 			if (error != NULL)
 				{
-					g_warning ("Errror committing transaction: %s\n",
+					g_warning ("Error committing transaction: %s\n",
 							   error->message);
 					ret = FALSE;
 				}
@@ -895,7 +895,7 @@ gdaex_rollback (GdaEx *gdaex)
 
 			if (error != NULL)
 				{
-					g_warning ("Errror rollbacking transaction: %s\n",
+					g_warning ("Error rollbacking transaction: %s\n",
 							   error->message);
 					ret = FALSE;
 				}
