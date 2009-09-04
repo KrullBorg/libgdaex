@@ -21,6 +21,7 @@
  *  
  */
 
+#include <time.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <libgda/libgda.h>
@@ -85,6 +86,9 @@ GdaTimestamp *gdaex_data_model_get_field_value_gdatimestamp_at (GdaDataModel *da
 GDate *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
+struct tm *gdaex_data_model_get_field_value_tm_at (GdaDataModel *data_model,
+                                                 gint row,
+                                                 const gchar *field_name);
 
 gchar *gdaex_data_model_get_value_stringify_at (GdaDataModel *data_model,
                                                gint row,
@@ -105,6 +109,9 @@ GdaTimestamp *gdaex_data_model_get_value_gdatimestamp_at (GdaDataModel *data_mod
                                                           gint row,
                                                           gint col);
 GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
+                                           gint row,
+                                           gint col);
+struct tm *gdaex_data_model_get_value_tm_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
 

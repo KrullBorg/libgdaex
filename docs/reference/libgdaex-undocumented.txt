@@ -1,7 +1,7 @@
-36% symbol docs coverage.
+33% symbol docs coverage.
 10 symbols documented.
 1 symbols incomplete.
-18 not documented.
+20 not documented.
 
 
 gdaex_data_model_get_field_value_boolean_at (row, field_name)
@@ -11,6 +11,7 @@ gdaex_data_model_get_field_value_gdate_at
 gdaex_data_model_get_field_value_gdatimestamp_at
 gdaex_data_model_get_field_value_integer_at
 gdaex_data_model_get_field_value_stringify_at
+gdaex_data_model_get_field_value_tm_at
 gdaex_data_model_get_value_boolean_at
 gdaex_data_model_get_value_double_at
 gdaex_data_model_get_value_float_at
@@ -18,6 +19,7 @@ gdaex_data_model_get_value_gdate_at
 gdaex_data_model_get_value_gdatimestamp_at
 gdaex_data_model_get_value_integer_at
 gdaex_data_model_get_value_stringify_at
+gdaex_data_model_get_value_tm_at
 gdaex_get_chr_quoting
 gdaex_get_gdaconnection
 gdaex_get_provider

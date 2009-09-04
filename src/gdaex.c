@@ -269,7 +269,7 @@ GdaDataModel
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #gchar (stringify)
+ * Returns: the @field_name's #GValue as #gchar (stringify)
  */
 gchar
 *gdaex_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
@@ -304,7 +304,7 @@ gchar
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #gint
+ * Returns: the @field_name's #GValue as #gint
  */
 gint
 gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
@@ -334,7 +334,7 @@ gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #gfloat
+ * Returns: the @field_name's #GValue as #gfloat
  */
 gfloat
 gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
@@ -364,7 +364,7 @@ gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #gdouble
+ * Returns: the @field_name's #GValue as #gdouble
  */
 gdouble
 gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
@@ -394,7 +394,7 @@ gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
  * @row:
  * @field_name:
  *
- * return the field_name's #GValue as #gboolean
+ * return the @field_name's #GValue as #gboolean
  */
 gboolean
 gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
@@ -424,7 +424,7 @@ gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #GdaTimestamp.
+ * Returns: the @field_name's #GValue as #GdaTimestamp.
  */
 GdaTimestamp
 *gdaex_data_model_get_field_value_gdatimestamp_at (GdaDataModel *data_model,
@@ -459,7 +459,7 @@ GdaTimestamp
  * @row:
  * @field_name:
  *
- * Returns: the field_name's #GValue as #GDate.
+ * Returns: the @field_name's #GValue as #GDate.
  */
 GDate
 *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
@@ -474,6 +474,42 @@ GDate
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s»\n", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
+
+
+/**
+ * gdaex_data_model_get_field_value_tm_at:
+ * @data_model: a #GdaDataModel object.
+ * @row:
+ * @field_name:
+ *
+ * Returns: the @field_name's value as a struct tm.
+ */
+struct tm
+*gdaex_data_model_get_field_value_tm_at (GdaDataModel *data_model,
+                                           gint row,
+                                           const gchar *field_name)
+{
+	struct tm *value;
+	gint col;
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_get_value_tm_at (data_model, row, col);
 			if (value == NULL)
 				{
 					g_warning ("Error retrieving «%s»'s value.", field_name);
@@ -702,10 +738,11 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 GdaTimestamp
 *gdaex_data_model_get_value_gdatimestamp_at (GdaDataModel *data_model, gint row, gint col)
 {
-	const GdaTimestamp *gdatimestamp = NULL;
+	GdaTimestamp *gdatimestamp;
 	const GValue *v;
 	GError *error;
 
+	gdatimestamp = NULL;
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
@@ -716,7 +753,47 @@ GdaTimestamp
 		}
 	else if (!gda_value_is_null (v))
 		{
-			gdatimestamp = gda_value_get_timestamp (v);
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+				{
+					gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					GDate *date;
+
+					date = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+
+					if (date != NULL)
+						{
+							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							if (g_date_valid (date))
+								{
+									gdatimestamp->year = g_date_get_year (date);
+									gdatimestamp->month = g_date_get_month (date);
+									gdatimestamp->day = g_date_get_day (date);
+								}
+							else
+								{
+									gdatimestamp->year = date->year;
+									gdatimestamp->month = date->month;
+									gdatimestamp->day = date->day;
+								}
+						}
+				}
+			else if (gda_value_isa (v, GDA_TYPE_TIME))
+				{
+					const GdaTime *time;
+
+					time = gda_value_get_time (v);
+
+					if (time != NULL)
+						{
+							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							gdatimestamp->hour = time->hour;
+							gdatimestamp->minute = time->minute;
+							gdatimestamp->second = time->second;
+						}
+				}				
 		}
 
 	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)gdatimestamp);
@@ -733,11 +810,12 @@ GdaTimestamp
 GDate
 *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model, gint row, gint col)
 {
-	GDate *ret = NULL;
+	GDate *ret;
 	const GdaTimestamp *gdatimestamp;
 	const GValue *v;
 	GError *error;
 
+	ret = NULL;
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
@@ -748,14 +826,59 @@ GDate
 		}
 	else if (!gda_value_is_null (v))
 		{
-			gdatimestamp = gda_value_get_timestamp (v);
-			if (g_date_valid_dmy ((GDateDay)gdatimestamp->day,
-			                      (GDateMonth)gdatimestamp->month,
-			                      (GDateYear)gdatimestamp->year))
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 				{
-					ret = g_date_new_dmy ((GDateDay)gdatimestamp->day,
-					                      (GDateMonth)gdatimestamp->month,
-					                      (GDateYear)gdatimestamp->year);
+					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					ret = (GDate *)g_value_get_boxed (v);
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_get_value_tm_at:
+ * @data_model: a #GdaDataModel object.
+ * @row: row number.
+ * @col: col number.
+ *
+ * Returns: the field's value as a struct tm.
+ */
+struct tm
+*gdaex_data_model_get_value_tm_at (GdaDataModel *data_model, gint row, gint col)
+{
+	struct tm *ret;
+	const GValue *v;
+	GError *error;
+
+	ret = NULL;
+	error = NULL;
+
+	v = gda_data_model_get_value_at (data_model, col, row, &error);
+	if (v == NULL || error != NULL)
+		{
+			g_warning ("Error on retrieving field's value: %s\n",
+			           error->message);
+		}
+	else if (!gda_value_is_null (v))
+		{
+			GdaTimestamp *gdatimestamp;
+
+			gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+
+			if (gdatimestamp != NULL)
+				{
+					ret = g_malloc0 (sizeof (struct tm));
+
+					ret->tm_year = gdatimestamp->year - 1900;
+					ret->tm_mon = gdatimestamp->month - 1;
+					ret->tm_mday = gdatimestamp->day;
+					ret->tm_hour = gdatimestamp->hour;
+					ret->tm_min = gdatimestamp->minute;
+					ret->tm_sec = gdatimestamp->second;
 				}
 		}
 
