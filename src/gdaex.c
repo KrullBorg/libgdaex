@@ -291,7 +291,7 @@ gchar
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 			value = NULL;
 		}
 
@@ -322,7 +322,7 @@ gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 		}
 
 	return value;
@@ -352,7 +352,7 @@ gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 		}
 
 	return value;
@@ -382,7 +382,7 @@ gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 		}
 
 	return value;
@@ -412,7 +412,7 @@ gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 		}
 
 	return value;
@@ -446,7 +446,7 @@ GdaTimestamp
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 			value = NULL;
 		}
 
@@ -481,7 +481,7 @@ GDate
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 			value = NULL;
 		}
 
@@ -517,7 +517,7 @@ struct tm
 		}
 	else
 		{
-			g_warning ("No column found with name «%s»\n", field_name);
+			g_warning ("No column found with name «%s».", field_name);
 			value = NULL;
 		}
 
@@ -793,7 +793,11 @@ GdaTimestamp
 							gdatimestamp->minute = time->minute;
 							gdatimestamp->second = time->second;
 						}
-				}				
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
+				}
 		}
 
 	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)gdatimestamp);
@@ -833,6 +837,10 @@ GDate
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					ret = (GDate *)g_value_get_boxed (v);
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
 				}
 		}
 
