@@ -1,27 +1,147 @@
-2006-11-01: Andrea Zagli <azagli@inwind.it>
+commit 29da0b572d2affd66cc906d341632c79c2af6db4
+Author: Andrea Zagli <azagli@libero.it>
+Date:   2009-09-06
 
-	* gdaobj.c: added function gdao_get_chr_quoting to solve a problem about
-	  quoting reserved words
+    Adjustments.
 
-2006-09-06 Andrea Zagli <azagli@inwind.it>
+M	src/gdaex.c
 
-	* gdaobj.c: some bugfixes
+commit dd4dd1c2a7cae405499cd414d5a947f2fc98270e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-09-04
 
-2006-09-03 Andrea Zagli <azagli@inwind.it>
+    Added functions GdaEx::get_field_value_tm_at and
+    GdaEx::get_value_tm_at.
 
-	* gdaobj.c: gdao_strescape(): escaped ' with a double '
+M	docs/reference/libgdaex-decl-list.txt
+M	docs/reference/libgdaex-decl.txt
+M	docs/reference/libgdaex-undocumented.txt
+M	docs/reference/libgdaex-unused.txt
+M	src/gdaex.c
+M	src/libgdaex.h
 
-2006-08-19 Andrea Zagli <azagli@inwind.it>
+commit 245104a873eb045481a66b9b8e1a8700d7c3e43d
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-08-29
 
-	* libgdaobj.h:
-	* gdaobj.c: converted GdaO into a GObject
+    Bugfixes.
 
-2006-08-18 Andrea Zagli <azagli@inwind.it>
+M	src/gdaex.c
 
-	* libgdaobj.h:
-	* gdaobj.c: added function gdao_strescape
-	* configure.ac: some improvement
+commit 985d106276a05241732d16a6e73ccb48d7187300
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-08-03
 
-2006-07-28 Andrea Zagli <azagli@inwind.it>
+    Fixed many bugs.
 
-	* gdaobj.c: added trap for gdao NULL into gdao_query
+M	autogen.sh
+M	config.h.in
+M	src/gdaex.c
+
+commit fd74d16cfc4349941cc9027c15b321854d6b79e2
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-07-26
+
+    Fixed two functions not updated to libgda 4.
+
+M	src/gdaex.c
+
+commit ab767896012b16edac3bfe243ed83916fa540ad1
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-07-26
+
+    Yet old name in libgdaex.pc.in.
+
+M	libgdaex.pc.in
+
+commit 659c37bf0b8178599ac81b47ab11f2a6be3a8348
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-07-26
+
+    Updated to libgda 4.
+
+M	.gitignore
+A	docs/reference/libgdaex-decl-list.txt
+A	docs/reference/libgdaex-decl.txt
+A	docs/reference/libgdaex-docs.sgml
+C100	docs/reference/libgdaoj-overrides.txt
+docs/reference/libgdaex-overrides.txt
+R100	docs/reference/libgdaoj-sections.txt
+docs/reference/libgdaex-sections.txt
+R075	docs/reference/libgdaoj-undocumented.txt
+docs/reference/libgdaex-undeclared.txt
+A	docs/reference/libgdaex-undocumented.txt
+A	docs/reference/libgdaex-unused.txt
+R100	docs/reference/tmpl/libgdaoj-unused.sgml
+docs/reference/libgdaex.args
+C100	docs/reference/libgdaoj-overrides.txt
+docs/reference/libgdaex.hierarchy
+C100	docs/reference/libgdaoj-overrides.txt
+docs/reference/libgdaex.interfaces
+C100	docs/reference/libgdaoj-overrides.txt
+docs/reference/libgdaex.prerequisites
+R100	docs/reference/libgdaoj-overrides.txt
+docs/reference/libgdaex.signals
+D	docs/reference/libgdaoj-docs.sgml
+A	docs/reference/tmpl/libgdaex-unused.sgml
+A	docs/reference/tmpl/libgdaex.sgml
+M	docs/reference/tmpl/libgdaobj.sgml
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit 01ac7e4764919402bdf0fa1b7446f6a5dad61fee
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-07-25
+
+    Started migration to libgda 4.
+
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit ec4fe51a1efc9afdd4e2f1d6750037724c816737
+Author: andreaz <andreaz@nemo.nautilus.org>
+Date:	2009-07-25
+
+    Changed the project's name.
+
+A	.gitignore
+A	COPYING
+M	Makefile.am
+A	autogen.sh
+M	config.h.in
+D	config.h.in~
+M	configure.ac
+M	docs/reference/Makefile.am
+R100	libgdaobj.pc.in libgdaex.pc.in
+M	src/Makefile.am
+R099	src/gdaobj.c	src/gdaex.c
+R100	src/libgdaobj.h src/libgdaex.h
+
+commit 43ae46dfa055b96d4a9f2c874850c05c4d608775
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2009-07-25
+
+    Initial commit.
+
+A	AUTHORS
+A	ChangeLog
+A	Makefile.am
+A	NEWS
+A	README
+A	TODO
+A	config.h.in
+A	config.h.in~
+A	configure.ac
+A	docs/Makefile.am
+A	docs/reference/Makefile.am
+A	docs/reference/libgdaoj-docs.sgml
+A	docs/reference/libgdaoj-overrides.txt
+A	docs/reference/libgdaoj-sections.txt
+A	docs/reference/libgdaoj-undocumented.txt
+A	docs/reference/tmpl/libgdaobj.sgml
+A	docs/reference/tmpl/libgdaoj-unused.sgml
+A	docs/reference/version.xml.in
+A	libgdaobj.pc.in
+A	src/Makefile.am
+A	src/gdaobj.c
+A	src/libgdaobj.h
