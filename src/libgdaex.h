@@ -51,6 +51,9 @@ struct _GdaEx
 struct _GdaExClass
 	{
 		GObjectClass parent_class;
+
+		guint before_execute_signal_id;
+		guint after_execute_signal_id;
 	};
 
 GType gdaex_get_type (void) G_GNUC_CONST;

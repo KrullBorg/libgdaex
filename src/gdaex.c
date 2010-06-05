@@ -26,11 +26,14 @@
 #endif
 
 #include <string.h>
+#include <libgda/sql-parser/gda-sql-parser.h>
 
 #include "libgdaex.h"
 
 static void gdaex_class_init (GdaExClass *klass);
 static void gdaex_init (GdaEx *gdaex);
+
+static void gdaex_create_connection_parser (GdaEx *gdaex);
 
 static void gdaex_set_property (GObject *object,
                                guint property_id,
@@ -47,6 +50,7 @@ typedef struct _GdaExPrivate GdaExPrivate;
 struct _GdaExPrivate
 	{
 		GdaConnection *gda_conn;
+		GdaSqlParser *gda_parser;
 	};
 
 G_DEFINE_TYPE (GdaEx, gdaex, G_TYPE_OBJECT)
@@ -60,6 +64,38 @@ gdaex_class_init (GdaExClass *klass)
 
 	object_class->set_property = gdaex_set_property;
 	object_class->get_property = gdaex_get_property;
+
+	/**
+	 * GdaEx::before-execute:
+	 * @gdaex:
+	 * @gdastatement:
+	 *
+	 */
+	klass->before_execute_signal_id = g_signal_new ("before-execute",
+	                                               G_TYPE_FROM_CLASS (object_class),
+	                                               G_SIGNAL_RUN_LAST,
+	                                               0,
+	                                               NULL,
+	                                               NULL,
+	                                               g_cclosure_marshal_VOID__POINTER,
+	                                               G_TYPE_NONE,
+	                                               1, G_TYPE_POINTER);
+
+	/**
+	 * GdaEx::after-execute:
+	 * @gdaex:
+	 * @gdastatement:
+	 *
+	 */
+	klass->after_execute_signal_id = g_signal_new ("after-execute",
+	                                               G_TYPE_FROM_CLASS (object_class),
+	                                               G_SIGNAL_RUN_LAST,
+	                                               0,
+	                                               NULL,
+	                                               NULL,
+	                                               g_cclosure_marshal_VOID__POINTER,
+	                                               G_TYPE_NONE,
+	                                               1, G_TYPE_POINTER);
 }
 
 static void
@@ -174,6 +210,8 @@ GdaEx
 			return NULL;
 		}
 
+	gdaex_create_connection_parser (gdaex);
+
 	return gdaex;
 }
 
@@ -220,6 +258,8 @@ GdaEx
 			return NULL;
 		}
 
+	gdaex_create_connection_parser (gdaex);
+
 	return gdaex;
 }
 
@@ -244,6 +284,8 @@ GdaEx
 	priv = GDAEX_GET_PRIVATE (gdaex);
 
 	priv->gda_conn = conn;
+
+	gdaex_create_connection_parser (gdaex);
 
 	return gdaex;
 }
@@ -985,15 +1027,35 @@ gdaex_begin (GdaEx *gdaex)
 gint
 gdaex_execute (GdaEx *gdaex, const gchar *sql)
 {
+	GdaStatement *stmt;
 	GError *error;
+
+	const gchar *remain;
 	gint nrecs;
 
 	g_return_val_if_fail (IS_GDAEX (gdaex), -1);
 
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+	GdaExClass *klass = GDAEX_GET_CLASS (gdaex);
 
 	error = NULL;
-	nrecs = gda_execute_non_select_command (priv->gda_conn, sql, &error);
+	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, &remain, &error);
+	if (remain)
+		{
+			g_warning ("REMAINS:\n%s\nfrom\n%s", remain, sql);
+		}
+
+	if (error != NULL)
+		{
+			g_warning ("Error parsing sql: %s\n%s\n",
+			           error->message, sql);
+			return -1;			
+		}
+
+	g_signal_emit (gdaex, klass->before_execute_signal_id, 0, stmt);
+
+	error = NULL;
+	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);
 
 	if (error != NULL)
 		{
@@ -1001,6 +1063,8 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 			           error->message, sql);
 			return -1;
 		}
+
+	g_signal_emit (gdaex, klass->after_execute_signal_id, 0, stmt);
 
 	return nrecs;
 }
@@ -1154,6 +1218,18 @@ gdaex_get_chr_quoting (GdaEx *gdaex)
 }
 
 /* PRIVATE */
+static void
+gdaex_create_connection_parser (GdaEx *gdaex)
+{
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	priv->gda_parser = gda_connection_create_parser (priv->gda_conn);
+	if (priv->gda_parser == NULL) /* @gda_conn doe snot provide its own parser => use default one */
+		{
+			priv->gda_parser = gda_sql_parser_new ();
+		}
+}
+
 static void
 gdaex_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
