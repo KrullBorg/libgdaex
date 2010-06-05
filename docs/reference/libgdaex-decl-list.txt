@@ -1,13 +1,14 @@
 <SECTION>
 <FILE>libgdaex</FILE>
+<TITLE>GdaEx</TITLE>
 TYPE_GDAEX
 GDAEX
 GDAEX_CLASS
 IS_GDAEX
 IS_GDAEX_CLASS
 GDAEX_GET_CLASS
-<TITLE>GdaEx</TITLE>
 GdaEx
+GdaExClass
 gdaex_get_type
 gdaex_new_from_dsn
 gdaex_new_from_string

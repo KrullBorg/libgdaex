@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2009 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -87,13 +87,16 @@ static GdaEx
  * If @username and @password are both NULL or empty, it will be used those
  * defined into datasource.
  *
- * Return value: the newly created #GdaEx.
+ * Returns: the newly created #GdaEx.
  */
 GdaEx
-*gdaex_new_from_dsn (const gchar *dsn)
+*gdaex_new_from_dsn (const gchar *dsn, const gchar *username, const gchar *password)
 {
 	GdaEx *gdaex;
 	GdaExPrivate *priv;
+	gchar *new_user;
+	gchar *new_pwd;
+	gchar *auth_string;
 
 	GError *error;
 
@@ -113,10 +116,55 @@ GdaEx
 
 	priv = GDAEX_GET_PRIVATE (gdaex);
 
+	auth_string = NULL;
+	new_user = NULL;
+	new_pwd = NULL;
+
+	if (username != NULL)
+		{
+			new_user = g_strstrip (g_strdup (username));
+			if (g_strcmp0 (new_user, "") != 0)
+				{
+					new_user = gda_rfc1738_encode (new_user);
+				}
+			else
+				{
+					new_user = NULL;
+				}
+		}
+	if (password != NULL)
+		{
+			new_pwd = g_strstrip (g_strdup (password));
+			if (g_strcmp0 (new_pwd, "") != 0)
+				{
+					new_pwd = gda_rfc1738_encode (new_pwd);
+				}
+			else
+				{
+					new_pwd = NULL;
+				}
+		}
+
+	if (new_user != NULL || new_pwd != NULL)
+		{
+			auth_string = g_strdup ("");
+			if (new_user != NULL)
+				{
+					auth_string = g_strdup_printf ("USERNAME=%s", new_user);
+				}
+			if (new_pwd != NULL)
+				{
+					auth_string = g_strconcat (auth_string,
+						(new_user != NULL ? ";" : ""),
+						g_strdup_printf ("PASSWORD=%s", new_pwd),
+						NULL);
+				}
+		}
+
 	/* open database connection */
 	error = NULL;
 	priv->gda_conn = gda_connection_open_from_dsn (dsn,
-	                                               NULL,
+	                                               auth_string,
 	                                               GDA_CONNECTION_OPTIONS_NONE,
 	                                               &error);
 	if (error != NULL)
@@ -133,7 +181,7 @@ GdaEx
  * gdaex_new_from_string:
  * @cnc_string: the connection string.
  *
- * Return value: the newly created #GdaEx.
+ * Returns: the newly created #GdaEx.
  */
 GdaEx
 *gdaex_new_from_string (const gchar *cnc_string)
@@ -181,7 +229,7 @@ GdaEx
  *
  * Returns a #GdaEx from an existing #GdaConnection.
  *
- * Return value: the newly created #GdaEx.
+ * Returns: the newly created #GdaEx.
  */
 GdaEx
 *gdaex_new_from_connection (GdaConnection *conn)
@@ -204,7 +252,7 @@ GdaEx
  * gdaex_get_gdaconnection:
  * @gdaex: a #GdaEx object.
  *
- * Return value: the #GdaConnection associated to the #GdaEx.
+ * Returns: the #GdaConnection associated to the #GdaEx.
  */
 const GdaConnection
 *gdaex_get_gdaconnection (GdaEx *gdaex)
@@ -220,7 +268,7 @@ const GdaConnection
  * gdaex_get_provider:
  * @gdaex: a #GdaEx object.
  *
- * Return value: the provider id associated to the #GdaEx.
+ * Returns: the provider id associated to the #GdaEx.
  */
 const gchar
 *gdaex_get_provider (GdaEx *gdaex)
@@ -239,7 +287,7 @@ const gchar
  *
  * Execute a selection query (SELECT).
  *
- * Return value: a #GdaDataModel, or #NULL if query fails.
+ * Returns: a #GdaDataModel, or #NULL if query fails.
  */
 GdaDataModel
 *gdaex_query (GdaEx *gdaex, const gchar *sql)
@@ -267,7 +315,7 @@ GdaDataModel
  * gdaex_data_model_get_field_value_stringify_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #gchar (stringify)
  */
@@ -302,7 +350,7 @@ gchar
  * gdaex_data_model_get_field_value_integer_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #gint
  */
@@ -332,7 +380,7 @@ gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
  * gdaex_data_model_get_field_value_float_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #gfloat
  */
@@ -362,7 +410,7 @@ gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
  * gdaex_data_model_get_field_value_double_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #gdouble
  */
@@ -392,9 +440,9 @@ gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
  * gdaex_data_model_get_field_value_boolean_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
- * return the @field_name's #GValue as #gboolean
+ * Returns: the @field_name's #GValue as #gboolean
  */
 gboolean
 gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
@@ -422,7 +470,7 @@ gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
  * gdaex_data_model_get_field_value_gdatimestamp_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #GdaTimestamp.
  */
@@ -457,7 +505,7 @@ GdaTimestamp
  * gdaex_data_model_get_field_value_gdate_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's #GValue as #GDate.
  */
@@ -493,7 +541,7 @@ GDate
  * gdaex_data_model_get_field_value_tm_at:
  * @data_model: a #GdaDataModel object.
  * @row:
- * @field_name:
+ * @field_name: the field's name.
  *
  * Returns: the @field_name's value as a struct tm.
  */
@@ -898,6 +946,8 @@ struct tm
  * @gdaex: a #GdaEx object.
  *
  * Begin a new transaction.
+ *
+ * Returns: TRUE if there isn't errors.
  */
 gboolean
 gdaex_begin (GdaEx *gdaex)
@@ -930,7 +980,7 @@ gdaex_begin (GdaEx *gdaex)
  *
  * Execute a command query (INSERT, UPDATE, DELETE).
  *
- * Return value: number of records affected by the query execution.
+ * Returns: number of records affected by the query execution.
  */
 gint
 gdaex_execute (GdaEx *gdaex, const gchar *sql)
@@ -960,6 +1010,8 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
  * @gdaex: a #GdaEx object.
  *
  * Commit a transaction.
+ *
+ * Returns: TRUE if there isn't errors.
  */
 gboolean
 gdaex_commit (GdaEx *gdaex)
@@ -1000,6 +1052,8 @@ gdaex_commit (GdaEx *gdaex)
  * @gdaex: a #GdaEx object.
  *
  * Rollback a transaction.
+ *
+ * Returns: TRUE if there isn't errors.
  */
 gboolean
 gdaex_rollback (GdaEx *gdaex)

@@ -1,10 +1,13 @@
-33% symbol docs coverage.
-10 symbols documented.
-1 symbols incomplete.
-20 not documented.
+28% symbol docs coverage.
+9 symbols documented.
+4 symbols incomplete.
+23 not documented.
 
 
-gdaex_data_model_get_field_value_boolean_at (row, field_name)
+GdaEx (<items>)
+gdaex_begin (Returns)
+gdaex_commit (Returns)
+gdaex_data_model_get_field_value_boolean_at
 gdaex_data_model_get_field_value_double_at
 gdaex_data_model_get_field_value_float_at
 gdaex_data_model_get_field_value_gdate_at
@@ -20,10 +23,12 @@ gdaex_data_model_get_value_gdatimestamp_at
 gdaex_data_model_get_value_integer_at
 gdaex_data_model_get_value_stringify_at
 gdaex_data_model_get_value_tm_at
+gdaex_free
 gdaex_get_chr_quoting
 gdaex_get_gdaconnection
 gdaex_get_provider
 gdaex_new_from_string
+gdaex_rollback (Returns)
 
 
-libgdaobj:Short_Description
+libgdaex:Short_Description

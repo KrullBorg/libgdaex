@@ -45,150 +45,150 @@ struct _GdaExClass
 <FUNCTION>
 <NAME>gdaex_get_type</NAME>
 <RETURNS>GType </RETURNS>
-void
+void 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_new_from_dsn</NAME>
 <RETURNS>GdaEx *</RETURNS>
-const gchar *dsn
+const gchar *dsn, const gchar *username, const gchar *password 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_new_from_string</NAME>
 <RETURNS>GdaEx *</RETURNS>
-const gchar *cnc_string
+const gchar *cnc_string 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_new_from_connection</NAME>
 <RETURNS>GdaEx *</RETURNS>
-GdaConnection *conn
+GdaConnection *conn 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_get_gdaconnection</NAME>
 <RETURNS>const GdaConnection *</RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_get_provider</NAME>
 <RETURNS>const gchar *</RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_query</NAME>
 <RETURNS>GdaDataModel *</RETURNS>
-GdaEx *gdaex, const gchar *sql
+GdaEx *gdaex, const gchar *sql 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_stringify_at</NAME>
 <RETURNS>gchar *</RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_integer_at</NAME>
 <RETURNS>gint </RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_float_at</NAME>
 <RETURNS>gfloat </RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_double_at</NAME>
 <RETURNS>gdouble </RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_boolean_at</NAME>
 <RETURNS>gboolean </RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_gdatimestamp_at</NAME>
 <RETURNS>GdaTimestamp *</RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_gdate_at</NAME>
 <RETURNS>GDate *</RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_field_value_tm_at</NAME>
 <RETURNS>struct tm *</RETURNS>
-GdaDataModel *data_model,gint row,const gchar *field_name
+GdaDataModel *data_model, gint row, const gchar *field_name 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_stringify_at</NAME>
 <RETURNS>gchar *</RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_integer_at</NAME>
 <RETURNS>gint </RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_float_at</NAME>
 <RETURNS>gfloat </RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_double_at</NAME>
 <RETURNS>gdouble </RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_boolean_at</NAME>
 <RETURNS>gboolean </RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_gdatimestamp_at</NAME>
 <RETURNS>GdaTimestamp *</RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_gdate_at</NAME>
 <RETURNS>GDate *</RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_data_model_get_value_tm_at</NAME>
 <RETURNS>struct tm *</RETURNS>
-GdaDataModel *data_model,gint row,gint col
+GdaDataModel *data_model, gint row, gint col 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_begin</NAME>
 <RETURNS>gboolean </RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_execute</NAME>
 <RETURNS>gint </RETURNS>
-GdaEx *gdaex, const gchar *sql
+GdaEx *gdaex, const gchar *sql 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_commit</NAME>
 <RETURNS>gboolean </RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_rollback</NAME>
 <RETURNS>gboolean </RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_free</NAME>
 <RETURNS>void </RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_strescape</NAME>
 <RETURNS>gchar *</RETURNS>
-const gchar *source, const gchar *exceptions
+const gchar *source, const gchar *exceptions 
 </FUNCTION>
 <FUNCTION>
 <NAME>gdaex_get_chr_quoting</NAME>
 <RETURNS>gchar </RETURNS>
-GdaEx *gdaex
+GdaEx *gdaex 
 </FUNCTION>

@@ -56,7 +56,9 @@ struct _GdaExClass
 GType gdaex_get_type (void) G_GNUC_CONST;
 
 
-GdaEx *gdaex_new_from_dsn (const gchar *dsn);
+GdaEx *gdaex_new_from_dsn (const gchar *dsn,
+                           const gchar *username,
+                           const gchar *password);
 GdaEx *gdaex_new_from_string (const gchar *cnc_string);
 GdaEx *gdaex_new_from_connection (GdaConnection *conn);
 

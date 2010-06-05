@@ -1,6 +1,15 @@
+commit 04c09a62f54da07928a60d37f08f8d10262e5e6d
+Author: Andrea Zagli <azagli@libero.it>
+Date:   2009-09-27
+
+    Added support for ChangeLog automatic generation.
+
+M	ChangeLog
+M	Makefile.am
+
 commit 29da0b572d2affd66cc906d341632c79c2af6db4
 Author: Andrea Zagli <azagli@libero.it>
-Date:   2009-09-06
+Date:	2009-09-06
 
     Adjustments.
 
