@@ -1,6 +1,39 @@
+commit 2866dddfc2d418fb9f2ab019dd2e32b33688112e
+Author: Andrea Zagli <azagli@libero.it>
+Date:   2010-06-05
+
+    Added signals "before-execute" and "after-execute".
+    Added private member gda_parse to GdaEx.
+
+M	configure.ac
+M	docs/reference/libgdaex-decl.txt
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit 103db55dbcae7055ea1ee1d462e918851c29e6f1
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-06-05
+
+    Added username and password to GdaEx::new_from_dsn.
+    Some adjustments to gtk-doc.
+
+M	.gitignore
+M	ChangeLog
+M	docs/reference/libgdaex-decl-list.txt
+M	docs/reference/libgdaex-decl.txt
+M	docs/reference/libgdaex-sections.txt
+M	docs/reference/libgdaex-undeclared.txt
+M	docs/reference/libgdaex-undocumented.txt
+M	docs/reference/libgdaex-unused.txt
+M	docs/reference/tmpl/libgdaex-unused.sgml
+M	docs/reference/tmpl/libgdaex.sgml
+D	docs/reference/tmpl/libgdaobj.sgml
+M	src/gdaex.c
+M	src/libgdaex.h
+
 commit 04c09a62f54da07928a60d37f08f8d10262e5e6d
 Author: Andrea Zagli <azagli@libero.it>
-Date:   2009-09-27
+Date:	2009-09-27
 
     Added support for ChangeLog automatic generation.
 

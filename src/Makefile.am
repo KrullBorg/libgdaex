@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir) \
-              $(GDAEX_CFLAGS)
+              $(GDAEX_CFLAGS) \
+              -DG_LOG_DOMAIN=\"GdaEx\"
 
 LIBS = $(GDAEX_LIBS)
 

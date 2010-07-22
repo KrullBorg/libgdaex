@@ -1,12 +1,12 @@
-28% symbol docs coverage.
+26% symbol docs coverage.
 9 symbols documented.
-4 symbols incomplete.
-23 not documented.
+1 symbols incomplete.
+25 not documented.
 
 
 GdaEx (<items>)
-gdaex_begin (Returns)
-gdaex_commit (Returns)
+GdaEx::after-execute
+GdaEx::before-execute
 gdaex_data_model_get_field_value_boolean_at
 gdaex_data_model_get_field_value_double_at
 gdaex_data_model_get_field_value_float_at
@@ -28,7 +28,6 @@ gdaex_get_chr_quoting
 gdaex_get_gdaconnection
 gdaex_get_provider
 gdaex_new_from_string
-gdaex_rollback (Returns)
 
 
 libgdaex:Short_Description
