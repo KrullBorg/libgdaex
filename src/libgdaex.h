@@ -1,7 +1,7 @@
 /*
  *  libgdaex.h
  *
- *  Copyright (C) 2005-2009 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -67,6 +67,9 @@ GdaEx *gdaex_new_from_connection (GdaConnection *conn);
 
 const GdaConnection *gdaex_get_gdaconnection (GdaEx *gdaex);
 const gchar *gdaex_get_provider (GdaEx *gdaex);
+
+const gchar *gdaex_get_tables_name_prefix (GdaEx *gdaex);
+void gdaex_set_tables_name_prefix (GdaEx *gdaex, const gchar *tables_name_prefix);
 
 GdaDataModel *gdaex_query (GdaEx *gdaex, const gchar *sql);
 

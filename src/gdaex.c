@@ -51,6 +51,8 @@ struct _GdaExPrivate
 	{
 		GdaConnection *gda_conn;
 		GdaSqlParser *gda_parser;
+
+		gchar *tables_name_prefix;
 	};
 
 G_DEFINE_TYPE (GdaEx, gdaex, G_TYPE_OBJECT)
@@ -323,6 +325,44 @@ const gchar
 }
 
 /**
+ * gdaex_get_tables_name_prefix:
+ * @gdaex: a #GdaEx object.
+ *
+ */
+const gchar
+*gdaex_get_tables_name_prefix (GdaEx *gdaex)
+{
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	return g_strdup (priv->tables_name_prefix);
+}
+
+/**
+ * gdaex_set_tables_name_prefix:
+ * #gdaex: a #GdaEx object.
+ * @tables_name_prefix:
+ *
+ */
+void
+gdaex_set_tables_name_prefix (GdaEx *gdaex, const gchar *tables_name_prefix)
+{
+	g_return_if_fail (IS_GDAEX (gdaex));
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	if (tables_name_prefix == NULL)
+		{
+			priv->tables_name_prefix = g_strdup ("");
+		}
+	else
+		{
+			priv->tables_name_prefix = g_strstrip (g_strdup (tables_name_prefix));
+		}
+}
+
+/**
  * gdaex_query:
  * @gdaex: a #GdaEx object.
  * @sql: the sql text.
@@ -341,12 +381,21 @@ GdaDataModel
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	error = NULL;
-	GdaDataModel *dm = gda_execute_select_command (priv->gda_conn, sql, &error);
+	GdaStatement *stmt;
+	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
+	if (!GDA_IS_STATEMENT (stmt))
+		{
+			g_warning ("Error parsing query string: %s\n%s\n",
+			           error != NULL && error->message != NULL ? error->message : "no details", sql);
+			return NULL;
+		}
 
-	if (error != NULL)
+	error = NULL;
+	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
+	if (!GDA_IS_DATA_MODEL (dm))
 		{
 			g_warning ("Error executing selection query: %s\n%s\n",
-			           error->message, sql);
+			           error != NULL && error->message != NULL ? error->message : "no details", sql);
 			return NULL;
 		}
 
@@ -1049,7 +1098,7 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 		{
 			g_warning ("Error parsing sql: %s\n%s\n",
 			           error->message, sql);
-			return -1;			
+			return -1;
 		}
 
 	g_signal_emit (gdaex, klass->before_execute_signal_id, 0, stmt);
