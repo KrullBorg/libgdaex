@@ -1,6 +1,6 @@
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 
-SUBDIRS = src docs
+SUBDIRS = src docs tests
 
 ACLOCAL_AMFLAGS = -I m4
 

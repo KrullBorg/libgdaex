@@ -362,6 +362,141 @@ gdaex_set_tables_name_prefix (GdaEx *gdaex, const gchar *tables_name_prefix)
 		}
 }
 
+static void
+gdaex_set_tables_name_prefix_into_statement (GdaEx *gdaex, GdaStatement **stmt)
+{
+	GdaStatement *stmp;
+	GdaSqlStatement *sstmt;
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	stmp = *stmt;
+	g_object_get (G_OBJECT (stmp), "structure", &sstmt, NULL);
+	if (sstmt == NULL)
+		{
+			g_warning ("Unable to get the GdaSqlStatement from the GdaStatement.");
+			return;
+		}
+
+	switch (sstmt->stmt_type)
+		{
+			case GDA_SQL_STATEMENT_SELECT:
+				{
+					GdaSqlStatementSelect *select;
+					GSList *tables;
+					GSList *joins;
+					GdaSqlSelectTarget *target;
+					GdaSqlExpr *expr;
+					GSList *operands;
+					gchar **splits;
+					gchar *field_name;
+					gchar *tables_names;
+
+					select = (GdaSqlStatementSelect *)sstmt->contents;
+
+					tables_names = g_strdup ("");
+					tables = NULL;
+					tables = select->from->targets;
+					while (tables != NULL)
+						{
+							target = (GdaSqlSelectTarget *)tables->data;
+							if (g_ascii_strncasecmp (g_value_get_string (target->expr->value), priv->tables_name_prefix, strlen (priv->tables_name_prefix)) != 0)
+								{
+									g_value_set_string (target->expr->value,
+											            g_strdup_printf ("%s%s",
+											                             priv->tables_name_prefix,
+											                             g_value_get_string (target->expr->value)));
+								}
+							tables_names = g_strconcat (tables_names, g_value_get_string (target->expr->value), "|", NULL);
+							tables = g_slist_next (tables);
+						}
+
+					joins = NULL;
+					joins = select->from->joins;
+					while (joins != NULL)
+						{
+							expr = ((GdaSqlSelectJoin *)joins->data)->expr;
+							operands = ((GdaSqlOperation *)expr->cond)->operands;
+							while (operands != NULL)
+								{
+									splits = gda_sql_identifier_split (g_value_get_string (((GdaSqlExpr *)operands->data)->value));
+									if (g_strv_length (splits) > 1)
+										{
+											if (g_strrstr (tables_names, g_strdup_printf ("%s|", splits[0])) != NULL
+											    && g_ascii_strncasecmp (splits[0], priv->tables_name_prefix, strlen (priv->tables_name_prefix)) != 0)
+												{
+													field_name = g_strdup_printf ("%s%s",
+															                      priv->tables_name_prefix,
+															                      g_value_get_string (((GdaSqlExpr *)operands->data)->value));
+												}
+											else
+												{
+													field_name = g_strdup (g_value_get_string (((GdaSqlExpr *)operands->data)->value));
+												}
+										}
+									else
+										{
+											field_name = g_strdup (splits[0]);
+										}
+
+									g_value_set_string (((GdaSqlExpr *)operands->data)->value, field_name);
+									g_free (field_name);
+									operands = g_slist_next (operands);
+								}
+
+							joins = g_slist_next (joins);
+						}
+				}
+				break;
+
+			case GDA_SQL_STATEMENT_INSERT:
+				{
+					GdaSqlStatementInsert *insert;
+					GValue *gval;
+
+					insert = (GdaSqlStatementInsert *)sstmt->contents;
+					gval = gda_value_new_from_string (g_strdup_printf ("%s%s",
+					                                                   priv->tables_name_prefix,
+					                                                   insert->table->table_name),
+					                                  G_TYPE_STRING);
+					gda_sql_statement_insert_take_table_name (sstmt, gval);
+				}
+				break;
+
+			case GDA_SQL_STATEMENT_UPDATE:
+				{
+					GdaSqlStatementUpdate *update;
+					GValue *gval;
+
+					update = (GdaSqlStatementUpdate *)sstmt->contents;
+					gval = gda_value_new_from_string (g_strdup_printf ("%s%s", priv->tables_name_prefix, update->table->table_name),
+					                                  G_TYPE_STRING);
+					gda_sql_statement_update_take_table_name (sstmt, gval);
+				}
+				break;
+
+			case GDA_SQL_STATEMENT_DELETE:
+				{
+					GdaSqlStatementDelete *delete;
+					GValue *gval;
+
+					delete = (GdaSqlStatementDelete *)sstmt->contents;
+					gval = gda_value_new_from_string (g_strdup_printf ("%s%s", priv->tables_name_prefix, delete->table->table_name),
+					                                  G_TYPE_STRING);
+					gda_sql_statement_delete_take_table_name (sstmt, gval);
+				}
+				break;
+
+			default:
+				g_warning ("Statement type %s not implemented.",
+				           gda_sql_statement_type_to_string (sstmt->stmt_type));
+				return;
+		}
+
+	g_object_set (G_OBJECT (stmp), "structure", sstmt, NULL);
+	g_free (sstmt);
+}
+
 /**
  * gdaex_query:
  * @gdaex: a #GdaEx object.
@@ -389,6 +524,8 @@ GdaDataModel
 			           error != NULL && error->message != NULL ? error->message : "no details", sql);
 			return NULL;
 		}
+
+	gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
 
 	error = NULL;
 	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
@@ -1102,6 +1239,8 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 		}
 
 	g_signal_emit (gdaex, klass->before_execute_signal_id, 0, stmt);
+
+	gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
 
 	error = NULL;
 	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);
