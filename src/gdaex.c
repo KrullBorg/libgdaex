@@ -525,7 +525,11 @@ GdaDataModel
 			return NULL;
 		}
 
-	gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
+	if (priv->tables_name_prefix != NULL
+	    && g_strcmp0 (priv->tables_name_prefix, "") != 0)
+		{
+			gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
+		}
 
 	error = NULL;
 	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
@@ -1240,7 +1244,11 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	g_signal_emit (gdaex, klass->before_execute_signal_id, 0, stmt);
 
-	gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
+	if (priv->tables_name_prefix != NULL
+	    && g_strcmp0 (priv->tables_name_prefix, "") != 0)
+		{
+			gdaex_set_tables_name_prefix_into_statement (gdaex, &stmt);
+		}
 
 	error = NULL;
 	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);

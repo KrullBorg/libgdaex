@@ -32,4 +32,4 @@ tests/.deps/
 *.la
 *.bak
 libgdaex*tar*
-tests/test_prefix
+tests/test_prefix*
