@@ -26,9 +26,21 @@
 #endif
 
 #include <string.h>
+
+#include <gio/gio.h>
 #include <libgda/sql-parser/gda-sql-parser.h>
 
 #include "libgdaex.h"
+
+static guint debug;
+static gchar *log_file;
+
+static GOptionEntry entries[] = 
+{
+	{ "gdaex-debug-level", 0, 0, G_OPTION_ARG_INT, &debug, "Sets the debug level", NULL },
+	{ "gdaex-log-file", 0, 0, G_OPTION_ARG_FILENAME, &log_file, "Path to file where to write debug info (or stdout or stderr)", NULL },
+	{ NULL }
+};
 
 static void gdaex_class_init (GdaExClass *klass);
 static void gdaex_init (GdaEx *gdaex);
@@ -53,6 +65,9 @@ struct _GdaExPrivate
 		GdaSqlParser *gda_parser;
 
 		gchar *tables_name_prefix;
+
+		guint debug;
+		GFileOutputStream *log_file;
 	};
 
 G_DEFINE_TYPE (GdaEx, gdaex, G_TYPE_OBJECT)
@@ -104,6 +119,10 @@ static void
 gdaex_init (GdaEx *gdaex)
 {
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	priv->tables_name_prefix = NULL;
+	priv->debug = 0;
+	priv->log_file = 0;
 }
 
 static GdaEx
@@ -255,8 +274,8 @@ GdaEx
                                                       &error);
 	if (error != NULL)
 		{
-			g_warning ("Error creating database connection: %s\n",
-			           error->message);
+			g_warning ("Error creating database connection: %s",
+			           error->message != NULL ? error->message : "no details.");
 			return NULL;
 		}
 
@@ -290,6 +309,93 @@ GdaEx
 	gdaex_create_connection_parser (gdaex);
 
 	return gdaex;
+}
+
+static void
+gdaex_log_handler (const gchar *log_domain,
+                   GLogLevelFlags log_level,
+                   const gchar *message,
+                   gpointer user_data)
+{
+	GError *error;
+
+	gchar *msg;
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE ((GdaEx *)user_data);
+
+	msg = g_strdup_printf ("%s **: %s\n\n", log_domain, message);
+
+	if (g_output_stream_write (G_OUTPUT_STREAM (priv->log_file),
+	    msg, strlen (msg), NULL, &error) < 0)
+		{
+			g_warning ("Error on writing on log file: %s",
+			           error != NULL && error->message != NULL ? error->message : "no details.");
+		}
+}
+
+static gboolean
+gdaex_post_parse_options (GOptionContext *context,
+                          GOptionGroup *group,
+                          gpointer user_data,
+                          GError **error)
+{
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE ((GdaEx *)user_data);
+
+	GError *my_error;
+
+	priv->debug = debug;
+	if (log_file == NULL)
+		{
+			priv->log_file = 0;
+		}
+	else if (priv->debug > 0)
+		{
+			gchar *filename = g_strstrip (g_strdup (log_file));
+			if (g_ascii_strncasecmp (filename, "stdout", 6) == 0
+			    || g_ascii_strncasecmp (filename, "stderr", 6) == 0)
+				{
+				}
+			else
+				{
+					my_error = NULL;
+					priv->log_file = g_file_replace (g_file_new_for_path (filename),
+					                                 NULL, FALSE, G_FILE_CREATE_NONE, NULL, &my_error);
+					if (priv->log_file == NULL)
+						{
+							g_warning ("Error on opening log file: %s.",
+							           my_error != NULL && my_error->message != NULL ? my_error->message : "no details.");
+						}
+					else
+						{
+							/* set handler */
+							g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL
+							                   | G_LOG_FLAG_RECURSION, gdaex_log_handler, user_data);
+						}
+				}	
+		}
+
+	return TRUE;
+}
+
+/**
+ * gdaex_get_option_group:
+ * #gdaex: a #GdaEx object.
+ *
+ * Returns: the #GOptionGroup.
+ */
+GOptionGroup
+*gdaex_get_option_group (GdaEx *gdaex)
+{
+	GOptionGroup *ret;
+
+	ret = g_option_group_new ("gdaex", "GdaEx", "GdaEx", (gpointer)gdaex, g_free);
+	if (ret != NULL)
+		{
+			g_option_group_add_entries (ret, entries);
+			g_option_group_set_parse_hooks (ret, NULL, gdaex_post_parse_options);
+		}
+
+	return ret;
 }
 
 /**
@@ -520,7 +626,7 @@ GdaDataModel
 	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
 	if (!GDA_IS_STATEMENT (stmt))
 		{
-			g_warning ("Error parsing query string: %s\n%s\n",
+			g_warning ("Error parsing query string: %s\n%s",
 			           error != NULL && error->message != NULL ? error->message : "no details", sql);
 			return NULL;
 		}
@@ -535,9 +641,16 @@ GdaDataModel
 	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
 	if (!GDA_IS_DATA_MODEL (dm))
 		{
-			g_warning ("Error executing selection query: %s\n%s\n",
+			g_warning ("Error executing selection query: %s\n%s",
 			           error != NULL && error->message != NULL ? error->message : "no details", sql);
 			return NULL;
+		}
+	else
+		{
+			if (priv->debug > 0)
+				{
+					g_message ("Selection query executed: %s", sql);
+				}
 		}
 
 	return dm;
@@ -1201,6 +1314,13 @@ gdaex_begin (GdaEx *gdaex)
 			g_warning ("Error opening transaction: %s\n",
 			           error->message);
 		}
+	else
+		{
+			if (priv->debug > 0)
+				{
+					g_message ("Transaction opened.");
+				}
+		}
 
 	return ret;
 }
@@ -1255,9 +1375,16 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	if (error != NULL)
 		{
-			g_warning ("Error executing command query: %s\n%s\n",
+			g_warning ("Error executing command query: %s\n%s",
 			           error->message, sql);
 			return -1;
+		}
+	else
+		{
+			if (priv->debug > 0)
+				{
+					g_message ("Query executed: %s", sql);
+				}
 		}
 
 	g_signal_emit (gdaex, klass->after_execute_signal_id, 0, stmt);
@@ -1290,6 +1417,10 @@ gdaex_commit (GdaEx *gdaex)
 	if (tstatus == NULL)
 		{
 			ret = TRUE;
+			if (priv->debug > 0)
+				{
+					g_message ("No transaction opened.");
+				}
 		}
 	else
 		{
@@ -1301,6 +1432,13 @@ gdaex_commit (GdaEx *gdaex)
 					g_warning ("Error committing transaction: %s\n",
 							   error->message);
 					ret = FALSE;
+				}
+			else
+				{
+					if (priv->debug > 0)
+						{
+							g_message ("Transaction committed.");
+						}
 				}
 		}
 
@@ -1332,6 +1470,10 @@ gdaex_rollback (GdaEx *gdaex)
 	if (tstatus == NULL)
 		{
 			ret = TRUE;
+			if (priv->debug > 0)
+				{
+					g_message ("No transaction opened.");
+				}
 		}
 	else
 		{
@@ -1343,6 +1485,13 @@ gdaex_rollback (GdaEx *gdaex)
 					g_warning ("Error rollbacking transaction: %s\n",
 							   error->message);
 					ret = FALSE;
+				}
+			else
+				{
+					if (priv->debug > 0)
+						{
+							g_message ("Transaction rolled back.");
+						}
 				}
 		}
 
@@ -1361,6 +1510,12 @@ gdaex_free (GdaEx *gdaex)
 	if (gda_connection_is_opened (priv->gda_conn))
 		{
 			gda_connection_close (priv->gda_conn);
+		}
+
+	if (priv->log_file != NULL)
+		{
+			g_output_stream_close (G_OUTPUT_STREAM (priv->log_file), NULL, NULL);
+			g_object_unref (priv->log_file);
 		}
 }
 

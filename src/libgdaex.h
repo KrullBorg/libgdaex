@@ -65,6 +65,8 @@ GdaEx *gdaex_new_from_dsn (const gchar *dsn,
 GdaEx *gdaex_new_from_string (const gchar *cnc_string);
 GdaEx *gdaex_new_from_connection (GdaConnection *conn);
 
+GOptionGroup *gdaex_get_option_group (GdaEx *gdaex);
+
 const GdaConnection *gdaex_get_gdaconnection (GdaEx *gdaex);
 const gchar *gdaex_get_provider (GdaEx *gdaex);
 

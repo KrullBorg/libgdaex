@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libgdaex], [0.2.1], [azagli@libero.it])
+AC_INIT([libgdaex], [0.2.2], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/gdaex.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -27,7 +27,8 @@ AC_PROG_LIBTOOL
 GTK_DOC_CHECK(1.0)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4])
+PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
+                          gio-2.0 >= 2.24])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)
