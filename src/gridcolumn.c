@@ -46,6 +46,7 @@ struct _GdaExGridColumnPrivate
 	{
 		gchar *title;
 		gchar *field_name;
+		GType type;
 		gboolean visible;
 		gboolean resizable;
 		gboolean sortable;
@@ -72,6 +73,7 @@ gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 
 	priv->title = NULL;
 	priv->field_name = NULL;
+	priv->type = G_TYPE_NONE;
 	priv->visible = FALSE;
 	priv->resizable = FALSE;
 	priv->sortable = FALSE;
@@ -81,6 +83,7 @@ gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 GdaExGridColumn
 *gdaex_grid_column_new (const gchar *title,
                         const gchar *field_name,
+                        GType type,
                         gboolean visible,
                         gboolean resizable,
                         gboolean sortable,
@@ -92,6 +95,7 @@ GdaExGridColumn
 
 	gdaex_grid_column_set_title (gdaex_grid_column, title);
 	gdaex_grid_column_set_field_name (gdaex_grid_column, field_name);
+	gdaex_grid_column_set_gtype (gdaex_grid_column, type);
 	gdaex_grid_column_set_visible (gdaex_grid_column, visible);
 	gdaex_grid_column_set_resizable (gdaex_grid_column, resizable);
 	gdaex_grid_column_set_sortable (gdaex_grid_column, sortable);
@@ -140,6 +144,26 @@ const gchar
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	return (const gchar *)g_strdup (priv->field_name);
+}
+
+void
+gdaex_grid_column_set_gtype (GdaExGridColumn *column, GType type)
+{
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
+
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->type = type;
+}
+
+GType
+gdaex_grid_column_get_gtype (GdaExGridColumn *column)
+{
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), G_TYPE_NONE);
+
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->type;
 }
 
 void

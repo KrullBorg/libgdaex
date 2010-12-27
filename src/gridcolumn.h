@@ -56,6 +56,7 @@ GType gdaex_grid_column_get_type (void) G_GNUC_CONST;
 
 GdaExGridColumn *gdaex_grid_column_new (const gchar *title,
                                         const gchar *field_name,
+                                        GType type,
                                         gboolean visible,
                                         gboolean resizable,
                                         gboolean sortable,
@@ -66,6 +67,9 @@ const gchar *gdaex_grid_column_get_title (GdaExGridColumn *column);
 
 void gdaex_grid_column_set_field_name (GdaExGridColumn *column, const gchar *field_name);
 const gchar *gdaex_grid_column_get_field_name (GdaExGridColumn *column);
+
+void gdaex_grid_column_set_gtype (GdaExGridColumn *column, GType type);
+GType gdaex_grid_column_get_gtype (GdaExGridColumn *column);
 
 void gdaex_grid_column_set_visible (GdaExGridColumn *column, gboolean visible);
 gboolean gdaex_grid_column_get_visible (GdaExGridColumn *column);

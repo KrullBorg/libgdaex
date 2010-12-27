@@ -91,12 +91,18 @@ gdaex_grid_add_column (GdaExGrid *grid, GdaExGridColumn *column)
 {
 	GdaExGridPrivate *priv;
 
+	_Column *col;
+
 	g_return_if_fail (GDAEX_IS_GRID (grid));
 	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
 	priv = GDAEX_GRID_GET_PRIVATE (grid);
 
-	g_ptr_array_add (priv->columns, g_memdup (column, sizeof (GdaExGridColumn)));
+	col = g_new0 (_Column, 1);
+	col->view_col = NULL;
+	col->grid_col = g_memdup (column, sizeof (GdaExGridColumn));
+
+	g_ptr_array_add (priv->columns, col);
 }
 
 void
