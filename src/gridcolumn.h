@@ -30,12 +30,12 @@
 G_BEGIN_DECLS
 
 
-#define TYPE_GDAEX_GRID_COLUMN                 (gdaex_get_type ())
-#define GDAEX_GRID_COLUMN(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_GDAEX_GRID_COLUMN, GdaExGridColumn))
-#define GDAEX_GRID_COLUMN_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_GDAEX_GRID_COLUMN, GdaExGridColumnClass))
-#define IS_GDAEX_GRID_COLUMN(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_GDAEX_GRID_COLUMN))
-#define IS_GDAEX_GRID_COLUMN_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_GDAEX_GRID_COLUMN))
-#define GDAEX_GRID_COLUMN_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_GDAEX_GRID_COLUMN, GdaExGridColumnClass))
+#define GDAEX_TYPE_GRID_COLUMN                 (gdaex_get_type ())
+#define GDAEX_GRID_COLUMN(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumn))
+#define GDAEX_GRID_COLUMN_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumnClass))
+#define GDAEX_IS_GRID_COLUMN(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_GRID_COLUMN))
+#define GDAEX_IS_GRID_COLUMN_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GDAEX_TYPE_GRID_COLUMN))
+#define GDAEX_GRID_COLUMN_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumnClass))
 
 
 typedef struct _GdaExGridColumn GdaExGridColumn;

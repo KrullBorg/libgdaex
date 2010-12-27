@@ -1,7 +1,7 @@
 /*
  *  grid.c
  *
- *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex_grid.
  *  

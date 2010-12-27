@@ -1,7 +1,7 @@
 /*
  *  gridcolumn.c
  *
- *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex_grid_column.
  *  
@@ -69,6 +69,13 @@ static void
 gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 {
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (gdaex_grid_column);
+
+	priv->title = NULL;
+	priv->field_name = NULL;
+	priv->visible = FALSE;
+	priv->resizable = FALSE;
+	priv->sortable = FALSE;
+	priv->reorderable = FALSE;
 }
 
 GdaExGridColumn
@@ -96,73 +103,123 @@ GdaExGridColumn
 void
 gdaex_grid_column_set_title (GdaExGridColumn *column, const gchar *title)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	g_free (priv->title);
+	priv->title = g_strdup (title);
 }
 
 const gchar
 *gdaex_grid_column_get_title (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), NULL);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return (const gchar *)g_strdup (priv->title);
 }
 
 void
 gdaex_grid_column_set_field_name (GdaExGridColumn *column, const gchar *field_name)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	g_free (priv->field_name);
+	priv->field_name = g_strdup (field_name);
 }
 
 const gchar
 *gdaex_grid_column_get_field_name (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), NULL);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return (const gchar *)g_strdup (priv->field_name);
 }
 
 void
 gdaex_grid_column_set_visible (GdaExGridColumn *column, gboolean visible)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->visible = visible;
 }
 
 gboolean
 gdaex_grid_column_get_visible (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->visible;
 }
 
 void
 gdaex_grid_column_set_resizable (GdaExGridColumn *column, gboolean resizable)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->resizable = resizable;
 }
 
 gboolean
 gdaex_grid_column_get_resizable (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->resizable;
 }
 
 void
 gdaex_grid_column_set_sortable (GdaExGridColumn *column, gboolean sortable)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->sortable = sortable;
 }
 
 gboolean
 gdaex_grid_column_get_sortable (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->sortable;
 }
 
 void
 gdaex_grid_column_set_reorderable (GdaExGridColumn *column, gboolean reorderable)
 {
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->reorderable = reorderable;
 }
 
 gboolean
 gdaex_grid_column_get_reorderable (GdaExGridColumn *column)
 {
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);
 
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->reorderable;
 }
 
 /* PRIVATE */

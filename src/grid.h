@@ -32,12 +32,12 @@
 G_BEGIN_DECLS
 
 
-#define TYPE_GDAEX_GRID                 (gdaex_get_type ())
-#define GDAEX_GRID(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_GDAEX_GRID, GdaExGrid))
-#define GDAEX_GRID_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_GDAEX_GRID, GdaExGridClass))
-#define IS_GDAEX_GRID(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_GDAEX_GRID))
-#define IS_GDAEX_GRID_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_GDAEX_GRID))
-#define GDAEX_GRID_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_GDAEX_GRID, GdaExGridClass))
+#define GDAEX_TYPE_GRID                 (gdaex_get_type ())
+#define GDAEX_GRID(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_TYPE_GRID, GdaExGrid))
+#define GDAEX_GRID_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_TYPE_GRID, GdaExGridClass))
+#define GDAEX_IS_GRID(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_GRID))
+#define GDAEX_IS_GRID_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GDAEX_TYPE_GRID))
+#define GDAEX_GRID_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GDAEX_TYPE_GRID, GdaExGridClass))
 
 
 typedef struct _GdaExGrid GdaExGrid;
