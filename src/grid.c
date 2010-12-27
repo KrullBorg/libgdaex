@@ -25,6 +25,8 @@
 	#include <config.h>
 #endif
 
+#include <gtk/gtk.h>
+
 #include "grid.h"
 
 static void gdaex_grid_class_init (GdaExGridClass *klass);
@@ -39,7 +41,7 @@ static void gdaex_grid_get_property (GObject *object,
                                GValue *value,
                                GParamSpec *pspec);
 
-#define GDAEX_GRID_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_GRID, GdaExGridPrivate))
+#define GDAEX_GRID_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GDAEX_TYPE_GRID, GdaExGridPrivate))
 
 typedef struct
 	{
@@ -50,7 +52,7 @@ typedef struct
 typedef struct _GdaExGridPrivate GdaExGridPrivate;
 struct _GdaExGridPrivate
 	{
-		GPtrArray *colums; /* _Column */
+		GPtrArray *columns; /* _Column */
 	};
 
 G_DEFINE_TYPE (GdaExGrid, gdaex_grid, G_TYPE_OBJECT)
@@ -94,7 +96,7 @@ gdaex_grid_add_column (GdaExGrid *grid, GdaExGridColumn *column)
 
 	priv = GDAEX_GRID_GET_PRIVATE (grid);
 
-	g_ptr_array_add (priv->columns, g_memdup (column, sizeof (GdaExGridColumn)))
+	g_ptr_array_add (priv->columns, g_memdup (column, sizeof (GdaExGridColumn)));
 }
 
 void
@@ -103,7 +105,6 @@ gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns)
 	GSList *first;
 
 	g_return_if_fail (GDAEX_IS_GRID (grid));
-	g_return_if_fail (G_IS_SLIST (columns));
 
 	first = columns;
 	while (first != NULL)

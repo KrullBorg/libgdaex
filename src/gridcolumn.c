@@ -39,7 +39,7 @@ static void gdaex_grid_column_get_property (GObject *object,
                                GValue *value,
                                GParamSpec *pspec);
 
-#define GDAEX_GRID_COLUMN_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_GRID_COLUMN, GdaExGridColumnPrivate))
+#define GDAEX_GRID_COLUMN_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumnPrivate))
 
 typedef struct _GdaExGridColumnPrivate GdaExGridColumnPrivate;
 struct _GdaExGridColumnPrivate
