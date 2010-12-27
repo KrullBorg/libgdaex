@@ -16,7 +16,7 @@
  *  GNU General Public License for more details.
  *  
  *  You should have received a copy of the GNU General Public License
- *  along with libgdaexbj; if not, write to the Free Software
+ *  along with libgdaex; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -30,7 +30,7 @@
 #include <gio/gio.h>
 #include <libgda/sql-parser/gda-sql-parser.h>
 
-#include "libgdaex.h"
+#include "gdaex.h"
 
 static guint debug;
 static gchar *log_file;
