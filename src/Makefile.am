@@ -6,8 +6,13 @@ LIBS = $(GDAEX_LIBS)
 
 lib_LTLIBRARIES = libgdaex.la
 
-libgdaex_la_SOURCES = gdaex.c
+libgdaex_la_SOURCES = gdaex.c \
+                      queryeditor.c
 
 libgdaex_la_LDFLAGS = -no-undefined
 
-include_HEADERS = libgdaex.h
+include_HEADERS = libgdaex.h \
+                  gdaex.h \
+                  queryeditor.h
+
+libgdaex_includedir = $(includedir)/libgdaex

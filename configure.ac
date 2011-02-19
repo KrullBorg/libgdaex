@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libgdaex], [0.2.2], [azagli@libero.it])
+AC_INIT([libgdaex], [0.3.0], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/gdaex.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -28,7 +28,8 @@ GTK_DOC_CHECK(1.0)
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
-                          gio-2.0 >= 2.24])
+                          gio-2.0 >= 2.24
+                          gtk+-2.0 >= 2.20])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)
@@ -44,12 +45,15 @@ AC_C_CONST
 AC_CHECK_FUNCS([strchr strcasecmp])
 
 AC_CONFIG_FILES([
-  libgdaex.pc
-  Makefile
-  src/Makefile
-  docs/Makefile
-  docs/reference/Makefile
-  docs/reference/version.xml
-  tests/Makefile
+	libgdaex.pc
+	Makefile
+	src/Makefile
+	data/Makefile
+	data/libgdaex/Makefile
+	data/libgdaex/gui/Makefile
+	docs/Makefile
+	docs/reference/Makefile
+	docs/reference/version.xml
+	tests/Makefile
 ])
 AC_OUTPUT
