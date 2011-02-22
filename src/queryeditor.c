@@ -38,12 +38,21 @@ static void gdaex_query_editor_build_ui (GdaExQueryEditor *qe);
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
+typedef struct
+	{
+		gchar *name;
+		gchar *name_visible;
+		GHashTable *fields;	/* GdaExQueryEditorField */
+	} GdaExQueryEditorTable;
+
 typedef struct _GdaExQueryEditorPrivate GdaExQueryEditorPrivate;
 struct _GdaExQueryEditorPrivate
 	{
 		GdaEx *gdaex;
 
 		GtkWidget *hbx_main;
+
+		GHashTable *tables;	/* GdaExQueryEditorTable */
 	};
 
 G_DEFINE_TYPE (GdaExQueryEditor, gdaex_query_editor, G_TYPE_OBJECT)
@@ -76,6 +85,7 @@ enum
 {
 	COL_WHERE_NAME,
 	COL_WHERE_VISIBLE_NAME,
+	COL_WHERE_CONDITION_NOT,
 	COL_WHERE_CONDITION_TYPE,
 	COL_WHERE_CONDITION_FROM,
 	COL_WHERE_CONDITION_TO

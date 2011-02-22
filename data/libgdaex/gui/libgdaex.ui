@@ -2,10 +2,53 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkTreeStore" id="tstore_fields">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstore_show">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="lstore_order">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+      <!-- column-name order -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTreeStore" id="tstore_where">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+      <!-- column-name condition_not -->
+      <column type="gboolean"/>
+      <!-- column-name condition_type -->
+      <column type="guint"/>
+      <!-- column-name condition_type_visible -->
+      <column type="gchararray"/>
+      <!-- column-name condition_from -->
+      <column type="gchararray"/>
+      <!-- column-name condition_to -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="dialog1">
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
-    <property name="has_separator">False</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
@@ -276,12 +319,23 @@
                                       </object>
                                     </child>
                                     <child>
+                                      <object class="GtkTreeViewColumn" id="treeviewcolumn9">
+                                        <property name="title">Not</property>
+                                        <child>
+                                          <object class="GtkCellRendererToggle" id="cellrenderertoggle1"/>
+                                          <attributes>
+                                            <attribute name="active">2</attribute>
+                                          </attributes>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
                                       <object class="GtkTreeViewColumn" id="treeviewcolumn6">
                                         <property name="title">Type</property>
                                         <child>
                                           <object class="GtkCellRendererText" id="cellrenderertext6"/>
                                           <attributes>
-                                            <attribute name="text">3</attribute>
+                                            <attribute name="text">4</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -292,7 +346,7 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="cellrenderertext7"/>
                                           <attributes>
-                                            <attribute name="text">4</attribute>
+                                            <attribute name="text">5</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -303,7 +357,7 @@
                                         <child>
                                           <object class="GtkCellRendererText" id="cellrenderertext8"/>
                                           <attributes>
-                                            <attribute name="text">5</attribute>
+                                            <attribute name="text">6</attribute>
                                           </attributes>
                                         </child>
                                       </object>
@@ -590,47 +644,5 @@
       <action-widget response="1">button1</action-widget>
       <action-widget response="2">button2</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkTreeStore" id="tstore_fields">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="lstore_show">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="lstore_order">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-      <!-- column-name order -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkTreeStore" id="tstore_where">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-      <!-- column-name condition_type -->
-      <column type="guint"/>
-      <!-- column-name condition_type_visible -->
-      <column type="gchararray"/>
-      <!-- column-name condition_from -->
-      <column type="gchararray"/>
-      <!-- column-name condition_to -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>

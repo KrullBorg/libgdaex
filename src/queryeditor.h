@@ -57,6 +57,25 @@ GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 
 GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
+typedef struct
+	{
+		gchar *name;
+		gchar *name_visible;
+		/* - tipo di campo (stringa, interno, double, date, datetime) */
+		/* - sempre presente nelle query, quindi non sceglibile per la parte show */
+		/* - sceglibile per la parte where */
+		/* - condizioni where che è possibile applicare (es. i campi id_* non ha senso che abbiano un between, */
+		/*                                             ma ci deve essere la possibilità di fare ricerche anche sulle decodifiche) */
+	} GdaExQueryEditorField;
+
+gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe, const gchar *table_name, const gchar *table_name_visibile);
+gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe, const gchar *table_name, GdaExQueryEditorField field);
+gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
+                                          const gchar *table_name1, GdaExQueryEditorField field1,
+                                          const gchar *table_name2, GdaExQueryEditorField field2);
+
+const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
+
 
 G_END_DECLS
 
