@@ -60,6 +60,8 @@ GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
 typedef struct
 	{
+		gchar *table_name;
+
 		gchar *name;
 		gchar *name_visible;
 		gchar *description;

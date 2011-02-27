@@ -46,6 +46,15 @@ static void gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
                                                        GdaExQueryEditorTable *table,
                                                        GtkTreeIter *iter_parent);
 
+static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
+                                    gpointer user_data);
+
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
 typedef struct _GdaExQueryEditorPrivate GdaExQueryEditorPrivate;
@@ -59,6 +68,14 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *hpaned_main;
 
 		GtkTreeStore *tstore_fields;
+		GtkListStore *lstore_show;
+		GtkTreeStore *tstore_where;
+		GtkListStore *lstore_order;
+
+		GtkTreeSelection *sel_fields;
+		GtkTreeSelection *sel_show;
+		GtkTreeSelection *sel_where;
+		GtkTreeSelection *sel_order;
 
 		GHashTable *tables;	/* GdaExQueryEditorTable */
 	};
@@ -79,6 +96,7 @@ enum
 
 enum
 {
+	COL_FIELDS_TABLE_NAME,
 	COL_FIELDS_NAME,
 	COL_FIELDS_VISIBLE_NAME,
 	COL_FIELDS_DESCRIPTION
@@ -86,12 +104,14 @@ enum
 
 enum
 {
+	COL_SHOW_TABLE_NAME,
 	COL_SHOW_NAME,
 	COL_SHOW_VISIBLE_NAME
 };
 
 enum
 {
+	COL_WHERE_TABLE_NAME,
 	COL_WHERE_NAME,
 	COL_WHERE_VISIBLE_NAME,
 	COL_WHERE_CONDITION_NOT,
@@ -102,6 +122,7 @@ enum
 
 enum
 {
+	COL_ORDER_TABLE_NAME,
 	COL_ORDER_NAME,
 	COL_ORDER_VISIBLE_NAME,
 	COL_ORDER_ORDER
@@ -171,6 +192,23 @@ GdaExQueryEditor
 		}
 
 	priv->tstore_fields = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_fields"));
+	priv->lstore_show = GTK_LIST_STORE (gtk_builder_get_object (priv->gtkbuilder, "lstore_show"));
+	priv->tstore_where = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_where"));
+	priv->lstore_order = GTK_LIST_STORE (gtk_builder_get_object (priv->gtkbuilder, "lstore_order"));
+
+	priv->sel_fields = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview1")));
+	priv->sel_show = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview2")));
+	priv->sel_where = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview3")));
+	priv->sel_order = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview4")));
+
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button3"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_show_add_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button4"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_show_remove_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button5"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_show_up_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button6"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_show_down_clicked), (gpointer)gdaex_query_editor);
 
 	return gdaex_query_editor;
 }
@@ -248,6 +286,7 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 
 	GdaExQueryEditorPrivate *priv;
 	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *_field;
 
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
 
@@ -260,7 +299,9 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 			return FALSE;
 		}
 
-	g_hash_table_insert (table->fields, field.name, g_memdup (&field, sizeof (GdaExQueryEditorField)));
+	_field = g_memdup (&field, sizeof (GdaExQueryEditorField));
+	_field->table_name = g_strdup (table_name);
+	g_hash_table_insert (table->fields, _field->name, _field);
 
 	ret = TRUE;
 
@@ -356,9 +397,192 @@ gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
 
 			gtk_tree_store_append (priv->tstore_fields, &iter, iter_parent);
 			gtk_tree_store_set (priv->tstore_fields, &iter,
+			                    COL_FIELDS_TABLE_NAME, table->name,
 			                    COL_FIELDS_NAME, field->name,
 			                    COL_FIELDS_VISIBLE_NAME, field->name_visible,
 			                    COL_FIELDS_DESCRIPTION, field->description,
 			                    -1);
+		}
+}
+
+static void
+gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	GtkWidget *dialog;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), &iter,
+			                    COL_FIELDS_TABLE_NAME, &table_name,
+			                    COL_FIELDS_NAME, &field_name,
+			                    -1);
+
+			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
+				{
+					/* TODO if get_widget dialog isn't valid */
+					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+					                                 GTK_MESSAGE_WARNING,
+					                                 GTK_BUTTONS_OK,
+					                                 "You cannot add a table.");
+					gtk_dialog_run (GTK_DIALOG (dialog));
+					gtk_widget_destroy (dialog);
+					return;
+				}
+			table = g_hash_table_lookup (priv->tables, table_name);
+			field = g_hash_table_lookup (table->fields, field_name);
+
+			gtk_list_store_append (priv->lstore_show, &iter);
+			gtk_list_store_set (priv->lstore_show, &iter,
+			                    COL_SHOW_TABLE_NAME, field->table_name,
+			                    COL_SHOW_NAME, field_name,
+			                    COL_SHOW_VISIBLE_NAME, g_strconcat (field->table_name, " - ", field->name_visible, NULL),
+			                    -1);
+		}
+	else
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must select a field before.");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+		}
+}
+
+static void
+gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	GtkWidget *dialog;
+
+	guint risp;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_QUESTION,
+			                                 GTK_BUTTONS_YES_NO,
+			                                 "Are you sure you want to remove the selected field?");
+			risp = gtk_dialog_run (GTK_DIALOG (dialog));
+			if (risp == GTK_RESPONSE_YES)
+				{
+					gtk_list_store_remove (priv->lstore_show, &iter);
+				}
+			gtk_widget_destroy (dialog);
+		}
+	else
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must select a field before.");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+		}
+}
+
+static void
+gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreePath *path;
+	GtkTreeIter iter;
+	GtkTreeIter iter_prev;
+
+	GtkWidget *dialog;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+		{
+			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->lstore_show), &iter);
+			if (path != NULL && gtk_tree_path_prev (path)
+			    && gtk_tree_model_get_iter (GTK_TREE_MODEL (priv->lstore_show), &iter_prev, path))
+				{
+					gtk_list_store_move_before (priv->lstore_show, &iter, &iter_prev);
+				}
+		}
+	else
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must select a field before.");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+		}
+}
+
+static void
+gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreePath *path;
+	GtkTreeIter iter;
+	GtkTreeIter iter_next;
+
+	GtkWidget *dialog;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+		{
+			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->lstore_show), &iter);
+			if (path != NULL)
+				{
+					gtk_tree_path_next (path);
+					if (gtk_tree_model_get_iter (GTK_TREE_MODEL (priv->lstore_show), &iter_next, path))
+						{
+							gtk_list_store_move_after (priv->lstore_show, &iter, &iter_next);
+						}
+				}
+		}
+	else
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must select a field before.");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
 		}
 }
