@@ -46,6 +46,14 @@ static void gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
                                                        GdaExQueryEditorTable *table,
                                                        GtkTreeIter *iter_parent);
 
+static void gdaex_query_editor_lstore_remove_iter (GdaExQueryEditor *qe,
+                                       GtkTreeSelection *sel,
+                                       GtkListStore *lstore);
+static void gdaex_query_editor_lstore_move_iter_up_down (GdaExQueryEditor *qe,
+                                      GtkTreeSelection *sel,
+                                      GtkListStore *lstore,
+                                      gboolean up);
+
 static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
@@ -53,6 +61,15 @@ static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
 static void gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
+                                    gpointer user_data);
+
+static void gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_order_remove_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_order_up_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_order_down_clicked (GtkButton *button,
                                     gpointer user_data);
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
@@ -210,6 +227,15 @@ GdaExQueryEditor
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button6"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_down_clicked), (gpointer)gdaex_query_editor);
 
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button11"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_order_add_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button12"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_order_remove_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button13"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_order_up_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button14"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_order_down_clicked), (gpointer)gdaex_query_editor);
+
 	return gdaex_query_editor;
 }
 
@@ -352,6 +378,25 @@ const gchar
 					                                      gda_sql_builder_add_id (sqlbuilder, table->name),
 					                                      NULL);
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
+		}
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_order), &iter))
+		{
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_order), &iter,
+					                    COL_ORDER_TABLE_NAME, &table_name,
+					                    COL_ORDER_NAME, &field_name,
+					                    -1);
+
+					table = g_hash_table_lookup (priv->tables, table_name);
+					field = g_hash_table_lookup (table->fields, field_name);
+
+					gda_sql_builder_select_order_by (sqlbuilder,
+					                                 gda_sql_builder_add_id (sqlbuilder, field->name),
+					                                 TRUE,
+					                                 NULL);
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_order), &iter));
 		}
 
 	error = NULL;
@@ -538,10 +583,10 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 }
 
 static void
-gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
-                                    gpointer user_data)
+gdaex_query_editor_lstore_remove_iter (GdaExQueryEditor *qe,
+                                       GtkTreeSelection *sel,
+                                       GtkListStore *lstore)
 {
-	GdaExQueryEditor *qe;
 	GdaExQueryEditorPrivate *priv;
 
 	GtkTreeIter iter;
@@ -549,10 +594,9 @@ gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
 
 	guint risp;
 
-	qe = (GdaExQueryEditor *)user_data;
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+	if (gtk_tree_selection_get_selected (sel, NULL, &iter))
 		{
 			/* TODO if get_widget dialog isn't valid */
 			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
@@ -563,7 +607,7 @@ gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
 			risp = gtk_dialog_run (GTK_DIALOG (dialog));
 			if (risp == GTK_RESPONSE_YES)
 				{
-					gtk_list_store_remove (priv->lstore_show, &iter);
+					gtk_list_store_remove (lstore, &iter);
 				}
 			gtk_widget_destroy (dialog);
 		}
@@ -581,10 +625,23 @@ gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
 }
 
 static void
-gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
+gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
                                     gpointer user_data)
 {
-	GdaExQueryEditor *qe;
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_remove_iter (qe,
+	                                       priv->sel_show,
+	                                       priv->lstore_show);
+}
+
+static void
+gdaex_query_editor_lstore_move_iter_up_down (GdaExQueryEditor *qe,
+                                      GtkTreeSelection *sel,
+                                      GtkListStore *lstore,
+                                      gboolean up)
+{
 	GdaExQueryEditorPrivate *priv;
 
 	GtkTreePath *path;
@@ -593,56 +650,24 @@ gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
 
 	GtkWidget *dialog;
 
-	qe = (GdaExQueryEditor *)user_data;
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+	if (gtk_tree_selection_get_selected (sel, NULL, &iter))
 		{
-			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->lstore_show), &iter);
-			if (path != NULL && gtk_tree_path_prev (path)
-			    && gtk_tree_model_get_iter (GTK_TREE_MODEL (priv->lstore_show), &iter_prev, path))
-				{
-					gtk_list_store_move_before (priv->lstore_show, &iter, &iter_prev);
-				}
-		}
-	else
-		{
-			/* TODO if get_widget dialog isn't valid */
-			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
-			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-			                                 GTK_MESSAGE_WARNING,
-			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
-			gtk_dialog_run (GTK_DIALOG (dialog));
-			gtk_widget_destroy (dialog);
-		}
-}
-
-static void
-gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
-                                    gpointer user_data)
-{
-	GdaExQueryEditor *qe;
-	GdaExQueryEditorPrivate *priv;
-
-	GtkTreePath *path;
-	GtkTreeIter iter;
-	GtkTreeIter iter_next;
-
-	GtkWidget *dialog;
-
-	qe = (GdaExQueryEditor *)user_data;
-	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
-
-	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
-		{
-			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->lstore_show), &iter);
+			path = gtk_tree_model_get_path (GTK_TREE_MODEL (lstore), &iter);
 			if (path != NULL)
 				{
-					gtk_tree_path_next (path);
-					if (gtk_tree_model_get_iter (GTK_TREE_MODEL (priv->lstore_show), &iter_next, path))
+					up ? gtk_tree_path_prev (path) : gtk_tree_path_next (path);
+					if (gtk_tree_model_get_iter (GTK_TREE_MODEL (lstore), &iter_prev, path))
 						{
-							gtk_list_store_move_after (priv->lstore_show, &iter, &iter_next);
+							if (up)
+								{
+									gtk_list_store_move_before (lstore, &iter, &iter_prev);
+								}
+							else
+								{
+									gtk_list_store_move_after (lstore, &iter, &iter_prev);
+								}
 						}
 				}
 		}
@@ -657,4 +682,130 @@ gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
+
+}
+
+static void
+gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_move_iter_up_down (qe,
+	                                      priv->sel_show,
+	                                      priv->lstore_show,
+	                                      TRUE);
+}
+
+static void
+gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_move_iter_up_down (qe,
+	                                      priv->sel_show,
+	                                      priv->lstore_show,
+	                                      FALSE);
+}
+
+static void
+gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	GtkWidget *dialog;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), &iter,
+			                    COL_FIELDS_TABLE_NAME, &table_name,
+			                    COL_FIELDS_NAME, &field_name,
+			                    -1);
+
+			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
+				{
+					/* TODO if get_widget dialog isn't valid */
+					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+					                                 GTK_MESSAGE_WARNING,
+					                                 GTK_BUTTONS_OK,
+					                                 "You cannot add a table.");
+					gtk_dialog_run (GTK_DIALOG (dialog));
+					gtk_widget_destroy (dialog);
+					return;
+				}
+			table = g_hash_table_lookup (priv->tables, table_name);
+			field = g_hash_table_lookup (table->fields, field_name);
+
+			gtk_list_store_append (priv->lstore_order, &iter);
+			gtk_list_store_set (priv->lstore_order, &iter,
+			                    COL_ORDER_TABLE_NAME, field->table_name,
+			                    COL_ORDER_NAME, field_name,
+			                    COL_ORDER_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
+			                    COL_ORDER_ORDER, "ASC",
+			                    -1);
+		}
+	else
+		{
+			/* TODO if get_widget dialog isn't valid */
+			dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+			                                 GTK_MESSAGE_WARNING,
+			                                 GTK_BUTTONS_OK,
+			                                 "You must select a field before.");
+			gtk_dialog_run (GTK_DIALOG (dialog));
+			gtk_widget_destroy (dialog);
+		}
+}
+
+static void
+gdaex_query_editor_on_btn_order_remove_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_remove_iter (qe,
+	                                       priv->sel_order,
+	                                       priv->lstore_order);
+}
+
+static void
+gdaex_query_editor_on_btn_order_up_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_move_iter_up_down (qe,
+	                                      priv->sel_order,
+	                                      priv->lstore_order,
+	                                      TRUE);
+}
+
+static void
+gdaex_query_editor_on_btn_order_down_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_lstore_move_iter_up_down (qe,
+	                                      priv->sel_order,
+	                                      priv->lstore_order,
+	                                      FALSE);
 }
