@@ -308,6 +308,78 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 	return ret;
 }
 
+const gchar
+*gdaex_query_editor_get_sql (GdaExQueryEditor *qe)
+{
+	const gchar *ret;
+
+	GdaExQueryEditorPrivate *priv;
+
+	GdaSqlBuilder *sqlbuilder;
+
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	GdaStatement *stmt;
+	GError *error;
+
+	ret = NULL;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	sqlbuilder = gda_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+		{
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
+					                    COL_SHOW_TABLE_NAME, &table_name,
+					                    COL_SHOW_NAME, &field_name,
+					                    -1);
+
+					table = g_hash_table_lookup (priv->tables, table_name);
+					field = g_hash_table_lookup (table->fields, field_name);
+
+					gda_sql_builder_select_add_field (sqlbuilder, field->name, table->name, NULL);
+					gda_sql_builder_select_add_target_id (sqlbuilder,
+					                                      gda_sql_builder_add_id (sqlbuilder, table->name),
+					                                      NULL);
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
+		}
+
+	error = NULL;
+	stmt = gda_sql_builder_get_statement (sqlbuilder, &error);
+	if (stmt == NULL || error != NULL)
+		{
+			g_object_unref (sqlbuilder);
+			g_warning ("Unable to create GdaStatement: %s.",
+			           error != NULL && error->message != NULL ? error->message : "no details");
+			return NULL;
+		}
+
+	error = NULL;
+	ret = gda_statement_to_sql_extended (stmt,
+	                                     (GdaConnection *)gdaex_get_gdaconnection (priv->gdaex),
+	                                     NULL, 0, NULL, &error);
+	if (error != NULL)
+		{
+			ret = NULL;
+			g_warning ("Unable to create sql: %s.",
+			           error->message != NULL ? error->message : "no details");
+		}
+
+	g_object_unref (sqlbuilder);
+
+	return ret;
+}
+
 /* PRIVATE */
 static void
 gdaex_query_editor_set_property (GObject *object,
@@ -449,7 +521,7 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 			gtk_list_store_set (priv->lstore_show, &iter,
 			                    COL_SHOW_TABLE_NAME, field->table_name,
 			                    COL_SHOW_NAME, field_name,
-			                    COL_SHOW_VISIBLE_NAME, g_strconcat (field->table_name, " - ", field->name_visible, NULL),
+			                    COL_SHOW_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 			                    -1);
 		}
 	else

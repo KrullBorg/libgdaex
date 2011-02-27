@@ -86,7 +86,7 @@ main (int argc, char *argv[])
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 
-	gtk_main ();
+	g_message (gdaex_query_editor_get_sql (qe));
 
 	return 0;
 }
