@@ -62,6 +62,7 @@ typedef struct
 	{
 		gchar *name;
 		gchar *name_visible;
+		gchar *description;
 		/* - tipo di campo (stringa, interno, double, date, datetime) */
 		/* - sempre presente nelle query, quindi non sceglibile per la parte show */
 		/* - sceglibile per la parte where */

@@ -2,14 +2,6 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkTreeStore" id="tstore_fields">
-    <columns>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="lstore_show">
     <columns>
       <!-- column-name name -->
@@ -46,6 +38,16 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkTreeStore" id="tstore_fields">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+      <!-- column-name description -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="diag_query_editor">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Query Editor</property>
@@ -77,6 +79,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="model">tstore_fields</property>
+                    <property name="tooltip_column">2</property>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn1">
                         <property name="title">Fields</property>

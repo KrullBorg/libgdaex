@@ -22,6 +22,13 @@
 
 #include "queryeditor.h"
 
+typedef struct
+	{
+		gchar *name;
+		gchar *name_visible;
+		GHashTable *fields;	/* GdaExQueryEditorField */
+	} GdaExQueryEditorTable;
+
 static void gdaex_query_editor_class_init (GdaExQueryEditorClass *class);
 static void gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor);
 
@@ -34,16 +41,12 @@ static void gdaex_query_editor_get_property (GObject *object,
                                GValue *value,
                                GParamSpec *pspec);
 
-static void gdaex_query_editor_build_ui (GdaExQueryEditor *qe);
+static void gdaex_query_editor_refresh_gui (GdaExQueryEditor *qe);
+static void gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
+                                                       GdaExQueryEditorTable *table,
+                                                       GtkTreeIter *iter_parent);
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
-
-typedef struct
-	{
-		gchar *name;
-		gchar *name_visible;
-		GHashTable *fields;	/* GdaExQueryEditorField */
-	} GdaExQueryEditorTable;
 
 typedef struct _GdaExQueryEditorPrivate GdaExQueryEditorPrivate;
 struct _GdaExQueryEditorPrivate
@@ -54,6 +57,8 @@ struct _GdaExQueryEditorPrivate
 
 		GtkWidget *dialog;
 		GtkWidget *hpaned_main;
+
+		GtkTreeStore *tstore_fields;
 
 		GHashTable *tables;	/* GdaExQueryEditorTable */
 	};
@@ -75,7 +80,8 @@ enum
 enum
 {
 	COL_FIELDS_NAME,
-	COL_FIELDS_VISIBLE_NAME
+	COL_FIELDS_VISIBLE_NAME,
+	COL_FIELDS_DESCRIPTION
 };
 
 enum
@@ -164,6 +170,8 @@ GdaExQueryEditor
 			return NULL;
 		}
 
+	priv->tstore_fields = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_fields"));
+
 	return gdaex_query_editor;
 }
 
@@ -181,6 +189,8 @@ GtkWidget
 			priv->dialog = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "diag_query_editor"));
 		}
 
+	gdaex_query_editor_refresh_gui (gdaex_query_editor);
+
 	return priv->dialog;
 }
 
@@ -197,6 +207,8 @@ GtkWidget
 		{
 			priv->hpaned_main = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "hpaned1"));
 		}
+
+	gdaex_query_editor_refresh_gui (gdaex_query_editor);
 
 	return priv->hpaned_main;
 }
@@ -289,5 +301,64 @@ gdaex_query_editor_get_property (GObject *object,
 			default:
 				G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 				break;
+		}
+}
+
+static void
+gdaex_query_editor_refresh_gui (GdaExQueryEditor *qe)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	GHashTableIter hiter;
+	gpointer key, value;
+	GdaExQueryEditorTable *table;
+
+	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gtk_tree_store_clear (priv->tstore_fields);
+
+	g_hash_table_iter_init (&hiter, priv->tables);
+	while (g_hash_table_iter_next (&hiter, &key, &value))
+		{
+			table = (GdaExQueryEditorTable *)value;
+
+			gtk_tree_store_append (priv->tstore_fields, &iter, NULL);
+			gtk_tree_store_set (priv->tstore_fields, &iter,
+			                    COL_FIELDS_NAME, table->name,
+			                    COL_FIELDS_VISIBLE_NAME, table->name_visible,
+			                    -1);
+
+			gdaex_query_editor_refresh_gui_add_fields (qe, table, &iter);
+		}
+}
+
+static void
+gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
+                                           GdaExQueryEditorTable *table,
+                                           GtkTreeIter *iter_parent)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	GHashTableIter hiter;
+	gpointer key, value;
+	GdaExQueryEditorField *field;
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	g_hash_table_iter_init (&hiter, table->fields);
+	while (g_hash_table_iter_next (&hiter, &key, &value))
+		{
+			field = (GdaExQueryEditorField *)value;
+
+			gtk_tree_store_append (priv->tstore_fields, &iter, iter_parent);
+			gtk_tree_store_set (priv->tstore_fields, &iter,
+			                    COL_FIELDS_NAME, field->name,
+			                    COL_FIELDS_VISIBLE_NAME, field->name_visible,
+			                    COL_FIELDS_DESCRIPTION, field->description,
+			                    -1);
 		}
 }
