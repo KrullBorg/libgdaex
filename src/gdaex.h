@@ -24,6 +24,7 @@
 #include <time.h>
 #include <glib.h>
 #include <glib-object.h>
+#include <gtk/gtk.h>
 #include <libgda/libgda.h>
 
 #ifndef __GDAEX_H__
@@ -137,6 +138,10 @@ void gdaex_free (GdaEx *gdaex);
 gchar *gdaex_strescape (const gchar *source, const gchar *exceptions);
 
 gchar gdaex_get_chr_quoting (GdaEx *gdaex);
+
+const gchar *gdaex_get_guifile (GdaEx *gdaex);
+
+GtkBuilder *gdaex_get_gtkbuilder (GdaEx *gdaex);
 
 
 G_END_DECLS

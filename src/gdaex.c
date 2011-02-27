@@ -66,6 +66,10 @@ struct _GdaExPrivate
 
 		gchar *tables_name_prefix;
 
+		const gchar *guidir;
+		const gchar *guifile;
+		GtkBuilder *gtkbuilder;
+
 		guint debug;
 		GFileOutputStream *log_file;
 	};
@@ -131,6 +135,36 @@ static GdaEx
 	GdaEx *gdaex = GDAEX (g_object_new (gdaex_get_type (), NULL));
 
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	/* gui */
+#ifdef G_OS_WIN32
+
+	gchar *moddir;
+	gchar *p;
+
+	moddir = g_win32_get_package_installation_directory_of_module (NULL);
+
+	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
+	if (p != NULL
+	    && (g_ascii_strcasecmp (p + 1, "src") == 0
+	        || g_ascii_strcasecmp (p + 1, ".libs") == 0))
+		{
+			priv->guidir = g_strdup (GUIDIR);
+		}
+	else
+		{
+			priv->guidir = g_build_filename (moddir, "share", PACKAGE, "gui", NULL);
+		}
+
+#else
+
+	priv->guidir = g_strdup (GUIDIR);
+
+#endif
+
+	priv->guifile = g_build_filename (priv->guidir, "libgdaex.ui", NULL);
+
+	priv->gtkbuilder = gtk_builder_new ();
 
 	return gdaex;
 }
@@ -1566,6 +1600,30 @@ gdaex_get_chr_quoting (GdaEx *gdaex)
 		}
 
 	return chr;
+}
+
+const gchar
+*gdaex_get_guifile (GdaEx *gdaex)
+{
+	GdaExPrivate *priv;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	priv = GDAEX_GET_PRIVATE (gdaex);
+
+	return (const gchar *)g_strdup (priv->guifile);
+}
+
+GtkBuilder
+*gdaex_get_gtkbuilder (GdaEx *gdaex)
+{
+	GdaExPrivate *priv;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	priv = GDAEX_GET_PRIVATE (gdaex);
+
+	return priv->gtkbuilder;
 }
 
 /* PRIVATE */

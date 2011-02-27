@@ -55,6 +55,7 @@ GType gdaex_query_editor_get_type (void) G_GNUC_CONST;
 
 GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 
+GtkWidget *gdaex_query_editor_get_dialog (GdaExQueryEditor *gdaex_query_editor);
 GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
 typedef struct
@@ -68,8 +69,12 @@ typedef struct
 		/*                                             ma ci deve essere la possibilità di fare ricerche anche sulle decodifiche) */
 	} GdaExQueryEditorField;
 
-gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe, const gchar *table_name, const gchar *table_name_visibile);
-gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe, const gchar *table_name, GdaExQueryEditorField field);
+gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe,
+                                       const gchar *table_name,
+                                       const gchar *table_name_visibile);
+gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
+                                             const gchar *table_name,
+                                             GdaExQueryEditorField field);
 gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
                                           const gchar *table_name1, GdaExQueryEditorField field1,
                                           const gchar *table_name2, GdaExQueryEditorField field2);

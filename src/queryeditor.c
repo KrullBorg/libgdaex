@@ -50,7 +50,10 @@ struct _GdaExQueryEditorPrivate
 	{
 		GdaEx *gdaex;
 
-		GtkWidget *hbx_main;
+		GtkBuilder *gtkbuilder;
+
+		GtkWidget *dialog;
+		GtkWidget *hpaned_main;
 
 		GHashTable *tables;	/* GdaExQueryEditorTable */
 	};
@@ -113,6 +116,11 @@ static void
 gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 {
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	priv->tables = g_hash_table_new (g_str_hash, g_str_equal);
+
+	priv->dialog = NULL;
+	priv->hpaned_main = NULL;
 }
 
 /**
@@ -137,7 +145,43 @@ GdaExQueryEditor
 
 	priv->gdaex = gdaex;
 
+	priv->gtkbuilder = gdaex_get_gtkbuilder (priv->gdaex);
+
+	error = NULL;
+	gtk_builder_add_objects_from_file (priv->gtkbuilder,
+	                                   gdaex_get_guifile (priv->gdaex),
+	                                   g_strsplit ("tstore_fields"
+	                                               "|lstore_show"
+	                                               "|tstore_where"
+	                                               "|lstore_order"
+	                                               "|diag_query_editor",
+	                                               "|", -1),
+	                                   &error);
+	if (error != NULL)
+		{
+			g_warning ("Error on gui initialization: %s.",
+			           error->message != NULL ? error->message : "no details");
+			return NULL;
+		}
+
 	return gdaex_query_editor;
+}
+
+GtkWidget
+*gdaex_query_editor_get_dialog (GdaExQueryEditor *gdaex_query_editor)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (gdaex_query_editor));
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	if (priv->dialog == NULL)
+		{
+			priv->dialog = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "diag_query_editor"));
+		}
+
+	return priv->dialog;
 }
 
 GtkWidget
@@ -145,9 +189,70 @@ GtkWidget
 {
 	GdaExQueryEditorPrivate *priv;
 
+	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (gdaex_query_editor));
+
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
 
-	return priv->hbx_main;
+	if (priv->hpaned_main == NULL)
+		{
+			priv->hpaned_main = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "hpaned1"));
+		}
+
+	return priv->hpaned_main;
+}
+
+gboolean
+gdaex_query_editor_add_table (GdaExQueryEditor *qe,
+                              const gchar *table_name,
+                              const gchar *table_name_visibile)
+{
+	gboolean ret;
+
+	GdaExQueryEditorPrivate *priv;
+	GdaExQueryEditorTable *table;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	table = g_new0 (GdaExQueryEditorTable, 1);
+	table->name = g_strstrip (g_strdup (table_name));
+	table->name_visible = g_strstrip (g_strdup (table_name_visibile));
+	table->fields = g_hash_table_new (g_str_hash, g_str_equal);
+
+	g_hash_table_insert (priv->tables, table->name, table);
+
+	ret = TRUE;
+
+	return ret;
+}
+
+gboolean
+gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
+                                    const gchar *table_name,
+                                    GdaExQueryEditorField field)
+{
+	gboolean ret;
+
+	GdaExQueryEditorPrivate *priv;
+	GdaExQueryEditorTable *table;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	table = g_hash_table_lookup (priv->tables, table_name);
+	if (table == NULL)
+		{
+			g_warning ("Table «%s» doesn't exists.", table_name);
+			return FALSE;
+		}
+
+	g_hash_table_insert (table->fields, field.name, g_memdup (&field, sizeof (GdaExQueryEditorField)));
+
+	ret = TRUE;
+
+	return ret;
 }
 
 /* PRIVATE */
