@@ -65,12 +65,22 @@ typedef struct
 		gchar *name;
 		gchar *name_visible;
 		gchar *description;
+		gchar *alias;
 		/* - tipo di campo (string, integer, double, date, datetime) */
 		/* - sceglibile per la parte show (es. le chiavi esterne non ha senno che lo siano) */
 		/* - sempre presente nelle query, quindi non sceglibile per la parte show */
 		/* - sceglibile per la parte where */
 		/* - condizioni where che è possibile applicare (es. i campi id_* non ha senso che abbiano un between, */
 		/*                                             ma ci deve essere la possibilità di fare ricerche anche sulle decodifiche) */
+		gchar *decode_table2;
+		/* TODO 
+		GSList *decode_fields1;
+		GSList *decode_fields2;
+		*/
+		/* TODO to test */
+		gchar *decode_field2;
+		gchar *decode_field_to_show;
+		gchar *decode_field_alias;
 	} GdaExQueryEditorField;
 
 gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe,
@@ -80,8 +90,9 @@ gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
                                              const gchar *table_name,
                                              GdaExQueryEditorField field);
 gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
-                                          const gchar *table_name1, GdaExQueryEditorField field1,
-                                          const gchar *table_name2, GdaExQueryEditorField field2);
+                                          const gchar *table1,
+                                          const gchar *table2,
+                                          ...);
 
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
 

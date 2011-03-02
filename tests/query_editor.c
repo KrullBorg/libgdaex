@@ -82,6 +82,19 @@ main (int argc, char *argv[])
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
+	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("id_cities");
+	field->name_visible = g_strdup ("City");
+	field->description = g_strdup ("The client's city");
+	field->decode_table2 = g_strdup ("cities");
+	/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
+	field->decode_fields2 = g_slist_append (field->decode_fields2, "id");*/
+	field->decode_field2 = g_strdup ("id");
+	field->decode_field_to_show = g_strdup ("name");
+	field->decode_field_alias = g_strdup ("city_name");
+	gdaex_query_editor_table_add_field (qe, "clients", *field);
+	g_free (field);
+
 	dialog = gdaex_query_editor_get_dialog (qe);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
