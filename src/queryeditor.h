@@ -65,7 +65,8 @@ typedef struct
 		gchar *name;
 		gchar *name_visible;
 		gchar *description;
-		/* - tipo di campo (stringa, interno, double, date, datetime) */
+		/* - tipo di campo (string, integer, double, date, datetime) */
+		/* - sceglibile per la parte show (es. le chiavi esterne non ha senno che lo siano) */
 		/* - sempre presente nelle query, quindi non sceglibile per la parte show */
 		/* - sceglibile per la parte where */
 		/* - condizioni where che è possibile applicare (es. i campi id_* non ha senso che abbiano un between, */
