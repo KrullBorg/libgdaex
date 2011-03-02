@@ -54,6 +54,10 @@ static void gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
                                       GObject *store,
                                       gboolean up);
 
+static gboolean gdaex_query_editor_model_has_value (GtkTreeModel *model,
+                                                    guint column,
+                                                    GValue *value);
+
 static void gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe);
 
 static void gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
@@ -690,6 +694,37 @@ gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
 		}
 }
 
+static gboolean
+gdaex_query_editor_model_has_value (GtkTreeModel *model,
+                                    guint column,
+                                    GValue *value)
+{
+	gboolean ret;
+
+	GtkTreeIter iter;
+	GValue iter_value = { 0 };
+
+	g_return_val_if_fail (gtk_tree_model_get_column_type (model, column) == G_VALUE_TYPE (value), FALSE);
+
+	ret = FALSE;
+
+	if (gtk_tree_model_get_iter_first (model, &iter))
+		{
+			do
+				{
+					gtk_tree_model_get_value (model, &iter, column, &iter_value);
+					if (!gda_value_differ (value, &iter_value))
+						{
+							g_value_unset (&iter_value);
+							return TRUE;
+						}
+					g_value_unset (&iter_value);
+				} while (gtk_tree_model_iter_next (model, &iter));
+		}
+
+	return ret;
+}
+
 static void
 gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe)
 {
@@ -962,6 +997,9 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 
 	gchar *table_name;
 	gchar *field_name;
+	gchar *table_field;
+	GValue *v_table_field;
+
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
@@ -990,11 +1028,29 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
+			table_field = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
+			v_table_field = gda_value_new (G_TYPE_STRING);
+			g_value_set_string (v_table_field, table_field);
+			if (gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_order),
+			                                        COL_ORDER_VISIBLE_NAME,
+			                                        v_table_field))
+				{
+					/* TODO if get_widget dialog isn't valid */
+					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
+					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+					                                 GTK_MESSAGE_WARNING,
+					                                 GTK_BUTTONS_OK,
+					                                 "Field already added.");
+					gtk_dialog_run (GTK_DIALOG (dialog));
+					gtk_widget_destroy (dialog);
+					return;
+				}
+
 			gtk_list_store_append (priv->lstore_order, &iter);
 			gtk_list_store_set (priv->lstore_order, &iter,
 			                    COL_ORDER_TABLE_NAME, field->table_name,
 			                    COL_ORDER_NAME, field_name,
-			                    COL_ORDER_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
+			                    COL_ORDER_VISIBLE_NAME, table_field,
 			                    COL_ORDER_ORDER, "ASC",
 			                    -1);
 		}
