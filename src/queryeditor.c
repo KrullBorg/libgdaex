@@ -54,6 +54,13 @@ static void gdaex_query_editor_lstore_move_iter_up_down (GdaExQueryEditor *qe,
                                       GtkListStore *lstore,
                                       gboolean up);
 
+static void gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe);
+
+static void gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
+                                    gpointer user_data);
+static void gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
+                                    gpointer user_data);
+
 static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
@@ -71,6 +78,8 @@ static void gdaex_query_editor_on_btn_order_up_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_order_down_clicked (GtkButton *button,
                                     gpointer user_data);
+static void gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
+                                                    gpointer user_data);
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
@@ -84,6 +93,9 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *dialog;
 		GtkWidget *hpaned_main;
 
+		GtkWidget *vbx_values_container;
+		GtkWidget *vbx_values;
+
 		GtkTreeStore *tstore_fields;
 		GtkListStore *lstore_show;
 		GtkTreeStore *tstore_where;
@@ -95,6 +107,12 @@ struct _GdaExQueryEditorPrivate
 		GtkTreeSelection *sel_order;
 
 		GHashTable *tables;	/* GdaExQueryEditorTable */
+
+		/* for value choosing */
+		GtkWidget *hbox;
+		GtkWidget *lbl;
+		GtkWidget *opt_asc;
+		GtkWidget *opt_desc;
 	};
 
 G_DEFINE_TYPE (GdaExQueryEditor, gdaex_query_editor, G_TYPE_OBJECT)
@@ -218,6 +236,14 @@ GdaExQueryEditor
 	priv->sel_where = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview3")));
 	priv->sel_order = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview4")));
 
+	priv->vbx_values_container = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "vbox3"));
+	priv->vbx_values = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "vbox4"));
+
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button16"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_cancel_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button15"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_save_clicked), (gpointer)gdaex_query_editor);
+
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button3"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_add_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button4"), "clicked",
@@ -235,6 +261,8 @@ GdaExQueryEditor
 	                  G_CALLBACK (gdaex_query_editor_on_btn_order_up_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button14"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_order_down_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (priv->sel_order, "changed",
+	                  G_CALLBACK (gdaex_query_editor_on_sel_order_changed), (gpointer)gdaex_query_editor);
 
 	return gdaex_query_editor;
 }
@@ -347,6 +375,8 @@ const gchar
 
 	gchar *table_name;
 	gchar *field_name;
+	gchar *asc_desc;
+
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
@@ -387,6 +417,7 @@ const gchar
 					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_order), &iter,
 					                    COL_ORDER_TABLE_NAME, &table_name,
 					                    COL_ORDER_NAME, &field_name,
+					                    COL_ORDER_ORDER, &asc_desc,
 					                    -1);
 
 					table = g_hash_table_lookup (priv->tables, table_name);
@@ -394,7 +425,7 @@ const gchar
 
 					gda_sql_builder_select_order_by (sqlbuilder,
 					                                 gda_sql_builder_add_id (sqlbuilder, field->name),
-					                                 TRUE,
+					                                 (g_strcmp0 (asc_desc, "ASC") == 0),
 					                                 NULL);
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_order), &iter));
 		}
@@ -520,6 +551,52 @@ gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
 			                    COL_FIELDS_DESCRIPTION, field->description,
 			                    -1);
 		}
+}
+
+static void
+gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gdaex_query_editor_remove_child_from_vbx_values (qe);
+	gtk_widget_hide (priv->vbx_values_container);
+}
+
+static void
+gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	gchar *asc_desc;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
+		{
+			if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->opt_asc)))
+				{
+					asc_desc = g_strdup ("ASC");
+				}
+			else
+				{
+					asc_desc = g_strdup ("DESC");
+				}
+
+			gtk_list_store_set (priv->lstore_order, &iter,
+			                    COL_ORDER_ORDER, asc_desc,
+			                    -1);
+		}
+
+	gtk_widget_hide (priv->vbx_values_container);
 }
 
 static void
@@ -808,4 +885,63 @@ gdaex_query_editor_on_btn_order_down_clicked (GtkButton *button,
 	                                      priv->sel_order,
 	                                      priv->lstore_order,
 	                                      FALSE);
+}
+
+static void
+gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe)
+{
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	GList *lw = gtk_container_get_children (GTK_CONTAINER (priv->vbx_values));
+	if (lw != NULL && lw->data != NULL)
+		{
+			gtk_container_remove (GTK_CONTAINER (priv->vbx_values), (GtkWidget *)lw->data);
+		}
+}
+
+static void
+gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
+                                         gpointer user_data)
+{
+	GtkTreeIter iter;
+
+	gchar *field_name;
+	gchar *order;
+
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_order), &iter,
+			                    COL_ORDER_VISIBLE_NAME, &field_name,
+			                    COL_ORDER_ORDER, &order,
+			                    -1);
+
+			gdaex_query_editor_remove_child_from_vbx_values (qe);
+
+			priv->hbox = gtk_hbox_new (FALSE, 5);
+
+			priv->lbl = gtk_label_new (field_name);
+			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->lbl, FALSE, FALSE, 0);
+
+			priv->opt_asc = gtk_radio_button_new_with_label (NULL, "Ascending");
+			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->opt_asc, FALSE, FALSE, 0);
+
+			priv->opt_desc = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (priv->opt_asc), "Descending");
+			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->opt_desc, FALSE, FALSE, 0);
+
+			if (g_strcmp0 (order, "ASC") == 0)
+				{
+					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_asc), TRUE);
+				}
+			else
+				{
+					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_desc), TRUE);
+				}
+
+			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
+
+			gtk_widget_show_all (priv->vbx_values_container);
+		}
 }
