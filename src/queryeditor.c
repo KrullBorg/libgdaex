@@ -878,6 +878,89 @@ xmlNode
 	return ret;
 }
 
+void
+gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
+                                          gboolean clean)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	gchar *name_visible;
+	GValue *v_table_field;
+
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	xmlNode *node;
+	xmlNode *node_field;
+
+	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
+
+	g_return_if_fail (xmlStrEqual (root->name, "gdaex_query_editor_choices"));
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (clean)
+		{
+			gdaex_query_editor_clean_choices (qe);
+		}
+
+	node = root->children;
+	while (node != NULL)
+	{
+		if (xmlStrEqual (node->name, "show")
+		    || xmlStrEqual (node->name, "where")
+		    || xmlStrEqual (node->name, "order"))
+			{
+				node_field = node->children;
+				while (node_field != NULL)
+					{
+						if (!xmlStrEqual (node_field->name, "field")) continue;
+
+						table_name = xmlGetProp (node_field, "table");
+						table = g_hash_table_lookup (priv->tables, table_name);
+						if (table == NULL)
+							{
+								g_warning ("Table «%s» not found.", table_name);
+								continue;
+							}
+
+						field_name = xmlGetProp (node_field, "field");
+						field = g_hash_table_lookup (table->fields, field_name);
+						if (field == NULL)
+							{
+								g_warning ("Field «%s» not found in table «%s».", field_name, table_name);
+								continue;
+							}
+
+						name_visible = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
+
+						if (xmlStrEqual (node->name, "show"))
+							{
+								v_table_field = gda_value_new (G_TYPE_STRING);
+								g_value_set_string (v_table_field, name_visible);
+
+								if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
+									{
+										gtk_list_store_append (priv->lstore_show, &iter);
+										gtk_list_store_set (priv->lstore_show, &iter,
+								                    COL_SHOW_TABLE_NAME, field->table_name,
+								                    COL_SHOW_NAME, field_name,
+								                    COL_SHOW_VISIBLE_NAME, name_visible,
+								                    -1);
+									}
+							}
+
+						node_field = node_field->next;
+					}
+			}
+		node = node->next;
+	}
+}
+
 /* PRIVATE */
 static void
 gdaex_query_editor_set_property (GObject *object,

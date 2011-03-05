@@ -118,6 +118,8 @@ void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
 
 xmlNode *gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe);
+void gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
+                                               gboolean clean);
 
 
 G_END_DECLS
