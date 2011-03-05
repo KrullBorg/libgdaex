@@ -86,6 +86,8 @@ static void gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 static void gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
                                                     gpointer user_data);
 
+static void gdaex_query_editor_show_add_iter (GdaExQueryEditor *qe, GtkTreeIter *iter);
+
 static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
@@ -94,6 +96,8 @@ static void gdaex_query_editor_on_btn_show_up_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
                                     gpointer user_data);
+static void gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
+                                                    gpointer user_data);
 
 static void gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
                                     gpointer user_data);
@@ -294,6 +298,8 @@ GdaExQueryEditor
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_up_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button6"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_down_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (priv->sel_show, "changed",
+	                  G_CALLBACK (gdaex_query_editor_on_sel_show_changed), (gpointer)gdaex_query_editor);
 
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button7"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_where_add_clicked), (gpointer)gdaex_query_editor);
@@ -693,6 +699,11 @@ gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
 			                    COL_FIELDS_VISIBLE_NAME, field->name_visible,
 			                    COL_FIELDS_DESCRIPTION, field->description,
 			                    -1);
+
+			if (field->always_showed)
+				{
+					gdaex_query_editor_show_add_iter (qe, &iter);
+				}
 		}
 }
 
@@ -891,8 +902,15 @@ gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
-			gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), TRUE);
-			gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")), TRUE);
+			if (!field->always_showed && field->for_show)
+				{
+					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), TRUE);
+				}
+
+			if (field->for_where)
+				{
+					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")),  TRUE);
+				}
 
 			table_field = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
 			v_table_field = gda_value_new (G_TYPE_STRING);
@@ -953,6 +971,34 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 }
 
 static void
+gdaex_query_editor_show_add_iter (GdaExQueryEditor *qe, GtkTreeIter *iter)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), iter,
+	                    COL_FIELDS_TABLE_NAME, &table_name,
+	                    COL_FIELDS_NAME, &field_name,
+	                    -1);
+
+	table = g_hash_table_lookup (priv->tables, table_name);
+	field = g_hash_table_lookup (table->fields, field_name);
+
+	gtk_list_store_append (priv->lstore_show, iter);
+	gtk_list_store_set (priv->lstore_show, iter,
+	                    COL_SHOW_TABLE_NAME, field->table_name,
+	                    COL_SHOW_NAME, field_name,
+	                    COL_SHOW_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
+	                    -1);
+}
+
+static void
 gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
                                     gpointer user_data)
 {
@@ -962,30 +1008,12 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 	GtkTreeIter iter;
 	GtkWidget *dialog;
 
-	gchar *table_name;
-	gchar *field_name;
-	GdaExQueryEditorTable *table;
-	GdaExQueryEditorField *field;
-
 	qe = (GdaExQueryEditor *)user_data;
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
 		{
-			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), &iter,
-			                    COL_FIELDS_TABLE_NAME, &table_name,
-			                    COL_FIELDS_NAME, &field_name,
-			                    -1);
-
-			table = g_hash_table_lookup (priv->tables, table_name);
-			field = g_hash_table_lookup (table->fields, field_name);
-
-			gtk_list_store_append (priv->lstore_show, &iter);
-			gtk_list_store_set (priv->lstore_show, &iter,
-			                    COL_SHOW_TABLE_NAME, field->table_name,
-			                    COL_SHOW_NAME, field_name,
-			                    COL_SHOW_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
-			                    -1);
+			gdaex_query_editor_show_add_iter (qe, &iter);
 		}
 	else
 		{
@@ -1036,6 +1064,34 @@ gdaex_query_editor_on_btn_show_down_clicked (GtkButton *button,
 	                                      priv->sel_show,
 	                                      G_OBJECT (priv->lstore_show),
 	                                      FALSE);
+}
+
+static void
+gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
+                                          gpointer user_data)
+{
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
+			                    COL_SHOW_TABLE_NAME, &table_name,
+			                    COL_SHOW_NAME, &field_name,
+			                    -1);
+
+			table = g_hash_table_lookup (priv->tables, table_name);
+			field = g_hash_table_lookup (table->fields, field_name);
+
+			gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button4")), !field->always_showed);
+		}
 }
 
 static void

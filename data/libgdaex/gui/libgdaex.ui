@@ -2,18 +2,6 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkTreeStore" id="tstore_fields">
-    <columns>
-      <!-- column-name table_name -->
-      <column type="gchararray"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-      <!-- column-name name_visible -->
-      <column type="gchararray"/>
-      <!-- column-name description -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="lstore_show">
     <columns>
       <!-- column-name table_name -->
@@ -53,6 +41,18 @@
       <!-- column-name name_visible -->
       <column type="gchararray"/>
       <!-- column-name order -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTreeStore" id="tstore_fields">
+    <columns>
+      <!-- column-name table_name -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name name_visible -->
+      <column type="gchararray"/>
+      <!-- column-name description -->
       <column type="gchararray"/>
     </columns>
   </object>

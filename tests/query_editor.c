@@ -58,6 +58,9 @@ main (int argc, char *argv[])
 	field = g_new0 (GdaExQueryEditorField, 1);
 	field->name = g_strdup ("id");
 	field->name_visible = g_strdup ("ID");
+	field->for_show = TRUE;
+	field->always_showed = TRUE;
+	field->for_where = TRUE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -65,6 +68,8 @@ main (int argc, char *argv[])
 	field->name = g_strdup ("name");
 	field->name_visible = g_strdup ("Name");
 	field->description = g_strdup ("The client's name");
+	field->for_show = TRUE;
+	field->for_where = TRUE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -72,6 +77,8 @@ main (int argc, char *argv[])
 	field->name = g_strdup ("surname");
 	field->name_visible = g_strdup ("Surname");
 	field->description = g_strdup ("The client's surname");
+	field->for_show = TRUE;
+	field->for_where = TRUE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -79,6 +86,8 @@ main (int argc, char *argv[])
 	field->name = g_strdup ("age");
 	field->name_visible = g_strdup ("Age");
 	field->description = g_strdup ("The client's age");
+	field->for_show = TRUE;
+	field->for_where = FALSE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -86,6 +95,8 @@ main (int argc, char *argv[])
 	field->name = g_strdup ("id_cities");
 	field->name_visible = g_strdup ("City");
 	field->description = g_strdup ("The client's city");
+	field->for_show = TRUE;
+	field->for_where = TRUE;
 	field->decode_table2 = g_strdup ("cities");
 	/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
 	field->decode_fields2 = g_slist_append (field->decode_fields2, "id");*/

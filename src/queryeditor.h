@@ -68,8 +68,11 @@ typedef struct
 		gchar *alias;
 		/* - tipo di campo (string, integer, double, date, datetime) */
 		/* - sceglibile per la parte show (es. le chiavi esterne non ha senno che lo siano) */
+		gboolean for_show;
 		/* - sempre presente nelle query, quindi non sceglibile per la parte show */
+		gboolean always_showed;
 		/* - sceglibile per la parte where */
+		gboolean for_where;
 		/* - condizioni where che è possibile applicare (es. i campi id_* non ha senso che abbiano un between, */
 		/*                                             ma ci deve essere la possibilità di fare ricerche anche sulle decodifiche) */
 		gchar *decode_table2;
