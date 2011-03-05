@@ -60,6 +60,15 @@ GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
 typedef enum
 	{
+		GDAEX_QE_FIELD_TYPE_TEXT,
+		GDAEX_QE_FIELD_TYPE_INTEGER,
+		GDAEX_QE_FIELD_TYPE_DOUBLE,
+		GDAEX_QE_FIELD_TYPE_DATE,
+		GDAEX_QE_FIELD_TYPE_DATETIME
+	} GdaExQueryEditorFieldType;
+
+typedef enum
+	{
 		GDAEX_QE_WHERE_TYPE_EQUAL = 1,
 		GDAEX_QE_WHERE_TYPE_LIKE = 2,
 		GDAEX_QE_WHERE_TYPE_ILIKE = 4,
@@ -79,6 +88,7 @@ typedef struct
 		gchar *description;
 		gchar *alias;
 		/* - tipo di campo (string, integer, double, date, datetime) */
+		GdaExQueryEditorFieldType type;
 		/* - sceglibile per la parte show (es. le chiavi esterne non ha senno che lo siano) */
 		gboolean for_show;
 		/* - sempre presente nelle query, quindi non sceglibile per la parte show */

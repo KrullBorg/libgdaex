@@ -158,6 +158,8 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *hbox;
 		GtkWidget *not;
 		GtkWidget *cb_where_type;
+		GtkWidget *txt1;
+		GtkWidget *txt2;
 		GtkWidget *opt_asc;
 		GtkWidget *opt_desc;
 	};
@@ -493,6 +495,12 @@ const gchar
 
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
 		{
+			guint id_target1;
+			guint id_target2;
+			guint id_join1;
+			guint id_join2;
+			guint join_cond;
+
 			do
 				{
 					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
@@ -505,16 +513,15 @@ const gchar
 
 					if (field->decode_table2 != NULL)
 						{
-							/* TODO alias for table2 must change based on tables count */
-							guint id_target1 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							id_target1 = gda_sql_builder_select_add_target_id (sqlbuilder,
 							                                                  gda_sql_builder_add_id (sqlbuilder, table->name),
 							                                                  NULL);
-							guint id_target2 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							id_target2 = gda_sql_builder_select_add_target_id (sqlbuilder,
 							                                                  gda_sql_builder_add_id (sqlbuilder, field->decode_table2),
-							                                                  "t2");
-							guint id_join1 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->table_name, ".", field->name, NULL));
-							guint id_join2 = gda_sql_builder_add_id (sqlbuilder, g_strconcat ("t2.", field->decode_field2, NULL));
-							guint join_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_EQ,
+							                                                  NULL);
+							id_join1 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->table_name, ".", field->name, NULL));
+							id_join2 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->decode_table2, ".", field->decode_field2, NULL));
+							join_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_EQ,
 							                                            id_join1, id_join2, 0);
 							gda_sql_builder_select_join_targets (sqlbuilder, id_target1, id_target2,
 							                                     GDA_SQL_SELECT_JOIN_INNER, join_cond);
@@ -528,6 +535,145 @@ const gchar
 							                                      NULL);
 						}
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
+		}
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
+		{
+			gboolean not;
+			guint where_type;
+			GdaSqlOperatorType op;
+			GType type;
+			gchar *from_str;
+			gchar *to_str;
+			GDate *from_date;
+			GDateTime *from_datetime;
+
+			guint id_field;
+			guint id_value1;
+			guint id_value2;
+			guint id_cond;
+			guint id_cond_iter;
+
+			id_cond = 0;
+			do
+				{
+					id_value2 = 0;
+
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+					                    COL_WHERE_TABLE_NAME, &table_name,
+					                    COL_WHERE_NAME, &field_name,
+					                    COL_WHERE_CONDITION_NOT, &not,
+					                    COL_WHERE_CONDITION_TYPE, &where_type,
+					                    COL_WHERE_CONDITION_FROM, &from_str,
+					                    COL_WHERE_CONDITION_TO, &to_str,
+					                    -1);
+
+					if (to_str == NULL || g_strcmp0 (g_strstrip (to_str), "") == 0)
+						{
+							to_str = NULL;
+						}
+
+					table = g_hash_table_lookup (priv->tables, table_name);
+					field = g_hash_table_lookup (table->fields, field_name);
+
+					id_field = gda_sql_builder_add_id (sqlbuilder, g_strconcat (table->name, ".", field->name, NULL));
+
+					switch (field->type)
+						{
+							case GDAEX_QE_FIELD_TYPE_TEXT:
+								type = G_TYPE_STRING;
+								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, from_str);
+								if (to_str != NULL)
+									{
+										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, to_str);
+									}
+								break;
+
+							case GDAEX_QE_FIELD_TYPE_INTEGER:
+								type = G_TYPE_INT;
+								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, strtol (from_str, NULL, 10));
+								if (to_str != NULL)
+									{
+										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, strtol (to_str, NULL, 10));
+									}
+								break;
+
+							case GDAEX_QE_FIELD_TYPE_DOUBLE:
+								type = G_TYPE_DOUBLE;
+								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, g_strtod (from_str, NULL));
+								if (to_str != NULL)
+									{
+										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, g_strtod (to_str, NULL));
+									}
+								break;
+
+							case GDAEX_QE_FIELD_TYPE_DATE:
+								type = G_TYPE_DATE;
+								/* TODO */
+								break;
+
+							case GDAEX_QE_FIELD_TYPE_DATETIME:
+								type = G_TYPE_DATE_TIME;
+								/* TODO */
+								break;
+						};
+
+					switch (where_type)
+						{
+							case GDAEX_QE_WHERE_TYPE_EQUAL:
+								op = GDA_SQL_OPERATOR_TYPE_EQ;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LIKE:
+								/* TODO */
+								op = GDA_SQL_OPERATOR_TYPE_LIKE;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ILIKE:
+								/* TODO */
+								op = GDA_SQL_OPERATOR_TYPE_LIKE;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_GREAT:
+								op = GDA_SQL_OPERATOR_TYPE_GT;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
+								op = GDA_SQL_OPERATOR_TYPE_GEQ;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LESS:
+								op = GDA_SQL_OPERATOR_TYPE_LT;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
+								op = GDA_SQL_OPERATOR_TYPE_LEQ;
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_BETWEEN:
+								op = GDA_SQL_OPERATOR_TYPE_BETWEEN;
+								break;
+						}
+
+					id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, op, id_field, id_value1, id_value2);
+					if (not)
+						{
+							id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
+						}
+					if (id_cond == 0)
+						{
+							id_cond = id_cond_iter;
+						}
+					else
+						{
+							id_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_AND, id_cond, id_cond_iter, 0);
+						}
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), &iter));
+
+			if (id_cond != 0)
+				{
+					gda_sql_builder_set_where (sqlbuilder, id_cond);
+				}
 		}
 
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_order), &iter))
@@ -1006,10 +1152,13 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 					gtk_tree_model_get (model, &iter_val,
 					                    0, &where_type,
 					                    -1);
+
 					gtk_tree_store_set (priv->tstore_where, &iter,
 					                    COL_WHERE_CONDITION_NOT, gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->not)),
 					                    COL_WHERE_CONDITION_TYPE, where_type,
 					                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+					                    COL_WHERE_CONDITION_FROM, gtk_entry_get_text (GTK_ENTRY (priv->txt1)),
+					                    COL_WHERE_CONDITION_TO, priv->txt2 != NULL ? gtk_entry_get_text (GTK_ENTRY (priv->txt2)) : "",
 					                    -1);
 				}
 		}
@@ -1261,6 +1410,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	gchar *field_name;
 	gboolean not;
 	guint where_type;
+	gchar *from;
+	gchar *to;
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
@@ -1285,6 +1436,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			                    COL_WHERE_NAME, &field_name,
 			                    COL_WHERE_CONDITION_NOT, &not,
 			                    COL_WHERE_CONDITION_TYPE, &where_type,
+			                    COL_WHERE_CONDITION_FROM, &from,
+			                    COL_WHERE_CONDITION_TO, &to,
 			                    -1);
 
 			table = g_hash_table_lookup (priv->tables, table_name);
@@ -1392,6 +1545,84 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 				}
 			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 2, 3, 1, 2, 0, 0, 0, 0);
+
+			priv->txt2 = NULL;
+			switch (field->type)
+				{
+					/* TODO for now are all equals */
+					case GDAEX_QE_FIELD_TYPE_TEXT:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN)
+							{
+								lbl = gtk_label_new ("and");
+								gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 1, 2, 0, 0, 0, 0);
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), to);
+								gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+							}
+						break;
+					case GDAEX_QE_FIELD_TYPE_INTEGER:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN)
+							{
+								lbl = gtk_label_new ("and");
+								gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 1, 2, 0, 0, 0, 0);
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), to);
+								gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+							}
+						break;
+					case GDAEX_QE_FIELD_TYPE_DOUBLE:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN)
+							{
+								lbl = gtk_label_new ("and");
+								gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 1, 2, 0, 0, 0, 0);
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), to);
+								gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+							}
+						break;
+					case GDAEX_QE_FIELD_TYPE_DATE:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 10);
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN)
+							{
+								lbl = gtk_label_new ("and");
+								gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 1, 2, 0, 0, 0, 0);
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_max_length (GTK_ENTRY (priv->txt2), 10);
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), to);
+								gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+							}
+						break;
+					case GDAEX_QE_FIELD_TYPE_DATETIME:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN)
+							{
+								lbl = gtk_label_new ("and");
+								gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 1, 2, 0, 0, 0, 0);
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_max_length (GTK_ENTRY (priv->txt2), 19);
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), to);
+								gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+							}
+						break;
+					default:
+						g_warning ("Field's type «%d» not valid.", field->type);
+						break;
+				};
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
