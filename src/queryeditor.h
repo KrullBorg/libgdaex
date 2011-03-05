@@ -55,7 +55,6 @@ GType gdaex_query_editor_get_type (void) G_GNUC_CONST;
 
 GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 
-GtkWidget *gdaex_query_editor_get_dialog (GdaExQueryEditor *gdaex_query_editor);
 GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
 typedef enum
@@ -113,6 +112,8 @@ gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
                                           const gchar *table1,
                                           const gchar *table2,
                                           ...);
+
+void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
 

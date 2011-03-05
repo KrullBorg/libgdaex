@@ -19,6 +19,44 @@
 #include <gdaex.h>
 #include <queryeditor.h>
 
+GtkWidget *w;
+
+on_btn_clean_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	gdaex_query_editor_clean_choices ((GdaExQueryEditor *)user_data);
+}
+
+on_btn_get_sql_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	xmlDoc *doc;
+	xmlNode *node;
+	xmlChar *buf;
+	gint size;
+
+	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+				                 GTK_DIALOG_DESTROY_WITH_PARENT,
+				                 GTK_MESSAGE_INFO,
+				                 GTK_BUTTONS_OK,
+				                 gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data));
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);;
+
+	doc = xmlNewDoc ("1.0");
+	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
+	xmlDocSetRootElement (doc, node);
+	xmlDocDumpMemory (doc, &buf, &size);
+
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+				                 GTK_DIALOG_DESTROY_WITH_PARENT,
+				                 GTK_MESSAGE_INFO,
+				                 GTK_BUTTONS_OK,
+				                 buf);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -31,11 +69,16 @@ main (int argc, char *argv[])
 
 	GdaExQueryEditorField *field;
 
-	GtkWidget *dialog;
+	GtkWidget *vbox;
+	GtkWidget *widget_qe;
+	GtkWidget *hbtnbox;
+	GtkWidget *btn_clean;
+	GtkWidget *btn_get_sql;
+	GtkWidget *btn_ok;
 
 	gtk_init (&argc, &argv);
 
-	gdaex = 	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
+	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
 	if (gdaex == NULL)
 		{
 			g_error ("Error on GdaEx initialization.");
@@ -123,22 +166,42 @@ main (int argc, char *argv[])
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
-	dialog = gdaex_query_editor_get_dialog (qe);
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
+	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size (GTK_WINDOW (w), 610, 400);
+	gtk_window_set_modal (GTK_WINDOW (w), TRUE);
+	gtk_window_set_position (GTK_WINDOW (w), GTK_WIN_POS_CENTER);
+	g_signal_connect (G_OBJECT (w), "delete-event",
+	                  gtk_main_quit, NULL);
 
-	g_message (gdaex_query_editor_get_sql (qe));
+	vbox = gtk_vbox_new (FALSE, 5);
+	gtk_container_add (GTK_CONTAINER (w), vbox);
 
-	xmlDoc *doc;
-	xmlNode *node;
-	xmlChar *buf;
-	gint size;
+	widget_qe = gdaex_query_editor_get_widget (qe);
+	gtk_box_pack_start (GTK_BOX (vbox), widget_qe, TRUE, TRUE, 5);
 
-	doc = xmlNewDoc ("1.0");
-	node = gdaex_query_editor_get_sql_as_xml (qe);
-	xmlDocSetRootElement (doc, node);
-	xmlDocDumpMemory (doc, &buf, &size);
-	g_message (buf);
+	hbtnbox = gtk_hbutton_box_new ();
+	gtk_button_box_set_layout (GTK_BUTTON_BOX (hbtnbox), GTK_BUTTONBOX_END);
+	gtk_button_box_set_spacing (GTK_BUTTON_BOX (hbtnbox), 5);
+	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 5);
+
+	btn_clean = gtk_button_new_from_stock ("gtk-clear");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_clean, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_clean), "clicked",
+	                  G_CALLBACK (on_btn_clean_clicked), qe);
+
+	btn_get_sql = gtk_button_new_with_mnemonic ("Get _Sql");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_get_sql, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_get_sql), "clicked",
+	                  G_CALLBACK (on_btn_get_sql_clicked), qe);
+
+	btn_ok = gtk_button_new_from_stock ("gtk-close");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_ok, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_ok), "clicked",
+	                  gtk_main_quit, NULL);
+
+	gtk_widget_show_all (w);
+
+	gtk_main ();
 
 	return 0;
 }
