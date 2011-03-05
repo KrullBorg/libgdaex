@@ -78,6 +78,8 @@ static gboolean gdaex_query_editor_model_has_value (GtkTreeModel *model,
 
 static void gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe);
 
+static gchar *gdaex_query_editor_get_where_type_str_from_type (guint where_type);
+
 static void gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
@@ -151,8 +153,11 @@ struct _GdaExQueryEditorPrivate
 		GSList *relations;	/* GdaExQueryEditorRelation */
 
 		/* for value choosing */
+		gboolean where_value;
+		GtkListStore *lstore_where_type;
 		GtkWidget *hbox;
-		GtkWidget *lbl;
+		GtkWidget *not;
+		GtkWidget *cb_where_type;
 		GtkWidget *opt_asc;
 		GtkWidget *opt_desc;
 	};
@@ -160,50 +165,39 @@ struct _GdaExQueryEditorPrivate
 G_DEFINE_TYPE (GdaExQueryEditor, gdaex_query_editor, G_TYPE_OBJECT)
 
 enum
-{
-	CONDITION_EQ,
-	CONDITION_LIKE,
-	CONDITION_ILIKE,
-	CONDITION_G,
-	CONDITION_G_EQ,
-	CONDITION_L,
-	CONDITION_L_EQ,
-	CONDITION_BETWEEN
-};
+	{
+		COL_FIELDS_TABLE_NAME,
+		COL_FIELDS_NAME,
+		COL_FIELDS_VISIBLE_NAME,
+		COL_FIELDS_DESCRIPTION
+	};
 
 enum
-{
-	COL_FIELDS_TABLE_NAME,
-	COL_FIELDS_NAME,
-	COL_FIELDS_VISIBLE_NAME,
-	COL_FIELDS_DESCRIPTION
-};
+	{
+		COL_SHOW_TABLE_NAME,
+		COL_SHOW_NAME,
+		COL_SHOW_VISIBLE_NAME
+	};
 
 enum
-{
-	COL_SHOW_TABLE_NAME,
-	COL_SHOW_NAME,
-	COL_SHOW_VISIBLE_NAME
-};
+	{
+		COL_WHERE_TABLE_NAME,
+		COL_WHERE_NAME,
+		COL_WHERE_VISIBLE_NAME,
+		COL_WHERE_CONDITION_NOT,
+		COL_WHERE_CONDITION_TYPE,
+		COL_WHERE_CONDITION_TYPE_VISIBLE,
+		COL_WHERE_CONDITION_FROM,
+		COL_WHERE_CONDITION_TO
+	};
 
 enum
-{
-	COL_WHERE_TABLE_NAME,
-	COL_WHERE_NAME,
-	COL_WHERE_VISIBLE_NAME,
-	COL_WHERE_CONDITION_NOT,
-	COL_WHERE_CONDITION_TYPE,
-	COL_WHERE_CONDITION_FROM,
-	COL_WHERE_CONDITION_TO
-};
-
-enum
-{
-	COL_ORDER_TABLE_NAME,
-	COL_ORDER_NAME,
-	COL_ORDER_VISIBLE_NAME,
-	COL_ORDER_ORDER
-};
+	{
+		COL_ORDER_TABLE_NAME,
+		COL_ORDER_NAME,
+		COL_ORDER_VISIBLE_NAME,
+		COL_ORDER_ORDER
+	};
 
 static void
 gdaex_query_editor_class_init (GdaExQueryEditorClass *class)
@@ -226,6 +220,10 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 	priv->dialog = NULL;
 	priv->hpaned_main = NULL;
 	priv->relations = NULL;
+
+	priv->lstore_where_type = gtk_list_store_new (2,
+	                                              G_TYPE_UINT,
+	                                              G_TYPE_STRING);
 }
 
 /**
@@ -865,6 +863,51 @@ gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe)
 		}
 }
 
+static gchar *
+gdaex_query_editor_get_where_type_str_from_type (guint where_type)
+{
+	gchar *ret;
+
+	ret = NULL;
+
+	switch (where_type)
+		{
+			case GDAEX_QE_WHERE_TYPE_EQUAL:
+				ret = g_strdup ("Equal");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_LIKE:
+				ret = g_strdup ("Like");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_ILIKE:
+				ret = g_strdup ("Non case sensitive like");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_GREAT:
+				ret = g_strdup ("Greater");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
+				ret = g_strdup ("Greater equal");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_LESS:
+				ret = g_strdup ("Lesser");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
+				ret = g_strdup ("Lesser equal");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_BETWEEN:
+				ret = g_strdup ("Between");
+				break;
+		};
+
+	return ret;
+}
+
 static void
 gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
                                           gpointer user_data)
@@ -951,20 +994,42 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 	qe = (GdaExQueryEditor *)user_data;
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
+	if (priv->where_value)
 		{
-			if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->opt_asc)))
+			if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
 				{
-					asc_desc = g_strdup ("ASC");
+					GtkTreeIter iter_val;
+					guint where_type;
+					
+					GtkTreeModel *model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_where_type));
+					gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_val);
+					gtk_tree_model_get (model, &iter_val,
+					                    0, &where_type,
+					                    -1);
+					gtk_tree_store_set (priv->tstore_where, &iter,
+					                    COL_WHERE_CONDITION_NOT, gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->not)),
+					                    COL_WHERE_CONDITION_TYPE, where_type,
+					                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+					                    -1);
 				}
-			else
+		}
+	else
+		{
+			if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
 				{
-					asc_desc = g_strdup ("DESC");
-				}
+					if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->opt_asc)))
+						{
+							asc_desc = g_strdup ("ASC");
+						}
+					else
+						{
+							asc_desc = g_strdup ("DESC");
+						}
 
-			gtk_list_store_set (priv->lstore_order, &iter,
-			                    COL_ORDER_ORDER, asc_desc,
-			                    -1);
+					gtk_list_store_set (priv->lstore_order, &iter,
+					                    COL_ORDER_ORDER, asc_desc,
+					                    -1);
+				}
 		}
 
 	gtk_widget_hide (priv->vbx_values_container);
@@ -1082,6 +1147,12 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 
 	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
 		{
+			gdaex_query_editor_remove_child_from_vbx_values (qe);
+			gtk_widget_hide (priv->vbx_values_container);
+
+			gtk_tree_selection_unselect_all (priv->sel_where);
+			gtk_tree_selection_unselect_all (priv->sel_order);
+
 			gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
 			                    COL_SHOW_TABLE_NAME, &table_name,
 			                    COL_SHOW_NAME, &field_name,
@@ -1184,6 +1255,148 @@ static void
 gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
                                          gpointer user_data)
 {
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	gboolean not;
+	guint where_type;
+
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	GtkWidget *tbl;
+	GtkWidget *lbl;
+	GtkTreeIter iter_cb;
+	GtkCellRenderer *renderer;
+
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
+		{
+			priv->where_value = TRUE;
+
+			gtk_tree_selection_unselect_all (priv->sel_show);
+			gtk_tree_selection_unselect_all (priv->sel_order);
+
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+			                    COL_WHERE_TABLE_NAME, &table_name,
+			                    COL_WHERE_NAME, &field_name,
+			                    COL_WHERE_CONDITION_NOT, &not,
+			                    COL_WHERE_CONDITION_TYPE, &where_type,
+			                    -1);
+
+			table = g_hash_table_lookup (priv->tables, table_name);
+			field = g_hash_table_lookup (table->fields, field_name);
+
+			gdaex_query_editor_remove_child_from_vbx_values (qe);
+
+			priv->hbox = gtk_hbox_new (TRUE, 0);
+
+			tbl = gtk_table_new (2, 6, FALSE);
+			gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
+			gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
+			gtk_box_pack_start (GTK_BOX (priv->hbox), tbl, TRUE, TRUE, 0);
+
+			lbl = gtk_label_new ("Not");
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, 0, 0, 0, 0);
+
+			lbl = gtk_label_new ("Condition");
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 2, 3, 0, 1, 0, 0, 0, 0);
+
+			lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
+
+			priv->not = gtk_check_button_new ();
+			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->not), not);
+			gtk_table_attach (GTK_TABLE (tbl), priv->not, 1, 2, 1, 2, 0, 0, 0, 0);
+
+			priv->cb_where_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_where_type));
+
+			renderer = gtk_cell_renderer_text_new ();
+			gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (priv->cb_where_type), renderer, TRUE);
+			gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (priv->cb_where_type), renderer, "text", 1);
+
+			gtk_list_store_clear (priv->lstore_where_type);
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_EQUAL)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_EQUAL,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_EQUAL),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_EQUAL) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_LIKE)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_LIKE,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_LIKE),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_LIKE) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_ILIKE)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_ILIKE,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_ILIKE),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_GREAT)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_GREAT,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_GREAT),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_GREAT) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_GREAT_EQUAL)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_GREAT_EQUAL,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_GREAT_EQUAL),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_GREAT_EQUAL) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_LESS)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_LESS,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_LESS),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_LESS) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_LESS_EQUAL)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_LESS_EQUAL,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_LESS_EQUAL),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_LESS_EQUAL) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_BETWEEN)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+			                    0, GDAEX_QE_WHERE_TYPE_BETWEEN,
+			                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_BETWEEN),
+			                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN) gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+				}
+			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 2, 3, 1, 2, 0, 0, 0, 0);
+
+			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
+
+			gtk_widget_show_all (priv->vbx_values_container);
+		}
 }
 
 static void
@@ -1285,11 +1498,18 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 	gchar *field_name;
 	gchar *order;
 
+	GtkWidget *lbl;
+
 	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
 		{
+			priv->where_value = FALSE;
+
+			gtk_tree_selection_unselect_all (priv->sel_show);
+			gtk_tree_selection_unselect_all (priv->sel_where);
+
 			gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_order), &iter,
 			                    COL_ORDER_VISIBLE_NAME, &field_name,
 			                    COL_ORDER_ORDER, &order,
@@ -1297,10 +1517,10 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 
 			gdaex_query_editor_remove_child_from_vbx_values (qe);
 
-			priv->hbox = gtk_hbox_new (FALSE, 5);
+			priv->hbox = gtk_hbox_new (TRUE, 5);
 
-			priv->lbl = gtk_label_new (field_name);
-			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->lbl, FALSE, FALSE, 0);
+			lbl = gtk_label_new (field_name);
+			gtk_box_pack_start (GTK_BOX (priv->hbox), lbl, FALSE, FALSE, 0);
 
 			priv->opt_asc = gtk_radio_button_new_with_label (NULL, "Ascending");
 			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->opt_asc, FALSE, FALSE, 0);

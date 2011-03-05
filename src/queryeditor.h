@@ -58,6 +58,18 @@ GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 GtkWidget *gdaex_query_editor_get_dialog (GdaExQueryEditor *gdaex_query_editor);
 GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
 
+typedef enum
+	{
+		GDAEX_QE_WHERE_TYPE_EQUAL = 1,
+		GDAEX_QE_WHERE_TYPE_LIKE = 2,
+		GDAEX_QE_WHERE_TYPE_ILIKE = 4,
+		GDAEX_QE_WHERE_TYPE_GREAT = 8,
+		GDAEX_QE_WHERE_TYPE_GREAT_EQUAL = 16,
+		GDAEX_QE_WHERE_TYPE_LESS = 32,
+		GDAEX_QE_WHERE_TYPE_LESS_EQUAL = 64,
+		GDAEX_QE_WHERE_TYPE_BETWEEN = 128
+	} GdaExQueryEditorWhereType;
+
 typedef struct
 	{
 		gchar *table_name;
@@ -75,6 +87,7 @@ typedef struct
 		gboolean for_where;
 		/* - condizioni where che è possibile applicare (es. i campi id_* non ha senso che abbiano un between, */
 		/*                                             ma ci deve essere la possibilità di fare ricerche anche sulle decodifiche) */
+		guint available_where_type;
 		gchar *decode_table2;
 		/* TODO 
 		GSList *decode_fields1;

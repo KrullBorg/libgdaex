@@ -61,6 +61,7 @@ main (int argc, char *argv[])
 	field->for_show = TRUE;
 	field->always_showed = TRUE;
 	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -70,6 +71,8 @@ main (int argc, char *argv[])
 	field->description = g_strdup ("The client's name");
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_ILIKE
+	                              | GDAEX_QE_WHERE_TYPE_ILIKE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -79,6 +82,8 @@ main (int argc, char *argv[])
 	field->description = g_strdup ("The client's surname");
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_LIKE
+	                              | GDAEX_QE_WHERE_TYPE_ILIKE;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -87,7 +92,12 @@ main (int argc, char *argv[])
 	field->name_visible = g_strdup ("Age");
 	field->description = g_strdup ("The client's age");
 	field->for_show = TRUE;
-	field->for_where = FALSE;
+	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_GREAT
+	                              | GDAEX_QE_WHERE_TYPE_GREAT_EQUAL
+	                              | GDAEX_QE_WHERE_TYPE_LESS
+	                              | GDAEX_QE_WHERE_TYPE_LESS_EQUAL
+	                              | GDAEX_QE_WHERE_TYPE_BETWEEN;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -103,6 +113,7 @@ main (int argc, char *argv[])
 	field->decode_field2 = g_strdup ("id");
 	field->decode_field_to_show = g_strdup ("name");
 	field->decode_field_alias = g_strdup ("city_name");
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
