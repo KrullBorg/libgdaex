@@ -83,6 +83,9 @@ static void gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
 static void gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
                                     gpointer user_data);
 
+static void gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
+                                                    gpointer user_data);
+
 static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_show_remove_clicked (GtkButton *button,
@@ -280,6 +283,9 @@ GdaExQueryEditor
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button15"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_save_clicked), (gpointer)gdaex_query_editor);
 
+	g_signal_connect (priv->sel_fields, "changed",
+	                  G_CALLBACK (gdaex_query_editor_on_sel_fields_changed), (gpointer)gdaex_query_editor);
+
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button3"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_add_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button4"), "clicked",
@@ -310,6 +316,10 @@ GdaExQueryEditor
 	                  G_CALLBACK (gdaex_query_editor_on_btn_order_down_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (priv->sel_order, "changed",
 	                  G_CALLBACK (gdaex_query_editor_on_sel_order_changed), (gpointer)gdaex_query_editor);
+
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")), FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), FALSE);
 
 	return gdaex_query_editor;
 }
@@ -845,6 +855,58 @@ gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe)
 }
 
 static void
+gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
+                                          gpointer user_data)
+{
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	gchar *table_field;
+	GValue *v_table_field;
+
+	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")), FALSE);
+	gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), FALSE);
+
+	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), &iter,
+			                    COL_FIELDS_TABLE_NAME, &table_name,
+			                    COL_FIELDS_NAME, &field_name,
+			                    -1);
+
+			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
+				{
+					/* cannot add a table */
+					return;
+				}
+
+			table = g_hash_table_lookup (priv->tables, table_name);
+			field = g_hash_table_lookup (table->fields, field_name);
+
+			gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), TRUE);
+			gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")), TRUE);
+
+			table_field = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
+			v_table_field = gda_value_new (G_TYPE_STRING);
+			g_value_set_string (v_table_field, table_field);
+			if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_order),
+			                                        COL_ORDER_VISIBLE_NAME,
+			                                        v_table_field))
+				{
+					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), TRUE);
+				}
+		}
+}
+
+static void
 gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
                                     gpointer user_data)
 {
@@ -915,18 +977,6 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 			                    COL_FIELDS_NAME, &field_name,
 			                    -1);
 
-			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
-				{
-					/* TODO if get_widget dialog isn't valid */
-					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
-					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-					                                 GTK_MESSAGE_WARNING,
-					                                 GTK_BUTTONS_OK,
-					                                 "You cannot add a table.");
-					gtk_dialog_run (GTK_DIALOG (dialog));
-					gtk_widget_destroy (dialog);
-					return;
-				}
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
@@ -1013,18 +1063,6 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 			                    COL_FIELDS_NAME, &field_name,
 			                    -1);
 
-			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
-				{
-					/* TODO if get_widget dialog isn't valid */
-					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
-					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-					                                 GTK_MESSAGE_WARNING,
-					                                 GTK_BUTTONS_OK,
-					                                 "You cannot add a table.");
-					gtk_dialog_run (GTK_DIALOG (dialog));
-					gtk_widget_destroy (dialog);
-					return;
-				}
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
@@ -1104,8 +1142,6 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 
 	gchar *table_name;
 	gchar *field_name;
-	gchar *table_field;
-	GValue *v_table_field;
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
@@ -1120,46 +1156,18 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 			                    COL_FIELDS_NAME, &field_name,
 			                    -1);
 
-			if (table_name == NULL || g_strcmp0 (table_name, "") == 0)
-				{
-					/* TODO if get_widget dialog isn't valid */
-					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
-					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-					                                 GTK_MESSAGE_WARNING,
-					                                 GTK_BUTTONS_OK,
-					                                 "You cannot add a table.");
-					gtk_dialog_run (GTK_DIALOG (dialog));
-					gtk_widget_destroy (dialog);
-					return;
-				}
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
-
-			table_field = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
-			v_table_field = gda_value_new (G_TYPE_STRING);
-			g_value_set_string (v_table_field, table_field);
-			if (gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_order),
-			                                        COL_ORDER_VISIBLE_NAME,
-			                                        v_table_field))
-				{
-					/* TODO if get_widget dialog isn't valid */
-					dialog = gtk_message_dialog_new (GTK_WINDOW (priv->dialog),
-					                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-					                                 GTK_MESSAGE_WARNING,
-					                                 GTK_BUTTONS_OK,
-					                                 "Field already added.");
-					gtk_dialog_run (GTK_DIALOG (dialog));
-					gtk_widget_destroy (dialog);
-					return;
-				}
 
 			gtk_list_store_append (priv->lstore_order, &iter);
 			gtk_list_store_set (priv->lstore_order, &iter,
 			                    COL_ORDER_TABLE_NAME, field->table_name,
 			                    COL_ORDER_NAME, field_name,
-			                    COL_ORDER_VISIBLE_NAME, table_field,
+			                    COL_ORDER_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 			                    COL_ORDER_ORDER, "ASC",
 			                    -1);
+
+			gdaex_query_editor_on_sel_fields_changed (NULL, user_data);
 		}
 	else
 		{
