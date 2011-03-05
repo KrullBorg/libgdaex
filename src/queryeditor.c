@@ -722,6 +722,151 @@ const gchar
 	return ret;
 }
 
+xmlNode
+*gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	xmlNode *ret;
+
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+
+	xmlNode *node;
+
+	ret = NULL;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	ret = xmlNewNode (NULL, "gdaex_query_editor_choices");
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+		{
+			xmlNode *node_show;
+
+			node_show = xmlNewNode (NULL, "show");
+			xmlAddChild (ret, node_show);
+
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
+					                    COL_SHOW_TABLE_NAME, &table_name,
+					                    COL_SHOW_NAME, &field_name,
+					                    -1);
+
+					node = xmlNewNode (NULL, "field");
+					xmlAddChild (node_show, node);
+					xmlNewProp (node, "table", table_name);
+					xmlNewProp (node, "field", field_name);
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
+		}
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
+		{
+			xmlNode *node_where;
+
+			gboolean not;
+			guint where_type;
+			gchar *from_str;
+			gchar *to_str;
+			gchar *str_op;
+
+			node_where = xmlNewNode (NULL, "where");
+			xmlAddChild (ret, node_where);
+
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+					                    COL_WHERE_TABLE_NAME, &table_name,
+					                    COL_WHERE_NAME, &field_name,
+					                    COL_WHERE_CONDITION_NOT, &not,
+					                    COL_WHERE_CONDITION_TYPE, &where_type,
+					                    COL_WHERE_CONDITION_FROM, &from_str,
+					                    COL_WHERE_CONDITION_TO, &to_str,
+					                    -1);
+
+					node = xmlNewNode (NULL, "field");
+					xmlAddChild (node_where, node);
+					xmlNewProp (node, "table", table_name);
+					xmlNewProp (node, "field", field_name);
+					xmlNewProp (node, "not", (not ? "y" : "n"));
+
+					switch (where_type)
+						{
+							case GDAEX_QE_WHERE_TYPE_EQUAL:
+								str_op = g_strdup ("EQUAL");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LIKE:
+								str_op = g_strdup ("LIKE");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ILIKE:
+								str_op = g_strdup ("ILIKE");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_GREAT:
+								str_op = g_strdup ("GREAT");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
+								str_op = g_strdup ("GREAT_EQUAL");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LESS:
+								str_op = g_strdup ("LESS");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
+								str_op = g_strdup ("LESS_EQUAL");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_BETWEEN:
+								str_op = g_strdup ("BETWEEN");
+								break;
+
+							default:
+								g_warning ("Where type «%d» not valid.", where_type);
+								continue;
+						}
+					xmlNewProp (node, "where_type", str_op);
+
+					xmlNewProp (node, "from", from_str);
+					xmlNewProp (node, "to", to_str);
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), &iter));
+		}
+
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_order), &iter))
+		{
+			gchar *asc_desc;
+			xmlNode *node_order;
+
+			node_order = xmlNewNode (NULL, "order");
+			xmlAddChild (ret, node_order);
+
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_order), &iter,
+					                    COL_ORDER_TABLE_NAME, &table_name,
+					                    COL_ORDER_NAME, &field_name,
+					                    COL_ORDER_ORDER, &asc_desc,
+					                    -1);
+
+					node = xmlNewNode (NULL, "field");
+					xmlAddChild (node_order, node);
+					xmlNewProp (node, "table", table_name);
+					xmlNewProp (node, "field", field_name);
+					xmlNewProp (node, "asc_desc", asc_desc);
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_order), &iter));
+		}
+
+	return ret;
+}
+
 /* PRIVATE */
 static void
 gdaex_query_editor_set_property (GObject *object,

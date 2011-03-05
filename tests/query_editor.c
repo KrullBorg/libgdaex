@@ -129,5 +129,16 @@ main (int argc, char *argv[])
 
 	g_message (gdaex_query_editor_get_sql (qe));
 
+	xmlDoc *doc;
+	xmlNode *node;
+	xmlChar *buf;
+	gint size;
+
+	doc = xmlNewDoc ("1.0");
+	node = gdaex_query_editor_get_sql_as_xml (qe);
+	xmlDocSetRootElement (doc, node);
+	xmlDocDumpMemory (doc, &buf, &size);
+	g_message (buf);
+
 	return 0;
 }
