@@ -918,8 +918,8 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 				node_field = node->children;
 				while (node_field != NULL)
 					{
-						if (!xmlStrEqual (node_field->name, "field")) continue;
-
+						if (xmlStrEqual (node_field->name, "field"))
+							{
 						table_name = xmlGetProp (node_field, "table");
 						table = g_hash_table_lookup (priv->tables, table_name);
 						if (table == NULL)
@@ -937,21 +937,102 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 							}
 
 						name_visible = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
+						v_table_field = gda_value_new (G_TYPE_STRING);
+						g_value_set_string (v_table_field, name_visible);
 
 						if (xmlStrEqual (node->name, "show"))
 							{
-								v_table_field = gda_value_new (G_TYPE_STRING);
-								g_value_set_string (v_table_field, name_visible);
-
 								if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
 									{
 										gtk_list_store_append (priv->lstore_show, &iter);
 										gtk_list_store_set (priv->lstore_show, &iter,
-								                    COL_SHOW_TABLE_NAME, field->table_name,
-								                    COL_SHOW_NAME, field_name,
-								                    COL_SHOW_VISIBLE_NAME, name_visible,
-								                    -1);
+										                    COL_SHOW_TABLE_NAME, field->table_name,
+										                    COL_SHOW_NAME, field_name,
+										                    COL_SHOW_VISIBLE_NAME, name_visible,
+										                    -1);
 									}
+							}
+						else if (xmlStrEqual (node->name, "where"))
+							{
+								gchar *not;
+								gchar *condition;
+								gchar *from;
+								gchar *to;
+								GdaExQueryEditorWhereType where_type;
+
+								not = xmlGetProp (node_field, "not");
+								condition = xmlGetProp (node_field, "where_type");
+								from = xmlGetProp (node_field, "from");
+								to = xmlGetProp (node_field, "to");
+
+								if (g_strcmp0 (condition, "EQUAL") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
+									}
+								else if (g_strcmp0 (condition, "LIKE") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_LIKE;
+									}
+								else if (g_strcmp0 (condition, "ILIKE") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_ILIKE;
+									}
+								else if (g_strcmp0 (condition, "GREAT") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_GREAT;
+									}
+								else if (g_strcmp0 (condition, "GREAT_EQUAL") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_GREAT_EQUAL;
+									}
+								else if (g_strcmp0 (condition, "LESS") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_LESS;
+									}
+								else if (g_strcmp0 (condition, "LESS_EQUAL") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_LESS_EQUAL;
+									}
+								else if (g_strcmp0 (condition, "BETWEEN") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_BETWEEN;
+									}
+
+								if (where_type != 0)
+									{
+										gtk_tree_store_append (priv->tstore_where, &iter, NULL);
+										gtk_tree_store_set (priv->tstore_where, &iter,
+										                    COL_WHERE_TABLE_NAME, table_name,
+										                    COL_WHERE_NAME, field_name,
+										                    COL_WHERE_VISIBLE_NAME, name_visible,
+										                    COL_WHERE_CONDITION_NOT, (g_strcmp0 (not, "n") != 0),
+										                    COL_WHERE_CONDITION_TYPE, where_type,
+										                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+										                    COL_WHERE_CONDITION_FROM, from,
+										                    COL_WHERE_CONDITION_TO, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to : ""),
+										                    -1);
+									}
+							}
+						else if (xmlStrEqual (node->name, "order"))
+							{
+								if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
+									{
+										gchar *asc_desc;
+										asc_desc = xmlGetProp (node_field, "asc_desc");
+
+										if (g_strcmp0 (asc_desc, "ASC") == 0
+										    || g_strcmp0 (asc_desc, "DESC") == 0)
+											{
+												gtk_list_store_append (priv->lstore_order, &iter);
+												gtk_list_store_set (priv->lstore_order, &iter,
+												                    COL_ORDER_TABLE_NAME, field->table_name,
+												                    COL_ORDER_NAME, field_name,
+												                    COL_ORDER_VISIBLE_NAME, name_visible,
+												                    COL_ORDER_ORDER, asc_desc,
+												                    -1);
+											}
+									}
+							}
 							}
 
 						node_field = node_field->next;
@@ -1367,22 +1448,26 @@ gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
-			if (!field->always_showed && field->for_show)
-				{
-					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), TRUE);
-				}
-
 			if (field->for_where)
 				{
-					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")),  TRUE);
+					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7")), TRUE);
 				}
 
 			table_field = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
 			v_table_field = gda_value_new (G_TYPE_STRING);
 			g_value_set_string (v_table_field, table_field);
+			if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show),
+			                                         COL_ORDER_VISIBLE_NAME,
+			                                         v_table_field))
+				{
+					if (!field->always_showed && field->for_show)
+						{
+							gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3")), TRUE);
+						}
+				}
 			if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_order),
-			                                        COL_ORDER_VISIBLE_NAME,
-			                                        v_table_field))
+			                                         COL_ORDER_VISIBLE_NAME,
+			                                         v_table_field))
 				{
 					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), TRUE);
 				}
@@ -1515,6 +1600,7 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
 		{
 			gdaex_query_editor_show_add_iter (qe, &iter);
+			gdaex_query_editor_on_sel_fields_changed (NULL, user_data);
 		}
 	else
 		{

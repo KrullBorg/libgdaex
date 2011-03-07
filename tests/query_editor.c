@@ -74,9 +74,15 @@ on_btn_load_xml_clicked (GtkButton *button,
 		{
 			gchar *filename;
 			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-			doc = xmlParseDoc (filename);
-			node = xmlDocGetRootElement (doc);
-			gdaex_query_editor_load_choices_from_xml ((GdaExQueryEditor *)user_data, node, TRUE);
+			doc = xmlParseFile (filename);
+			if (doc != NULL)
+				{
+					node = xmlDocGetRootElement (doc);
+					if (node != NULL)
+						{
+							gdaex_query_editor_load_choices_from_xml ((GdaExQueryEditor *)user_data, node, TRUE);
+						}
+				}
 			g_free (filename);
 		}
 	gtk_widget_destroy (dialog);
