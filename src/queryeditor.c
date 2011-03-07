@@ -1732,6 +1732,9 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
+	gtk_widget_hide (priv->vbx_values_container);
+	gdaex_query_editor_remove_child_from_vbx_values (qe);
+
 	if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
 		{
 			priv->where_value = TRUE;
@@ -1750,8 +1753,6 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
-
-			gdaex_query_editor_remove_child_from_vbx_values (qe);
 
 			priv->hbox = gtk_hbox_new (TRUE, 0);
 
@@ -2054,6 +2055,9 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
+	gtk_widget_hide (priv->vbx_values_container);
+	gdaex_query_editor_remove_child_from_vbx_values (qe);
+
 	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
 		{
 			priv->where_value = FALSE;
@@ -2065,8 +2069,6 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 			                    COL_ORDER_VISIBLE_NAME, &field_name,
 			                    COL_ORDER_ORDER, &order,
 			                    -1);
-
-			gdaex_query_editor_remove_child_from_vbx_values (qe);
 
 			priv->hbox = gtk_hbox_new (TRUE, 5);
 

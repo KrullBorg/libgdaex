@@ -21,12 +21,68 @@
 
 GtkWidget *w;
 
+static void
 on_btn_clean_clicked (GtkButton *button,
                       gpointer user_data)
 {
 	gdaex_query_editor_clean_choices ((GdaExQueryEditor *)user_data);
 }
 
+static void
+on_btn_save_xml_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	xmlDoc *doc;
+	xmlNode *node;
+	GtkWidget *dialog;
+
+	doc = xmlNewDoc ("1.0");
+	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
+	xmlDocSetRootElement (doc, node);
+
+	dialog = gtk_file_chooser_dialog_new ("Save xml to...",
+	                                      GTK_WINDOW (w),
+	                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                                      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	                                      NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			xmlSaveFormatFile (filename, doc, 2);
+			g_free (filename);
+		}
+	gtk_widget_destroy (dialog);
+}
+
+static void
+on_btn_load_xml_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	GtkWidget *dialog;
+	xmlDoc *doc;
+	xmlNode *node;
+
+	dialog = gtk_file_chooser_dialog_new ("Load xml from...",
+	                                      GTK_WINDOW (w),
+	                                      GTK_FILE_CHOOSER_ACTION_OPEN,
+	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                                      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+	                                      NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			doc = xmlParseDoc (filename);
+			node = xmlDocGetRootElement (doc);
+			gdaex_query_editor_load_choices_from_xml ((GdaExQueryEditor *)user_data, node, TRUE);
+			g_free (filename);
+		}
+	gtk_widget_destroy (dialog);
+}
+
+static void
 on_btn_get_sql_clicked (GtkButton *button,
                       gpointer user_data)
 {
@@ -74,6 +130,8 @@ main (int argc, char *argv[])
 	GtkWidget *hbtnbox;
 	GtkWidget *btn_clean;
 	GtkWidget *btn_get_sql;
+	GtkWidget *btn_save_xml;
+	GtkWidget *btn_load_xml;
 	GtkWidget *btn_ok;
 
 	gtk_init (&argc, &argv);
@@ -193,6 +251,16 @@ main (int argc, char *argv[])
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_get_sql, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_get_sql), "clicked",
 	                  G_CALLBACK (on_btn_get_sql_clicked), qe);
+
+	btn_save_xml = gtk_button_new_from_stock ("gtk-save");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_save_xml, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_save_xml), "clicked",
+	                  G_CALLBACK (on_btn_save_xml_clicked), qe);
+
+	btn_load_xml = gtk_button_new_from_stock ("gtk-open");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_load_xml, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_load_xml), "clicked",
+	                  G_CALLBACK (on_btn_load_xml_clicked), qe);
 
 	btn_ok = gtk_button_new_from_stock ("gtk-close");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_ok, TRUE, TRUE, 5);
