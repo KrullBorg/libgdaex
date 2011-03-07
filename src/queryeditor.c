@@ -89,6 +89,10 @@ static void gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 
 static void gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
                                                     gpointer user_data);
+static void gdaex_query_editor_on_trv_fields_row_activated (GtkTreeView *tree_view,
+                                                            GtkTreePath *path,
+                                                            GtkTreeViewColumn *column,
+                                                            gpointer user_data);
 
 static void gdaex_query_editor_show_add_iter (GdaExQueryEditor *qe, GtkTreeIter *iter);
 
@@ -295,6 +299,8 @@ GdaExQueryEditor
 
 	g_signal_connect (priv->sel_fields, "changed",
 	                  G_CALLBACK (gdaex_query_editor_on_sel_fields_changed), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "treeview1"), "row-activated",
+	                  G_CALLBACK (gdaex_query_editor_on_trv_fields_row_activated), (gpointer)gdaex_query_editor);
 
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button3"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_show_add_clicked), (gpointer)gdaex_query_editor);
@@ -1471,6 +1477,52 @@ gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
 				{
 					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), TRUE);
 				}
+		}
+}
+
+static void
+gdaex_query_editor_on_trv_fields_row_activated (GtkTreeView *tree_view,
+                                                GtkTreePath *path,
+                                                GtkTreeViewColumn *column,
+                                                gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter;
+	guint page;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (!gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
+		{
+			return;
+		}
+
+	page = gtk_notebook_get_current_page (GTK_NOTEBOOK (gtk_builder_get_object (priv->gtkbuilder, "notebook1")));
+	switch (page)
+		{
+			case 0: /* show */
+				if (gtk_widget_is_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button3"))))
+					{
+						gtk_button_clicked (GTK_BUTTON (gtk_builder_get_object (priv->gtkbuilder, "button3")));
+					}
+				break;
+
+			case 1: /* where */
+				if (gtk_widget_is_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button7"))))
+					{
+						gtk_button_clicked (GTK_BUTTON (gtk_builder_get_object (priv->gtkbuilder, "button7")));
+					}
+				break;
+
+			case 2: /* order */
+				if (gtk_widget_is_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11"))))
+					{
+						gtk_button_clicked (GTK_BUTTON (gtk_builder_get_object (priv->gtkbuilder, "button11")));
+					}
+				break;
 		}
 }
 
