@@ -130,6 +130,8 @@ gboolean gdaex_begin (GdaEx *gdaex);
 
 gint gdaex_execute (GdaEx *gdaex, const gchar *sql);
 
+GSList *gdaex_batch_execute (GdaEx *gdaex, ...);
+
 gboolean gdaex_commit (GdaEx *gdaex);
 gboolean gdaex_rollback (GdaEx *gdaex);
 

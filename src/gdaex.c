@@ -25,6 +25,7 @@
 	#include <config.h>
 #endif
 
+#include <stdarg.h>
 #include <string.h>
 
 #include <gio/gio.h>
@@ -983,7 +984,7 @@ gchar
 	else
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 			ret = NULL;
 		}
 
@@ -1011,7 +1012,7 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1049,7 +1050,7 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1087,7 +1088,7 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1125,7 +1126,7 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1176,7 +1177,7 @@ GdaTimestamp
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1253,7 +1254,7 @@ GDate
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1296,7 +1297,7 @@ struct tm
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1346,7 +1347,7 @@ gdaex_begin (GdaEx *gdaex)
 	if (error != NULL)
 		{
 			g_warning ("Error opening transaction: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1392,7 +1393,7 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	if (error != NULL)
 		{
 			g_warning ("Error parsing sql: %s\n%s\n",
-			           error->message, sql);
+			           error->message != NULL ? error->message : "no details", sql);
 			return -1;
 		}
 
@@ -1410,7 +1411,7 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	if (error != NULL)
 		{
 			g_warning ("Error executing command query: %s\n%s",
-			           error->message, sql);
+			           error->message != NULL ? error->message : "no details", sql);
 			return -1;
 		}
 	else
@@ -1424,6 +1425,62 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	g_signal_emit (gdaex, klass->after_execute_signal_id, 0, stmt);
 
 	return nrecs;
+}
+
+/**
+ * gdaex_batch_execute:
+ * @gdaex: a #GdaEx object.
+ * @...: a #NULL terminated list of sql texts.
+ *
+ */
+GSList
+*gdaex_batch_execute (GdaEx *gdaex, ...)
+{
+	GSList *ret;
+
+	va_list ap;
+
+	gchar *sql;
+	GdaStatement *stmt;
+	GError *error;
+
+	GdaDataModel *dm;
+	gint recs;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	ret = NULL;
+
+	va_start (ap, gdaex);
+
+	while ((sql = va_arg (ap, gchar *)) != NULL)
+		{
+			error = NULL;
+			stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
+			if (error != NULL)
+				{
+					g_warning ("Error parsing sql: %s\n%s\n",
+					           error->message != NULL ? error->message : "no details", sql);
+					return NULL;
+				}
+
+			if (gda_statement_get_statement_type (stmt) == GDA_SQL_STATEMENT_SELECT)
+				{
+					dm = gdaex_query (gdaex, sql);
+					ret = g_slist_append (ret, dm);
+				}
+			else
+				{
+					recs = gdaex_execute (gdaex, sql);
+					ret = g_slist_append (ret, GINT_TO_POINTER (recs));
+				}
+		}
+
+	va_end (ap);
+
+	return ret;
 }
 
 /**
