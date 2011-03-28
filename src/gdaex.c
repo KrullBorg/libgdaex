@@ -618,12 +618,14 @@ GdaDataModel
 {
 	GError *error;
 
+	GdaStatement *stmt;
+	GdaDataModel *dm;
+
 	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
 
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	error = NULL;
-	GdaStatement *stmt;
 	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
 	if (!GDA_IS_STATEMENT (stmt))
 		{
@@ -639,7 +641,9 @@ GdaDataModel
 		}
 
 	error = NULL;
-	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
+	dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
+	g_object_unref (stmt);
+
 	if (!GDA_IS_DATA_MODEL (dm))
 		{
 			g_warning ("Error executing selection query: %s\n%s",
@@ -653,6 +657,8 @@ GdaDataModel
 					g_message ("Selection query executed: %s", sql);
 				}
 		}
+
+	g_object_unref (stmt);
 
 	return dm;
 }
@@ -1358,6 +1364,7 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	if (error != NULL)
 		{
+			g_object_unref (stmt);
 			g_warning ("Error parsing sql: %s\n%s\n",
 			           error->message != NULL ? error->message : "no details", sql);
 			return -1;
@@ -1373,6 +1380,8 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	error = NULL;
 	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);
+
+	g_object_unref (stmt);
 
 	if (error != NULL)
 		{
