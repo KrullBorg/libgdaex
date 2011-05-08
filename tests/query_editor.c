@@ -98,10 +98,10 @@ on_btn_get_sql_clicked (GtkButton *button,
 	gint size;
 
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-				                 GTK_DIALOG_DESTROY_WITH_PARENT,
-				                 GTK_MESSAGE_INFO,
-				                 GTK_BUTTONS_OK,
-				                 gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data));
+	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                            GTK_MESSAGE_INFO,
+	                                            GTK_BUTTONS_OK,
+	                                            gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data));
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);;
 
@@ -111,10 +111,10 @@ on_btn_get_sql_clicked (GtkButton *button,
 	xmlDocDumpMemory (doc, &buf, &size);
 
 	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-				                 GTK_DIALOG_DESTROY_WITH_PARENT,
-				                 GTK_MESSAGE_INFO,
-				                 GTK_BUTTONS_OK,
-				                 buf);
+	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                            GTK_MESSAGE_INFO,
+	                                            GTK_BUTTONS_OK,
+	                                            buf);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);;
 }
@@ -201,6 +201,7 @@ main (int argc, char *argv[])
 	field->name = g_strdup ("age");
 	field->name_visible = g_strdup ("Age");
 	field->description = g_strdup ("The client's age");
+	field->alias = g_strdup ("client_age");
 	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
