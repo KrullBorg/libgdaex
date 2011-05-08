@@ -1612,6 +1612,11 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
 			gtk_widget_set_visible (priv->txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
+
+			if (where_type != GDAEX_QE_WHERE_TYPE_BETWEEN)
+				{
+					gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
+				}
 		}
 }
 
