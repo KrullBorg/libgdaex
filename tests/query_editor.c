@@ -95,13 +95,18 @@ on_btn_get_sql_clicked (GtkButton *button,
 	xmlDoc *doc;
 	xmlNode *node;
 	xmlChar *buf;
+
+	gchar *sql;
+
 	gint size;
 
+	sql = (gchar *)gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
 	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                            GTK_MESSAGE_INFO,
 	                                            GTK_BUTTONS_OK,
-	                                            gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data));
+	                                            sql);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);;
 
@@ -109,6 +114,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
 	xmlDocSetRootElement (doc, node);
 	xmlDocDumpMemory (doc, &buf, &size);
+	buf = g_strjoinv ("%%", g_strsplit (buf, "%", -1));
 
 	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
 	                                            GTK_DIALOG_DESTROY_WITH_PARENT,

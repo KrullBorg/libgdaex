@@ -599,7 +599,21 @@ const gchar
 						{
 							from_str = g_strdup ("");
 						}
-					if (to_str == NULL || g_strcmp0 (g_strstrip (to_str), "") == 0)
+					else
+						{
+							if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE)
+								{
+									from_str = g_utf8_strdown (from_str, -1);
+								}
+						}
+					if (to_str != NULL && g_strcmp0 (g_strstrip (to_str), "") != 0)
+						{
+							if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE)
+								{
+									to_str = g_utf8_strdown (to_str, -1);
+								}
+						}
+					else
 						{
 							to_str = NULL;
 						}
@@ -607,7 +621,11 @@ const gchar
 					table = g_hash_table_lookup (priv->tables, table_name);
 					field = g_hash_table_lookup (table->fields, field_name);
 
-					id_field = gda_sql_builder_add_id (sqlbuilder, g_strconcat (table->name, ".", field->name, NULL));
+					id_field = gda_sql_builder_add_id (sqlbuilder,
+					                                   g_strconcat (where_type == GDAEX_QE_WHERE_TYPE_ILIKE ? "lower(" : "",
+					                                                table->name, ".", field->name,
+					                                                where_type == GDAEX_QE_WHERE_TYPE_ILIKE ? ")" : "",
+					                                                NULL));
 
 					switch (field->type)
 						{
@@ -647,6 +665,11 @@ const gchar
 								type = G_TYPE_DATE_TIME;
 								/* TODO */
 								break;
+
+							case GDAEX_QE_FIELD_TYPE_TIME:
+								type = G_TYPE_DATE_TIME;
+								/* TODO */
+								break;
 						};
 
 					switch (where_type)
@@ -656,12 +679,7 @@ const gchar
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_LIKE:
-								/* TODO */
-								op = GDA_SQL_OPERATOR_TYPE_LIKE;
-								break;
-
 							case GDAEX_QE_WHERE_TYPE_ILIKE:
-								/* TODO */
 								op = GDA_SQL_OPERATOR_TYPE_LIKE;
 								break;
 
@@ -1434,7 +1452,7 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_ILIKE:
-				ret = g_strdup ("Non case sensitive like");
+				ret = g_strdup ("Case-insensitive like");
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_GREAT:
@@ -1654,7 +1672,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 							}
 						else
 							{
-								g_strstrip (val1);
+								val1 = g_strstrip (g_strdup (val1));
 							}
 						gtk_list_store_set (priv->lstore_show, &iter,
 						                    COL_SHOW_ALIAS, val1,
@@ -1694,7 +1712,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 							}
 						else
 							{
-								g_strstrip (val1);
+								val1 = g_strstrip (g_strdup (val1));
 							}
 
 						val2 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt2));
@@ -2086,9 +2104,6 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (priv->cb_where_type), renderer, TRUE);
 			gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (priv->cb_where_type), renderer, "text", 1);
 
-			g_signal_connect (G_OBJECT (priv->cb_where_type), "changed",
-			                  G_CALLBACK (gdaex_query_editor_on_cb_where_type_changed), user_data);
-
 			gtk_list_store_clear (priv->lstore_where_type);
 			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_EQUAL)
 				{
@@ -2246,6 +2261,17 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
 						break;
 
+					case GDAEX_QE_FIELD_TYPE_TIME:
+						priv->txt1 = gtk_entry_new ();
+						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
+						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+
+						priv->txt2 = gtk_entry_new ();
+						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						break;
+
 					default:
 						g_warning ("Field's type «%d» not valid.", field->type);
 						break;
@@ -2256,10 +2282,11 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_widget_show_all (priv->vbx_values);
 			gtk_widget_show (priv->vbx_values_container);
 
-			gtk_widget_set_visible (priv->txt2, FALSE);
-
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
 			gtk_widget_set_visible (priv->txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
+
+			g_signal_connect (G_OBJECT (priv->cb_where_type), "changed",
+			                  G_CALLBACK (gdaex_query_editor_on_cb_where_type_changed), user_data);
 		}
 }
 
