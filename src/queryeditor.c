@@ -176,6 +176,7 @@ struct _GdaExQueryEditorPrivate
 		guint editor_type; /* 1 - show; 2 - where; 3 - order */
 
 		GtkWidget *hbox;
+		GtkWidget *tbl;
 		GtkWidget *cb_link_type;
 		GtkWidget *not;
 		GtkWidget *cb_where_type;
@@ -1512,6 +1513,9 @@ gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
 	GtkTreeIter iter;
 	GtkTreeIter iter_prev;
 
+	gboolean swap_link;
+	guint link_type;
+
 	GtkWidget *dialog;
 
 	g_return_if_fail (GTK_IS_LIST_STORE (store) || GTK_IS_TREE_STORE (store));
@@ -1523,6 +1527,18 @@ gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
 			path = gtk_tree_model_get_path (GTK_TREE_MODEL (store), &iter);
 			if (path != NULL)
 				{
+					/* if the first item of where is changed,
+					   swap link type */
+					swap_link = FALSE;
+					if (sel == priv->sel_where)
+						{
+							gint *indices = gtk_tree_path_get_indices (path);
+							if (indices[0] == (up ? 1 : 0))
+								{
+									swap_link = TRUE;
+								}
+						}
+
 					up ? gtk_tree_path_prev (path) : gtk_tree_path_next (path);
 					if (gtk_tree_model_get_iter (GTK_TREE_MODEL (store), &iter_prev, path))
 						{
@@ -1547,6 +1563,24 @@ gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
 										{
 											gtk_tree_store_move_after (GTK_TREE_STORE (store), &iter, &iter_prev);
 										}
+								}
+
+							if (swap_link)
+								{
+									gtk_tree_model_get_iter_first (GTK_TREE_MODEL (store), &iter_prev);
+									gtk_tree_model_get (GTK_TREE_MODEL (store), &iter_prev,
+									                    COL_WHERE_LINK_TYPE, &link_type,
+									                    -1);
+									gtk_tree_store_set (GTK_TREE_STORE (store), &iter_prev,
+									                    COL_WHERE_LINK_TYPE, 0,
+									                    COL_WHERE_LINK_TYPE_VISIBLE, "",
+									                    -1);
+
+									gtk_tree_model_iter_next (GTK_TREE_MODEL (store), &iter_prev);
+									gtk_tree_store_set (GTK_TREE_STORE (store), &iter_prev,
+									                    COL_WHERE_LINK_TYPE, link_type,
+									                    COL_WHERE_LINK_TYPE_VISIBLE, gdaex_query_editor_get_link_type_str_from_type (link_type),
+									                    -1);
 								}
 						}
 				}
@@ -1837,6 +1871,15 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 			if (where_type != GDAEX_QE_WHERE_TYPE_BETWEEN)
 				{
 					gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 0);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 0);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 0);
+				}
+			else
+				{
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 5);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 5);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 5);
 				}
 		}
 }
@@ -1925,10 +1968,10 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_val))
 									{
 										GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
-												                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-												                                    GTK_MESSAGE_WARNING,
-												                                    GTK_BUTTONS_OK,
-												                                    "You must select a link's type before.");
+										                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+										                                            GTK_MESSAGE_WARNING,
+										                                            GTK_BUTTONS_OK,
+										                                            "You must select a link's type before.");
 										gtk_dialog_run (GTK_DIALOG (dialog));
 										gtk_widget_destroy (dialog);
 										return;
@@ -2138,7 +2181,6 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
-	GtkWidget *tbl;
 	GtkWidget *lbl;
 
 	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
@@ -2167,20 +2209,20 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 
 			priv->hbox = gtk_hbox_new (TRUE, 0);
 
-			tbl = gtk_table_new (2, 2, FALSE);
-			gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-			gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-			gtk_box_pack_start (GTK_BOX (priv->hbox), tbl, TRUE, TRUE, 0);
+			priv->tbl = gtk_table_new (2, 2, FALSE);
+			gtk_table_set_row_spacings (GTK_TABLE (priv->tbl), 5);
+			gtk_table_set_col_spacings (GTK_TABLE (priv->tbl), 5);
+			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->tbl, TRUE, TRUE, 0);
 
 			lbl = gtk_label_new ("Alias");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
 
 			priv->txt1 = gtk_entry_new ();
 			gtk_entry_set_text (GTK_ENTRY (priv->txt1), alias == NULL ? "" : alias);
-			gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->txt1, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
@@ -2305,7 +2347,6 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
-	GtkWidget *tbl;
 	GtkWidget *lbl;
 	GtkWidget *widget_val1;
 	GtkWidget *widget_val2;
@@ -2340,10 +2381,10 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 			priv->hbox = gtk_hbox_new (TRUE, 0);
 
-			tbl = gtk_table_new (2, 7, FALSE);
-			gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-			gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-			gtk_box_pack_start (GTK_BOX (priv->hbox), tbl, TRUE, TRUE, 0);
+			priv->tbl = gtk_table_new (2, 7, FALSE);
+			gtk_table_set_row_spacings (GTK_TABLE (priv->tbl), 5);
+			gtk_table_set_col_spacings (GTK_TABLE (priv->tbl), 5);
+			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->tbl, TRUE, TRUE, 0);
 
 			/* if it is the first condition, "link" doesn't is visibile */
 			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
@@ -2351,17 +2392,17 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			if (indices[0] != 0)
 				{
 					lbl = gtk_label_new ("Link");
-					gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 0, 1, 0, 0, 0, 0);
+					gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 0, 1, 0, 1, 0, 0, 0, 0);
 				}
 
 			lbl = gtk_label_new ("Not");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 2, 3, 0, 1, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 2, 3, 0, 1, 0, 0, 0, 0);
 
 			lbl = gtk_label_new ("Condition");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 3, 4, 0, 1, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 3, 4, 0, 1, 0, 0, 0, 0);
 
 			priv->lbl_txt1 = gtk_label_new ("Value");
-			gtk_table_attach (GTK_TABLE (tbl), priv->lbl_txt1, 4, 5, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt1, 4, 5, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			/* if it is the first condition, "link" doesn't is visibile */
 			if (indices[0] != 0)
@@ -2392,15 +2433,19 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						{
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
 						}
-					gtk_table_attach (GTK_TABLE (tbl), priv->cb_link_type, 0, 1, 1, 2, 0, 0, 0, 0);
+					gtk_table_attach (GTK_TABLE (priv->tbl), priv->cb_link_type, 0, 1, 1, 2, 0, 0, 0, 0);
+				}
+			else
+				{
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 0, 0);
 				}
 
 			lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 1, 2, 1, 2, 0, 0, 0, 0);
 
 			priv->not = gtk_check_button_new ();
 			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->not), not);
-			gtk_table_attach (GTK_TABLE (tbl), priv->not, 2, 3, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->not, 2, 3, 1, 2, 0, 0, 0, 0);
 
 			priv->cb_where_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_where_type));
 
@@ -2565,10 +2610,10 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
 				}
-			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 3, 4, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->cb_where_type, 3, 4, 1, 2, 0, 0, 0, 0);
 
 			priv->lbl_txt2 = gtk_label_new ("and");
-			gtk_table_attach (GTK_TABLE (tbl), priv->lbl_txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt2, 5, 6, 1, 2, 0, 0, 0, 0);
 
 			switch (field->type)
 				{
@@ -2641,8 +2686,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 				};
 
-			gtk_table_attach (GTK_TABLE (tbl), widget_val1, 4, 5, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
-			gtk_table_attach (GTK_TABLE (tbl), widget_val2, 6, 7, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val1, 4, 5, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val2, 6, 7, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
@@ -2652,8 +2697,21 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_widget_set_visible (priv->lbl_txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
 			gtk_widget_set_visible (priv->txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
 
+			if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
+				{
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 3, 0);
+				}
+
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
 			gtk_widget_set_visible (priv->txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
+
+			if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN
+			    || where_type == 0)
+				{
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 0);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 0);
+					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 0);
+				}
 
 			g_signal_connect (G_OBJECT (priv->cb_where_type), "changed",
 			                  G_CALLBACK (gdaex_query_editor_on_cb_where_type_changed), user_data);
