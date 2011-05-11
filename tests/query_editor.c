@@ -186,8 +186,12 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_ILIKE
-	                              | GDAEX_QE_WHERE_TYPE_ILIKE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_STARTS
+	                              | GDAEX_QE_WHERE_TYPE_CONTAINS
+	                              | GDAEX_QE_WHERE_TYPE_ENDS
+	                              | GDAEX_QE_WHERE_TYPE_ISTARTS
+	                              | GDAEX_QE_WHERE_TYPE_ICONTAINS
+	                              | GDAEX_QE_WHERE_TYPE_IENDS;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -198,8 +202,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_LIKE
-	                              | GDAEX_QE_WHERE_TYPE_ILIKE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
@@ -211,12 +214,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL
-	                              | GDAEX_QE_WHERE_TYPE_GREAT
-	                              | GDAEX_QE_WHERE_TYPE_GREAT_EQUAL
-	                              | GDAEX_QE_WHERE_TYPE_LESS
-	                              | GDAEX_QE_WHERE_TYPE_LESS_EQUAL
-	                              | GDAEX_QE_WHERE_TYPE_BETWEEN;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 

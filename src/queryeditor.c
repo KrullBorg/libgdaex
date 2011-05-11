@@ -601,14 +601,18 @@ const gchar
 						}
 					else
 						{
-							if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE)
+							if (where_type == GDAEX_QE_WHERE_TYPE_ISTARTS
+							    || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS
+							    || where_type == GDAEX_QE_WHERE_TYPE_IENDS)
 								{
 									from_str = g_utf8_strdown (from_str, -1);
 								}
 						}
 					if (to_str != NULL && g_strcmp0 (g_strstrip (to_str), "") != 0)
 						{
-							if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE)
+							if (where_type == GDAEX_QE_WHERE_TYPE_ISTARTS
+							    || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS
+							    || where_type == GDAEX_QE_WHERE_TYPE_IENDS)
 								{
 									to_str = g_utf8_strdown (to_str, -1);
 								}
@@ -618,13 +622,45 @@ const gchar
 							to_str = NULL;
 						}
 
+					if (where_type == GDAEX_QE_WHERE_TYPE_STARTS
+					    || where_type == GDAEX_QE_WHERE_TYPE_ISTARTS)
+						{
+							from_str = g_strconcat (from_str, "%", NULL);
+							if (to_str != NULL)
+								{
+									to_str = g_strconcat (to_str, "%", NULL);
+								}
+						}
+					if (where_type == GDAEX_QE_WHERE_TYPE_CONTAINS
+					    || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS)
+						{
+							from_str = g_strconcat ("%", from_str, "%", NULL);
+							if (to_str != NULL)
+								{
+									to_str = g_strconcat ("%", to_str, "%", NULL);
+								}
+						}
+					if (where_type == GDAEX_QE_WHERE_TYPE_ENDS
+					    || where_type == GDAEX_QE_WHERE_TYPE_IENDS)
+						{
+							from_str = g_strconcat ("%", from_str, NULL);
+							if (to_str != NULL)
+								{
+									to_str = g_strconcat ("%", to_str, NULL);
+								}
+						}
+
 					table = g_hash_table_lookup (priv->tables, table_name);
 					field = g_hash_table_lookup (table->fields, field_name);
 
 					id_field = gda_sql_builder_add_id (sqlbuilder,
-					                                   g_strconcat (where_type == GDAEX_QE_WHERE_TYPE_ILIKE ? "lower(" : "",
+					                                   g_strconcat (where_type == GDAEX_QE_WHERE_TYPE_ISTARTS
+					                                                || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS
+					                                                || where_type == GDAEX_QE_WHERE_TYPE_IENDS ? "lower(" : "",
 					                                                table->name, ".", field->name,
-					                                                where_type == GDAEX_QE_WHERE_TYPE_ILIKE ? ")" : "",
+					                                                where_type == GDAEX_QE_WHERE_TYPE_ISTARTS
+					                                                || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS
+					                                                || where_type == GDAEX_QE_WHERE_TYPE_IENDS ? ")" : "",
 					                                                NULL));
 
 					switch (field->type)
@@ -678,8 +714,12 @@ const gchar
 								op = GDA_SQL_OPERATOR_TYPE_EQ;
 								break;
 
-							case GDAEX_QE_WHERE_TYPE_LIKE:
-							case GDAEX_QE_WHERE_TYPE_ILIKE:
+							case GDAEX_QE_WHERE_TYPE_STARTS:
+							case GDAEX_QE_WHERE_TYPE_CONTAINS:
+							case GDAEX_QE_WHERE_TYPE_ENDS:
+							case GDAEX_QE_WHERE_TYPE_ISTARTS:
+							case GDAEX_QE_WHERE_TYPE_ICONTAINS:
+							case GDAEX_QE_WHERE_TYPE_IENDS:
 								op = GDA_SQL_OPERATOR_TYPE_LIKE;
 								break;
 
@@ -864,12 +904,28 @@ xmlNode
 								str_op = g_strdup ("EQUAL");
 								break;
 
-							case GDAEX_QE_WHERE_TYPE_LIKE:
-								str_op = g_strdup ("LIKE");
+							case GDAEX_QE_WHERE_TYPE_STARTS:
+								str_op = g_strdup ("STARTS");
 								break;
 
-							case GDAEX_QE_WHERE_TYPE_ILIKE:
-								str_op = g_strdup ("ILIKE");
+							case GDAEX_QE_WHERE_TYPE_CONTAINS:
+								str_op = g_strdup ("CONTAINS");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ENDS:
+								str_op = g_strdup ("ENDS");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ISTARTS:
+								str_op = g_strdup ("ISTARTS");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ICONTAINS:
+								str_op = g_strdup ("ICONTAINS");
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_IENDS:
+								str_op = g_strdup ("IENDS");
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_GREAT:
@@ -1037,13 +1093,29 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 									{
 										where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
 									}
-								else if (g_strcmp0 (condition, "LIKE") == 0)
+								else if (g_strcmp0 (condition, "STARTS") == 0)
 									{
-										where_type = GDAEX_QE_WHERE_TYPE_LIKE;
+										where_type = GDAEX_QE_WHERE_TYPE_STARTS;
 									}
-								else if (g_strcmp0 (condition, "ILIKE") == 0)
+								else if (g_strcmp0 (condition, "CONTAINS") == 0)
 									{
-										where_type = GDAEX_QE_WHERE_TYPE_ILIKE;
+										where_type = GDAEX_QE_WHERE_TYPE_CONTAINS;
+									}
+								else if (g_strcmp0 (condition, "ENDS") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_ENDS;
+									}
+								else if (g_strcmp0 (condition, "ISTARTS") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_ISTARTS;
+									}
+								else if (g_strcmp0 (condition, "ICONTAINS") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_ICONTAINS;
+									}
+								else if (g_strcmp0 (condition, "IENDS") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_IENDS;
 									}
 								else if (g_strcmp0 (condition, "GREAT") == 0)
 									{
@@ -1447,12 +1519,28 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 				ret = g_strdup ("Equal");
 				break;
 
-			case GDAEX_QE_WHERE_TYPE_LIKE:
-				ret = g_strdup ("Like");
+			case GDAEX_QE_WHERE_TYPE_STARTS:
+				ret = g_strdup ("Starts with");
 				break;
 
-			case GDAEX_QE_WHERE_TYPE_ILIKE:
-				ret = g_strdup ("Case-insensitive like");
+			case GDAEX_QE_WHERE_TYPE_CONTAINS:
+				ret = g_strdup ("Contains");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_ENDS:
+				ret = g_strdup ("Ends with");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_ISTARTS:
+				ret = g_strdup ("Case-insensitive starts with");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_ICONTAINS:
+				ret = g_strdup ("Case-insensitive contains");
+				break;
+
+			case GDAEX_QE_WHERE_TYPE_IENDS:
+				ret = g_strdup ("Case-insensitive ends with");
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_GREAT:
@@ -1460,7 +1548,7 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
-				ret = g_strdup ("Greater equal");
+				ret = g_strdup ("Greater or equal");
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_LESS:
@@ -1468,7 +1556,7 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
-				ret = g_strdup ("Lesser equal");
+				ret = g_strdup ("Lesser or equal");
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_BETWEEN:
@@ -2122,26 +2210,74 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
 				}
-			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_LIKE)
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_STARTS)
 				{
 					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
 					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
-					                    0, GDAEX_QE_WHERE_TYPE_LIKE,
-					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_LIKE),
+					                    0, GDAEX_QE_WHERE_TYPE_STARTS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_STARTS),
 					                    -1);
-					if (where_type == GDAEX_QE_WHERE_TYPE_LIKE)
+					if (where_type == GDAEX_QE_WHERE_TYPE_STARTS)
 						{
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
 				}
-			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_ILIKE)
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_CONTAINS)
 				{
 					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
 					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
-					                    0, GDAEX_QE_WHERE_TYPE_ILIKE,
-					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_ILIKE),
+					                    0, GDAEX_QE_WHERE_TYPE_CONTAINS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_CONTAINS),
 					                    -1);
-					if (where_type == GDAEX_QE_WHERE_TYPE_ILIKE)
+					if (where_type == GDAEX_QE_WHERE_TYPE_CONTAINS)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+						}
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_ENDS)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+					                    0, GDAEX_QE_WHERE_TYPE_ENDS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_ENDS),
+					                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_ENDS)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+						}
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_ISTARTS)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+					                    0, GDAEX_QE_WHERE_TYPE_ISTARTS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_ISTARTS),
+					                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_ISTARTS)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+						}
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_ICONTAINS)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+					                    0, GDAEX_QE_WHERE_TYPE_ICONTAINS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_ICONTAINS),
+					                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+						}
+				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_IENDS)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+					                    0, GDAEX_QE_WHERE_TYPE_IENDS,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_IENDS),
+					                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_IENDS)
 						{
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
