@@ -42,6 +42,12 @@ typedef struct
 		GSList *fields2;
 	} GdaExQueryEditorRelation;
 
+typedef enum
+	{
+		GDAEX_QE_LINK_TYPE_AND = 1,
+		GDAEX_QE_LINK_TYPE_OR = 2
+	} GdaExQueryEditorLinkType;
+
 static void gdaex_query_editor_class_init (GdaExQueryEditorClass *class);
 static void gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor);
 
@@ -81,6 +87,7 @@ static gboolean gdaex_query_editor_model_has_value (GtkTreeModel *model,
 static void gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe);
 
 static gchar *gdaex_query_editor_get_where_type_str_from_type (guint where_type);
+static gchar *gdaex_query_editor_get_link_type_str_from_type (guint link_type);
 
 static void gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
                                                          gpointer user_data);
@@ -168,8 +175,8 @@ struct _GdaExQueryEditorPrivate
 		/* for value choosing */
 		guint editor_type; /* 1 - show; 2 - where; 3 - order */
 
-		GtkListStore *lstore_where_type;
 		GtkWidget *hbox;
+		GtkWidget *cb_link_type;
 		GtkWidget *not;
 		GtkWidget *cb_where_type;
 		GtkWidget *txt1;
@@ -177,6 +184,9 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *txt2;
 		GtkWidget *opt_asc;
 		GtkWidget *opt_desc;
+
+		GtkListStore *lstore_link_type;
+		GtkListStore *lstore_where_type;
 	};
 
 G_DEFINE_TYPE (GdaExQueryEditor, gdaex_query_editor, G_TYPE_OBJECT)
@@ -199,6 +209,8 @@ enum
 
 enum
 	{
+		COL_WHERE_LINK_TYPE,
+		COL_WHERE_LINK_TYPE_VISIBLE,
 		COL_WHERE_TABLE_NAME,
 		COL_WHERE_NAME,
 		COL_WHERE_VISIBLE_NAME,
@@ -238,6 +250,9 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 	priv->hpaned_main = NULL;
 	priv->relations = NULL;
 
+	priv->lstore_link_type = gtk_list_store_new (2,
+	                                              G_TYPE_UINT,
+	                                              G_TYPE_STRING);
 	priv->lstore_where_type = gtk_list_store_new (2,
 	                                              G_TYPE_UINT,
 	                                              G_TYPE_STRING);
@@ -566,9 +581,11 @@ const gchar
 
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
 		{
+			guint link_type;
+			GdaSqlOperatorType link_op;
 			gboolean not;
 			guint where_type;
-			GdaSqlOperatorType op;
+			GdaSqlOperatorType where_op;
 			GType type;
 			gchar *from_str;
 			gchar *to_str;
@@ -587,6 +604,7 @@ const gchar
 					id_value2 = 0;
 
 					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+					                    COL_WHERE_LINK_TYPE, &link_type,
 					                    COL_WHERE_TABLE_NAME, &table_name,
 					                    COL_WHERE_NAME, &field_name,
 					                    COL_WHERE_CONDITION_NOT, &not,
@@ -663,6 +681,17 @@ const gchar
 					                                                || where_type == GDAEX_QE_WHERE_TYPE_IENDS ? ")" : "",
 					                                                NULL));
 
+					switch (link_type)
+						{
+							case GDAEX_QE_LINK_TYPE_AND:
+								link_op = GDA_SQL_OPERATOR_TYPE_AND;
+								break;
+
+							case GDAEX_QE_LINK_TYPE_OR:
+								link_op = GDA_SQL_OPERATOR_TYPE_OR;
+								break;
+						}
+
 					switch (field->type)
 						{
 							case GDAEX_QE_FIELD_TYPE_TEXT:
@@ -711,7 +740,7 @@ const gchar
 					switch (where_type)
 						{
 							case GDAEX_QE_WHERE_TYPE_EQUAL:
-								op = GDA_SQL_OPERATOR_TYPE_EQ;
+								where_op = GDA_SQL_OPERATOR_TYPE_EQ;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_STARTS:
@@ -720,27 +749,27 @@ const gchar
 							case GDAEX_QE_WHERE_TYPE_ISTARTS:
 							case GDAEX_QE_WHERE_TYPE_ICONTAINS:
 							case GDAEX_QE_WHERE_TYPE_IENDS:
-								op = GDA_SQL_OPERATOR_TYPE_LIKE;
+								where_op = GDA_SQL_OPERATOR_TYPE_LIKE;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_GREAT:
-								op = GDA_SQL_OPERATOR_TYPE_GT;
+								where_op = GDA_SQL_OPERATOR_TYPE_GT;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
-								op = GDA_SQL_OPERATOR_TYPE_GEQ;
+								where_op = GDA_SQL_OPERATOR_TYPE_GEQ;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_LESS:
-								op = GDA_SQL_OPERATOR_TYPE_LT;
+								where_op = GDA_SQL_OPERATOR_TYPE_LT;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
-								op = GDA_SQL_OPERATOR_TYPE_LEQ;
+								where_op = GDA_SQL_OPERATOR_TYPE_LEQ;
 								break;
 
 							case GDAEX_QE_WHERE_TYPE_BETWEEN:
-								op = GDA_SQL_OPERATOR_TYPE_BETWEEN;
+								where_op = GDA_SQL_OPERATOR_TYPE_BETWEEN;
 								break;
 
 							default:
@@ -748,7 +777,7 @@ const gchar
 								continue;
 						}
 
-					id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, op, id_field, id_value1, id_value2);
+					id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, where_op, id_field, id_value1, id_value2);
 					if (not)
 						{
 							id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
@@ -759,7 +788,7 @@ const gchar
 						}
 					else
 						{
-							id_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_AND, id_cond, id_cond_iter, 0);
+							id_cond = gda_sql_builder_add_cond (sqlbuilder, link_op, id_cond, id_cond_iter, 0);
 						}
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), &iter));
 
@@ -878,10 +907,15 @@ xmlNode
 		{
 			xmlNode *node_where;
 
+			GtkTreePath *path;
+			gint *indices;
+
 			gboolean not;
+			guint link_type;
 			guint where_type;
 			gchar *from_str;
 			gchar *to_str;
+			gchar *str_link;
 			gchar *str_op;
 
 			node_where = xmlNewNode (NULL, "where");
@@ -890,6 +924,7 @@ xmlNode
 			do
 				{
 					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+					                    COL_WHERE_LINK_TYPE, &link_type,
 					                    COL_WHERE_TABLE_NAME, &table_name,
 					                    COL_WHERE_NAME, &field_name,
 					                    COL_WHERE_CONDITION_NOT, &not,
@@ -897,6 +932,31 @@ xmlNode
 					                    COL_WHERE_CONDITION_FROM, &from_str,
 					                    COL_WHERE_CONDITION_TO, &to_str,
 					                    -1);
+
+					switch (link_type)
+						{
+							case GDAEX_QE_LINK_TYPE_AND:
+								str_link = g_strdup ("AND");
+								break;
+
+							case GDAEX_QE_LINK_TYPE_OR:
+								str_link = g_strdup ("OR");
+								break;
+
+							default:
+								path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
+								indices = gtk_tree_path_get_indices (path);
+								if (indices[0] != 0)
+									{
+										g_warning ("Link type «%d» not valid.", link_type);
+										continue;
+									}
+								else
+									{
+										str_link = g_strdup ("");
+										break;
+									}
+						}
 
 					switch (where_type)
 						{
@@ -959,8 +1019,8 @@ xmlNode
 
 					xmlNewProp (node, "table", table_name);
 					xmlNewProp (node, "field", field_name);
+					xmlNewProp (node, "link_type", str_link);
 					xmlNewProp (node, "not", (not ? "y" : "n"));
-
 					xmlNewProp (node, "where_type", str_op);
 					xmlNewProp (node, "from", from_str);
 					xmlNewProp (node, "to", to_str);
@@ -1078,16 +1138,29 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 							}
 						else if (xmlStrEqual (node->name, "where"))
 							{
+								gchar *link;
 								gchar *not;
 								gchar *condition;
 								gchar *from;
 								gchar *to;
+								GdaExQueryEditorLinkType link_type;
 								GdaExQueryEditorWhereType where_type;
 
+								link = xmlGetProp (node_field, "link_type");
 								not = xmlGetProp (node_field, "not");
 								condition = xmlGetProp (node_field, "where_type");
 								from = xmlGetProp (node_field, "from");
 								to = xmlGetProp (node_field, "to");
+
+								link_type = 0;
+								if (g_strcmp0 (link, "AND") == 0)
+									{
+										link_type = GDAEX_QE_LINK_TYPE_AND;
+									}
+								else if (g_strcmp0 (link, "OR") == 0)
+									{
+										link_type = GDAEX_QE_LINK_TYPE_OR;
+									}
 
 								if (g_strcmp0 (condition, "EQUAL") == 0)
 									{
@@ -1142,6 +1215,8 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 									{
 										gtk_tree_store_append (priv->tstore_where, &iter, NULL);
 										gtk_tree_store_set (priv->tstore_where, &iter,
+										                    COL_WHERE_LINK_TYPE, link_type,
+										                    COL_WHERE_LINK_TYPE_VISIBLE, gdaex_query_editor_get_link_type_str_from_type (link_type),
 										                    COL_WHERE_TABLE_NAME, table_name,
 										                    COL_WHERE_NAME, field_name,
 										                    COL_WHERE_VISIBLE_NAME, name_visible,
@@ -1567,6 +1642,27 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 	return ret;
 }
 
+static gchar *
+gdaex_query_editor_get_link_type_str_from_type (guint link_type)
+{
+	gchar *ret;
+
+	ret = NULL;
+
+	switch (link_type)
+		{
+			case GDAEX_QE_LINK_TYPE_AND:
+				ret = g_strdup ("And");
+				break;
+
+			case GDAEX_QE_LINK_TYPE_OR:
+				ret = g_strdup ("Or");
+				break;
+		};
+
+	return ret;
+}
+
 static void
 gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
                                           gpointer user_data)
@@ -1778,10 +1874,39 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 			case 2:
 				if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
 					{
+						GtkTreeModel *model;
 						GtkTreeIter iter_val;
+						guint link_type;
 						guint where_type;
 
-						GtkTreeModel *model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_where_type));
+						/* if it is the first condition, "link" doesn't is visibile */
+						GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
+						gint *indices = gtk_tree_path_get_indices (path);
+						if (indices[0] != 0)
+							{
+								model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_link_type));
+								if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_val))
+									{
+										GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
+												                                    GTK_DIALOG_DESTROY_WITH_PARENT,
+												                                    GTK_MESSAGE_WARNING,
+												                                    GTK_BUTTONS_OK,
+												                                    "You must select a link's type before.");
+										gtk_dialog_run (GTK_DIALOG (dialog));
+										gtk_widget_destroy (dialog);
+										return;
+									}
+
+								gtk_tree_model_get (model, &iter_val,
+										            0, &link_type,
+										            -1);
+							}
+						else
+							{
+								link_type = 0;
+							}
+
+						model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_where_type));
 						if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_val))
 							{
 								GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
@@ -1819,6 +1944,8 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 							}
 
 						gtk_tree_store_set (priv->tstore_where, &iter,
+						                    COL_WHERE_LINK_TYPE, link_type,
+						                    COL_WHERE_LINK_TYPE_VISIBLE, gdaex_query_editor_get_link_type_str_from_type (link_type),
 						                    COL_WHERE_CONDITION_NOT, gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->not)),
 						                    COL_WHERE_CONDITION_TYPE, where_type,
 						                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
@@ -2127,7 +2254,10 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
                                          gpointer user_data)
 {
 	GtkTreeIter iter;
+	GtkTreePath *path;
+	gint *indices;
 
+	guint link_type;
 	gchar *table_name;
 	gchar *field_name;
 	gboolean not;
@@ -2157,6 +2287,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_tree_selection_unselect_all (priv->sel_order);
 
 			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
+			                    COL_WHERE_LINK_TYPE, &link_type,
 			                    COL_WHERE_TABLE_NAME, &table_name,
 			                    COL_WHERE_NAME, &field_name,
 			                    COL_WHERE_CONDITION_NOT, &not,
@@ -2170,26 +2301,67 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 			priv->hbox = gtk_hbox_new (TRUE, 0);
 
-			tbl = gtk_table_new (2, 6, FALSE);
+			tbl = gtk_table_new (2, 7, FALSE);
 			gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
 			gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
 			gtk_box_pack_start (GTK_BOX (priv->hbox), tbl, TRUE, TRUE, 0);
 
-			lbl = gtk_label_new ("Not");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, 0, 0, 0, 0);
+			/* if it is the first condition, "link" doesn't is visibile */
+			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
+			indices = gtk_tree_path_get_indices (path);
+			if (indices[0] != 0)
+				{
+					lbl = gtk_label_new ("Link");
+					gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 0, 1, 0, 0, 0, 0);
+				}
 
-			lbl = gtk_label_new ("Condition");
+			lbl = gtk_label_new ("Not");
 			gtk_table_attach (GTK_TABLE (tbl), lbl, 2, 3, 0, 1, 0, 0, 0, 0);
 
-			lbl = gtk_label_new ("Value");
+			lbl = gtk_label_new ("Condition");
 			gtk_table_attach (GTK_TABLE (tbl), lbl, 3, 4, 0, 1, 0, 0, 0, 0);
 
+			lbl = gtk_label_new ("Value");
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 0, 1, 0, 0, 0, 0);
+
+			/* if it is the first condition, "link" doesn't is visibile */
+			if (indices[0] != 0)
+				{
+					priv->cb_link_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_link_type));
+
+					renderer = gtk_cell_renderer_text_new ();
+					gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (priv->cb_link_type), renderer, TRUE);
+					gtk_cell_layout_add_attribute (GTK_CELL_LAYOUT (priv->cb_link_type), renderer, "text", 1);
+
+					gtk_list_store_clear (priv->lstore_link_type);
+
+					gtk_list_store_append (priv->lstore_link_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_link_type, &iter_cb,
+							            0, GDAEX_QE_LINK_TYPE_AND,
+							            1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_AND),
+							            -1);
+					if (link_type == GDAEX_QE_LINK_TYPE_AND)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
+						}
+					gtk_list_store_append (priv->lstore_link_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_link_type, &iter_cb,
+							            0, GDAEX_QE_LINK_TYPE_OR,
+							            1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_OR),
+							            -1);
+					if (link_type == GDAEX_QE_LINK_TYPE_OR)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
+						}
+					gtk_table_attach (GTK_TABLE (tbl), priv->cb_link_type, 0, 1, 1, 2, 0, 0, 0, 0);
+				}
+
 			lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 1, 2, 0, 0, 0, 0);
 
 			priv->not = gtk_check_button_new ();
 			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->not), not);
-			gtk_table_attach (GTK_TABLE (tbl), priv->not, 1, 2, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), priv->not, 2, 3, 1, 2, 0, 0, 0, 0);
 
 			priv->cb_where_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_where_type));
 
@@ -2342,10 +2514,10 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
 				}
-			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 2, 3, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 3, 4, 1, 2, 0, 0, 0, 0);
 
 			priv->lbl_txt2 = gtk_label_new ("and");
-			gtk_table_attach (GTK_TABLE (tbl), priv->lbl_txt2, 4, 5, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), priv->lbl_txt2, 5, 6, 1, 2, 0, 0, 0, 0);
 
 			switch (field->type)
 				{
@@ -2353,64 +2525,64 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					case GDAEX_QE_FIELD_TYPE_TEXT:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_INTEGER:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DOUBLE:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATE:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 10);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATETIME:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_TIME:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 3, 4, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
 						break;
 
 					default:
