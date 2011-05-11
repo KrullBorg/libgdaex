@@ -202,7 +202,8 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING
+	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 

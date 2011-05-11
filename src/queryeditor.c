@@ -179,6 +179,7 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *cb_link_type;
 		GtkWidget *not;
 		GtkWidget *cb_where_type;
+		GtkWidget *lbl_txt1;
 		GtkWidget *txt1;
 		GtkWidget *lbl_txt2;
 		GtkWidget *txt2;
@@ -586,7 +587,6 @@ const gchar
 			gboolean not;
 			guint where_type;
 			GdaSqlOperatorType where_op;
-			GType type;
 			gchar *from_str;
 			gchar *to_str;
 			GDate *from_date;
@@ -640,32 +640,34 @@ const gchar
 							to_str = NULL;
 						}
 
-					if (where_type == GDAEX_QE_WHERE_TYPE_STARTS
-					    || where_type == GDAEX_QE_WHERE_TYPE_ISTARTS)
+					switch (where_type)
 						{
-							from_str = g_strconcat (from_str, "%", NULL);
-							if (to_str != NULL)
-								{
-									to_str = g_strconcat (to_str, "%", NULL);
-								}
-						}
-					if (where_type == GDAEX_QE_WHERE_TYPE_CONTAINS
-					    || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS)
-						{
-							from_str = g_strconcat ("%", from_str, "%", NULL);
-							if (to_str != NULL)
-								{
-									to_str = g_strconcat ("%", to_str, "%", NULL);
-								}
-						}
-					if (where_type == GDAEX_QE_WHERE_TYPE_ENDS
-					    || where_type == GDAEX_QE_WHERE_TYPE_IENDS)
-						{
-							from_str = g_strconcat ("%", from_str, NULL);
-							if (to_str != NULL)
-								{
-									to_str = g_strconcat ("%", to_str, NULL);
-								}
+							case GDAEX_QE_WHERE_TYPE_STARTS:
+							case GDAEX_QE_WHERE_TYPE_ISTARTS:
+								from_str = g_strconcat (from_str, "%", NULL);
+								if (to_str != NULL)
+									{
+										to_str = g_strconcat (to_str, "%", NULL);
+									}
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_CONTAINS:
+							case GDAEX_QE_WHERE_TYPE_ICONTAINS:
+								from_str = g_strconcat ("%", from_str, "%", NULL);
+								if (to_str != NULL)
+									{
+										to_str = g_strconcat ("%", to_str, "%", NULL);
+									}
+								break;
+
+							case GDAEX_QE_WHERE_TYPE_ENDS:
+							case GDAEX_QE_WHERE_TYPE_IENDS:
+								from_str = g_strconcat ("%", from_str, NULL);
+								if (to_str != NULL)
+									{
+										to_str = g_strconcat ("%", to_str, NULL);
+									}
+								break;
 						}
 
 					table = g_hash_table_lookup (priv->tables, table_name);
@@ -692,50 +694,54 @@ const gchar
 								break;
 						}
 
-					switch (field->type)
+					if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
 						{
-							case GDAEX_QE_FIELD_TYPE_TEXT:
-								type = G_TYPE_STRING;
-								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, from_str);
-								if (to_str != NULL)
-									{
-										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, to_str);
-									}
-								break;
+							id_value1 = 0;
+						}
+					else
+						{
+							switch (field->type)
+								{
+									case GDAEX_QE_FIELD_TYPE_TEXT:
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_STRING, from_str);
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_STRING, to_str);
+											}
+										break;
 
-							case GDAEX_QE_FIELD_TYPE_INTEGER:
-								type = G_TYPE_INT;
-								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, strtol (from_str, NULL, 10));
-								if (to_str != NULL)
-									{
-										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, strtol (to_str, NULL, 10));
-									}
-								break;
+									case GDAEX_QE_FIELD_TYPE_INTEGER:
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_INT, strtol (from_str, NULL, 10));
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_INT, strtol (to_str, NULL, 10));
+											}
+										break;
 
-							case GDAEX_QE_FIELD_TYPE_DOUBLE:
-								type = G_TYPE_DOUBLE;
-								id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, g_strtod (from_str, NULL));
-								if (to_str != NULL)
-									{
-										id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, type, g_strtod (to_str, NULL));
-									}
-								break;
+									case GDAEX_QE_FIELD_TYPE_DOUBLE:
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_DOUBLE, g_strtod (from_str, NULL));
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_DOUBLE, g_strtod (to_str, NULL));
+											}
+										break;
 
-							case GDAEX_QE_FIELD_TYPE_DATE:
-								type = G_TYPE_DATE;
-								/* TODO */
-								break;
+									case GDAEX_QE_FIELD_TYPE_DATE:
+										/* TODO
+										type = G_TYPE_DATE; */
+										break;
 
-							case GDAEX_QE_FIELD_TYPE_DATETIME:
-								type = G_TYPE_DATE_TIME;
-								/* TODO */
-								break;
+									case GDAEX_QE_FIELD_TYPE_DATETIME:
+										/* TODO
+										type = G_TYPE_DATE_TIME; */
+										break;
 
-							case GDAEX_QE_FIELD_TYPE_TIME:
-								type = G_TYPE_DATE_TIME;
-								/* TODO */
-								break;
-						};
+									case GDAEX_QE_FIELD_TYPE_TIME:
+										/* TODO
+										type = G_TYPE_DATE_TIME; */
+										break;
+								};
+						}
 
 					switch (where_type)
 						{
@@ -772,13 +778,24 @@ const gchar
 								where_op = GDA_SQL_OPERATOR_TYPE_BETWEEN;
 								break;
 
+							case GDAEX_QE_WHERE_TYPE_IS_NULL:
+								if (not)
+									{
+										where_op = GDA_SQL_OPERATOR_TYPE_ISNOTNULL;
+									}
+								else
+									{
+										where_op = GDA_SQL_OPERATOR_TYPE_ISNULL;
+									}
+								break;
+
 							default:
 								g_warning ("Where type «%d» not valid.", where_type);
 								continue;
 						}
 
 					id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, where_op, id_field, id_value1, id_value2);
-					if (not)
+					if (not && where_type != GDAEX_QE_WHERE_TYPE_IS_NULL)
 						{
 							id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
 						}
@@ -1008,6 +1025,10 @@ xmlNode
 								str_op = g_strdup ("BETWEEN");
 								break;
 
+							case GDAEX_QE_WHERE_TYPE_IS_NULL:
+								str_op = g_strdup ("IS_NULL");
+								break;
+
 							default:
 								g_warning ("Where type «%d» not valid.", where_type);
 								continue;
@@ -1209,6 +1230,10 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 								else if (g_strcmp0 (condition, "BETWEEN") == 0)
 									{
 										where_type = GDAEX_QE_WHERE_TYPE_BETWEEN;
+									}
+								else if (g_strcmp0 (condition, "IS_NULL") == 0)
+									{
+										where_type = GDAEX_QE_WHERE_TYPE_IS_NULL;
 									}
 
 								if (where_type != 0)
@@ -1637,6 +1662,10 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 			case GDAEX_QE_WHERE_TYPE_BETWEEN:
 				ret = g_strdup ("Between");
 				break;
+
+			case GDAEX_QE_WHERE_TYPE_IS_NULL:
+				ret = g_strdup ("Is NULL");
+				break;
 		};
 
 	return ret;
@@ -1793,6 +1822,14 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 			gtk_tree_model_get (model, &iter,
 			                    0, &where_type,
 			                    -1);
+
+			gtk_widget_set_visible (priv->lbl_txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
+			gtk_widget_set_visible (priv->txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
+
+			if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
+				{
+					gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
+				}
 
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
 			gtk_widget_set_visible (priv->txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
@@ -2136,14 +2173,14 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 			gtk_box_pack_start (GTK_BOX (priv->hbox), tbl, TRUE, TRUE, 0);
 
 			lbl = gtk_label_new ("Alias");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
 			gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
 
 			priv->txt1 = gtk_entry_new ();
 			gtk_entry_set_text (GTK_ENTRY (priv->txt1), alias == NULL ? "" : alias);
-			gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 1, 2, 1, 2, 0, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
@@ -2270,6 +2307,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 	GtkWidget *tbl;
 	GtkWidget *lbl;
+	GtkWidget *widget_val1;
+	GtkWidget *widget_val2;
 	GtkTreeIter iter_cb;
 	GtkCellRenderer *renderer;
 
@@ -2321,8 +2360,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			lbl = gtk_label_new ("Condition");
 			gtk_table_attach (GTK_TABLE (tbl), lbl, 3, 4, 0, 1, 0, 0, 0, 0);
 
-			lbl = gtk_label_new ("Value");
-			gtk_table_attach (GTK_TABLE (tbl), lbl, 4, 5, 0, 1, 0, 0, 0, 0);
+			priv->lbl_txt1 = gtk_label_new ("Value");
+			gtk_table_attach (GTK_TABLE (tbl), priv->lbl_txt1, 4, 5, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			/* if it is the first condition, "link" doesn't is visibile */
 			if (indices[0] != 0)
@@ -2514,6 +2553,18 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 						}
 				}
+			if (field->available_where_type & GDAEX_QE_WHERE_TYPE_IS_NULL)
+				{
+					gtk_list_store_append (priv->lstore_where_type, &iter_cb);
+					gtk_list_store_set (priv->lstore_where_type, &iter_cb,
+					                    0, GDAEX_QE_WHERE_TYPE_IS_NULL,
+					                    1, gdaex_query_editor_get_where_type_str_from_type (GDAEX_QE_WHERE_TYPE_IS_NULL),
+					                    -1);
+					if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
+						{
+							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
+						}
+				}
 			gtk_table_attach (GTK_TABLE (tbl), priv->cb_where_type, 3, 4, 1, 2, 0, 0, 0, 0);
 
 			priv->lbl_txt2 = gtk_label_new ("and");
@@ -2525,64 +2576,64 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					case GDAEX_QE_FIELD_TYPE_TEXT:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_INTEGER:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DOUBLE:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATE:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 10);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATETIME:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_TIME:
 						priv->txt1 = gtk_entry_new ();
-						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
+						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 8);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt1, 4, 5, 1, 2, 0, 0, 0, 0);
+						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						gtk_table_attach (GTK_TABLE (tbl), priv->txt2, 6, 7, 1, 2, 0, 0, 0, 0);
+						widget_val2 = priv->txt2;
 						break;
 
 					default:
@@ -2590,10 +2641,16 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 				};
 
+			gtk_table_attach (GTK_TABLE (tbl), widget_val1, 4, 5, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (tbl), widget_val2, 6, 7, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
 			gtk_widget_show_all (priv->vbx_values);
 			gtk_widget_show (priv->vbx_values_container);
+
+			gtk_widget_set_visible (priv->lbl_txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
+			gtk_widget_set_visible (priv->txt1, where_type != GDAEX_QE_WHERE_TYPE_IS_NULL);
 
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
 			gtk_widget_set_visible (priv->txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
