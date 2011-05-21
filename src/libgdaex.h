@@ -1,7 +1,7 @@
 /*
  *  libgdaex.h
  *
- *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -123,6 +123,40 @@ GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
                                            gint col);
 struct tm *gdaex_data_model_get_value_tm_at (GdaDataModel *data_model,
                                            gint row,
+                                           gint col);
+
+gchar *gdaex_data_model_iter_get_field_value_stringify_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name);
+gint gdaex_data_model_iter_get_field_value_integer_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+gfloat gdaex_data_model_iter_get_field_value_float_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+gdouble gdaex_data_model_iter_get_field_value_double_at (GdaDataModelIter *iter,
+                                                   const gchar *field_name);
+gboolean gdaex_data_model_iter_get_field_value_boolean_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name);
+GdaTimestamp *gdaex_data_model_iter_get_field_value_gdatimestamp_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+GDate *gdaex_data_model_iter_get_field_value_gdate_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+struct tm *gdaex_data_model_iter_get_field_value_tm_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+
+gchar *gdaex_data_model_iter_get_value_stringify_at (GdaDataModelIter *iter,
+                                               gint col);
+gint gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter,
+                                           gint col);
+gfloat gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter,
+                                           gint col);
+gdouble gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter,
+                                             gint col);
+gboolean gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter,
+                                               gint col);
+GdaTimestamp *gdaex_data_model_iter_get_value_gdatimestamp_at (GdaDataModelIter *iter,
+                                                          gint col);
+GDate *gdaex_data_model_iter_get_value_gdate_at (GdaDataModelIter *iter,
+                                           gint col);
+struct tm *gdaex_data_model_iter_get_value_tm_at (GdaDataModelIter *iter,
                                            gint col);
 
 gboolean gdaex_begin (GdaEx *gdaex);
