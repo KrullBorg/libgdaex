@@ -307,6 +307,7 @@ static GtkTreeModel
 
 	guint col;
 	GType *gtype;
+	GType col_gtype;
 
 	g_return_val_if_fail (GDAEX_IS_GRID (grid), NULL);
 
@@ -316,7 +317,21 @@ static GtkTreeModel
 
 	for (col = 0; col < priv->columns->len; col++)
 		{
-			gtype[col] = gdaex_grid_column_get_gtype ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col));
+			col_gtype = gdaex_grid_column_get_gtype ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col));
+			if (col_gtype == G_TYPE_DATE
+			    || col_gtype == G_TYPE_DATE_TIME
+			    || col_gtype == GDA_TYPE_TIMESTAMP
+			    || ((col_gtype == G_TYPE_INT
+			         || col_gtype == G_TYPE_FLOAT
+			         || col_gtype == G_TYPE_DOUBLE)
+			        && gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)) > -1))
+				{
+					gtype[col] = G_TYPE_STRING;
+				}
+			else
+				{
+					gtype[col] = col_gtype;
+				}
 		}
 
 	if (priv->model != NULL)

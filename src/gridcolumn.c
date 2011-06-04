@@ -297,7 +297,14 @@ GtkTreeViewColumn
 	    || priv->type == G_TYPE_FLOAT
 	    || priv->type == G_TYPE_DOUBLE)
 		{
-			renderer = gtk_cell_renderer_spin_new ();
+			if (priv->decimals > -1)
+				{
+					renderer = gtk_cell_renderer_text_new ();
+				}
+			else
+				{
+					renderer = gtk_cell_renderer_spin_new ();
+				}
 			gtk_cell_renderer_set_alignment (renderer, 1.0, 0.5);
 		}
 	else
