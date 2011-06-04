@@ -100,6 +100,9 @@ GdaTimestamp *gdaex_data_model_get_field_value_gdatimestamp_at (GdaDataModel *da
 GDate *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
+GDateTime *gdaex_data_model_get_field_value_gdatetime_at (GdaDataModel *data_model,
+                                                 gint row,
+                                                 const gchar *field_name);
 struct tm *gdaex_data_model_get_field_value_tm_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
@@ -125,6 +128,9 @@ GdaTimestamp *gdaex_data_model_get_value_gdatimestamp_at (GdaDataModel *data_mod
 GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
+GDateTime *gdaex_data_model_get_value_gdatetime_at (GdaDataModel *data_model,
+                                           gint row,
+                                           gint col);
 struct tm *gdaex_data_model_get_value_tm_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
@@ -143,6 +149,8 @@ GdaTimestamp *gdaex_data_model_iter_get_field_value_gdatimestamp_at (GdaDataMode
                                                  const gchar *field_name);
 GDate *gdaex_data_model_iter_get_field_value_gdate_at (GdaDataModelIter *iter,
                                                  const gchar *field_name);
+GDateTime *gdaex_data_model_iter_get_field_value_gdatetime_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
 struct tm *gdaex_data_model_iter_get_field_value_tm_at (GdaDataModelIter *iter,
                                                  const gchar *field_name);
 
@@ -159,6 +167,8 @@ gboolean gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter,
 GdaTimestamp *gdaex_data_model_iter_get_value_gdatimestamp_at (GdaDataModelIter *iter,
                                                           gint col);
 GDate *gdaex_data_model_iter_get_value_gdate_at (GdaDataModelIter *iter,
+                                           gint col);
+GDateTime *gdaex_data_model_iter_get_value_gdatetime_at (GdaDataModelIter *iter,
                                            gint col);
 struct tm *gdaex_data_model_iter_get_value_tm_at (GdaDataModelIter *iter,
                                            gint col);
