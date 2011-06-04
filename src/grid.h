@@ -1,7 +1,7 @@
 /*
  *  grid.h
  *
- *  Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 
-#define GDAEX_TYPE_GRID                 (gdaex_get_type ())
+#define GDAEX_TYPE_GRID                 (gdaex_grid_get_type ())
 #define GDAEX_GRID(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_TYPE_GRID, GdaExGrid))
 #define GDAEX_GRID_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_TYPE_GRID, GdaExGridClass))
 #define GDAEX_IS_GRID(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_GRID))
@@ -62,6 +62,8 @@ void gdaex_grid_add_column (GdaExGrid *grid, GdaExGridColumn *column);
 void gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns);
 
 void gdaex_grid_clear (GdaExGrid *grid);
+
+GtkWidget *gdaex_grid_get_widget (GdaExGrid *grid);
 
 
 G_END_DECLS

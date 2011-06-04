@@ -33,3 +33,5 @@ tests/.deps/
 *.bak
 libgdaex*tar*
 tests/test_prefix*
+tests/grid
+tests/grid.exe

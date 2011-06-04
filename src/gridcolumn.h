@@ -1,7 +1,7 @@
 /*
  *  gridcolumn.h
  *
- *  Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -27,10 +27,12 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <gtk/gtk.h>
+
 G_BEGIN_DECLS
 
 
-#define GDAEX_TYPE_GRID_COLUMN                 (gdaex_get_type ())
+#define GDAEX_TYPE_GRID_COLUMN                 (gdaex_grid_column_get_type ())
 #define GDAEX_GRID_COLUMN(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumn))
 #define GDAEX_GRID_COLUMN_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_TYPE_GRID_COLUMN, GdaExGridColumnClass))
 #define GDAEX_IS_GRID_COLUMN(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_GRID_COLUMN))
@@ -60,7 +62,8 @@ GdaExGridColumn *gdaex_grid_column_new (const gchar *title,
                                         gboolean visible,
                                         gboolean resizable,
                                         gboolean sortable,
-                                        gboolean reorderable);
+                                        gboolean reorderable,
+                                        guint decimals);
 
 void gdaex_grid_column_set_title (GdaExGridColumn *column, const gchar *title);
 const gchar *gdaex_grid_column_get_title (GdaExGridColumn *column);
@@ -82,6 +85,11 @@ gboolean gdaex_grid_column_get_sortable (GdaExGridColumn *column);
 
 void gdaex_grid_column_set_reorderable (GdaExGridColumn *column, gboolean reorderable);
 gboolean gdaex_grid_column_get_reorderable (GdaExGridColumn *column);
+
+void gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals);
+guint gdaex_grid_column_get_decimals (GdaExGridColumn *column);
+
+GtkTreeViewColumn *gdaex_grid_column_get_column (GdaExGridColumn *column, gint model_column_number);
 
 
 G_END_DECLS

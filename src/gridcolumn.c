@@ -1,7 +1,7 @@
 /*
  *  gridcolumn.c
  *
- *  Copyright (C) 2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex_grid_column.
  *  
@@ -51,6 +51,7 @@ struct _GdaExGridColumnPrivate
 		gboolean resizable;
 		gboolean sortable;
 		gboolean reorderable;
+		guint decimals;
 	};
 
 G_DEFINE_TYPE (GdaExGridColumn, gdaex_grid_column, G_TYPE_OBJECT)
@@ -78,6 +79,7 @@ gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 	priv->resizable = FALSE;
 	priv->sortable = FALSE;
 	priv->reorderable = FALSE;
+	priv->decimals = 0;
 }
 
 GdaExGridColumn
@@ -87,7 +89,8 @@ GdaExGridColumn
                         gboolean visible,
                         gboolean resizable,
                         gboolean sortable,
-                        gboolean reorderable)
+                        gboolean reorderable,
+                        guint decimals)
 {
 	GdaExGridColumn *gdaex_grid_column = GDAEX_GRID_COLUMN (g_object_new (gdaex_grid_column_get_type (), NULL));
 
@@ -100,6 +103,7 @@ GdaExGridColumn
 	gdaex_grid_column_set_resizable (gdaex_grid_column, resizable);
 	gdaex_grid_column_set_sortable (gdaex_grid_column, sortable);
 	gdaex_grid_column_set_reorderable (gdaex_grid_column, reorderable);
+	gdaex_grid_column_set_decimals (gdaex_grid_column, decimals);
 
 	return gdaex_grid_column;
 }
@@ -244,6 +248,72 @@ gdaex_grid_column_get_reorderable (GdaExGridColumn *column)
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	return priv->reorderable;
+}
+
+void
+gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals)
+{
+	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
+
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	priv->decimals = decimals;
+}
+
+guint
+gdaex_grid_column_get_decimals (GdaExGridColumn *column)
+{
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);
+
+	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	return priv->decimals;
+}
+
+GtkTreeViewColumn
+*gdaex_grid_column_get_column (GdaExGridColumn *column, gint model_column_number)
+{
+	GtkTreeViewColumn *col;
+
+	GdaExGridColumnPrivate *priv;
+
+	GtkCellRenderer *renderer;
+
+	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), NULL);
+
+	priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
+
+	renderer = NULL;
+	switch (priv->type)
+		{
+			case G_TYPE_STRING:
+				renderer = gtk_cell_renderer_text_new ();
+				break;
+
+			case G_TYPE_INT:
+			case G_TYPE_FLOAT:
+			case G_TYPE_DOUBLE:
+				renderer = gtk_cell_renderer_spin_new ();
+				break;
+		}
+	if (renderer == NULL)
+		{
+			g_warning ("Error on creating the renderer.");
+			return NULL;
+		}
+
+	col = gtk_tree_view_column_new ();
+
+	gtk_tree_view_column_pack_start (col, renderer, TRUE);
+
+	gtk_tree_view_column_add_attribute (col, renderer, "text", model_column_number);
+
+	gtk_tree_view_column_set_title (col, priv->title);
+	gtk_tree_view_column_set_resizable (col, priv->resizable);
+	gtk_tree_view_column_set_clickable (col, priv->sortable);
+	gtk_tree_view_column_set_reorderable (col, priv->reorderable);
+
+	return col;
 }
 
 /* PRIVATE */
