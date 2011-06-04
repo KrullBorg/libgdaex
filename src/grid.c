@@ -50,6 +50,8 @@ typedef struct _GdaExGridPrivate GdaExGridPrivate;
 struct _GdaExGridPrivate
 	{
 		GPtrArray *columns; /* GdaExGridColumn */
+
+		GtkTreeModel *model;
 	};
 
 G_DEFINE_TYPE (GdaExGrid, gdaex_grid, G_TYPE_OBJECT)
@@ -141,6 +143,133 @@ GtkWidget
 	return GTK_WIDGET (gdaex_grid_get_view (grid));
 }
 
+gboolean
+gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error)
+{
+	GdaDataModel *dm;
+
+	gchar *_sql;
+
+	g_return_val_if_fail (GDAEX_IS_GRID (grid), FALSE);
+	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
+	g_return_val_if_fail (sql != NULL, FALSE);
+
+	_sql = g_strstrip (g_strdup (sql));
+
+	g_return_val_if_fail (g_strcmp0 (_sql, "") != 0, FALSE);
+
+	dm = gdaex_query (gdaex, _sql);
+	return gdaex_grid_fill_from_datamodel (grid, dm, error);
+}
+
+gboolean
+gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error)
+{
+	GdaExGridPrivate *priv;
+
+	GdaDataModelIter *dm_iter;
+	GtkTreeIter iter;
+
+	guint cols;
+	guint col;
+
+	GType col_gtype;
+
+	GdaColumn *gcol;
+	GType gcol_gtype;
+
+	gint *columns;
+	GValue *values;
+
+	g_return_val_if_fail (GDAEX_IS_GRID (grid), FALSE);
+	g_return_val_if_fail (GDA_IS_DATA_MODEL (dm), FALSE);
+
+	priv = GDAEX_GRID_GET_PRIVATE (grid);
+
+	if (priv->model == NULL)
+		{
+			gdaex_grid_get_model (grid);
+		}
+	g_return_val_if_fail (GTK_IS_TREE_MODEL (priv->model), FALSE);
+
+	dm_iter = gda_data_model_create_iter (dm);
+	g_return_val_if_fail (GDA_IS_DATA_MODEL_ITER (dm_iter), FALSE);
+
+	gtk_list_store_clear (GTK_LIST_STORE (priv->model));
+
+	cols = gtk_tree_model_get_n_columns (priv->model);
+
+	columns = g_malloc0 (cols * sizeof (gint));
+	values = g_malloc0 (cols * sizeof (GValue));
+
+	while (gda_data_model_iter_move_next (dm_iter))
+		{
+			gtk_list_store_append (GTK_LIST_STORE (priv->model), &iter);
+
+			for (col = 0; col < cols; col++)
+				{
+					columns[col] = col;
+
+					col_gtype = gtk_tree_model_get_column_type (priv->model, col);
+
+					GValue gval = {0};
+					g_value_init (&gval, col_gtype);
+					switch (col_gtype)
+						{
+							case G_TYPE_STRING:
+								gcol = gda_data_model_describe_column (dm, col);
+								gcol_gtype = gda_column_get_g_type (gcol);
+
+								switch (gcol_gtype)
+									{
+										case G_TYPE_STRING:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (dm_iter, col));
+											break;
+
+										case G_TYPE_BOOLEAN:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (dm_iter, col) ? "X" : "");
+											break;
+
+										default:
+											g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (dm_iter, col)));
+											break;
+									}
+
+								values[col] = gval;
+								break;
+
+							case G_TYPE_INT:
+								g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (dm_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_FLOAT:
+								g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (dm_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_DOUBLE:
+								g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (dm_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_BOOLEAN:
+								g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (dm_iter, col));
+								values[col] = gval;
+								break;
+
+							default:
+								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (dm_iter, col), col_gtype);
+								break;
+						}
+				}
+
+			gtk_list_store_set_valuesv (GTK_LIST_STORE (priv->model), &iter, columns, values, cols);
+		}
+
+	return TRUE;
+}
+
 /* PRIVATE */
 static void
 gdaex_grid_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
@@ -174,9 +303,6 @@ static GtkTreeModel
 *gdaex_grid_get_model (GdaExGrid *grid)
 {
 	/* TODO for now it returns always a GtkListStore */
-
-	GtkListStore *store;
-
 	GdaExGridPrivate *priv;
 
 	guint col;
@@ -193,9 +319,13 @@ static GtkTreeModel
 			gtype[col] = gdaex_grid_column_get_gtype ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col));
 		}
 
-	store = gtk_list_store_newv (priv->columns->len, gtype);
+	if (priv->model != NULL)
+		{
+			g_object_unref (priv->model);
+		}
+	priv->model = GTK_TREE_MODEL (gtk_list_store_newv (priv->columns->len, gtype));
 
-	return GTK_TREE_MODEL (store);
+	return priv->model;
 }
 
 static GtkTreeView

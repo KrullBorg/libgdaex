@@ -22,7 +22,6 @@ int
 main (int argc, char **argv)
 {
 	GdaEx *gdaex;
-	GdaDataModel *dm;
 
 	GtkWidget *w;
 
@@ -60,7 +59,7 @@ main (int argc, char **argv)
 	wgrid = gdaex_grid_get_widget (grid);
 	gtk_container_add (GTK_CONTAINER (w), wgrid);
 
-	dm = gdaex_query (gdaex, "SELECT * FROM clients");
+	gdaex_grid_fill_from_sql (grid, gdaex, "SELECT * FROM clients", NULL);
 
 	gtk_widget_show_all (w);
 

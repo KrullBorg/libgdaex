@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include "gdaex.h"
 #include "gridcolumn.h"
 
 G_BEGIN_DECLS
@@ -64,6 +65,9 @@ void gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns);
 void gdaex_grid_clear (GdaExGrid *grid);
 
 GtkWidget *gdaex_grid_get_widget (GdaExGrid *grid);
+
+gboolean gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error);
+gboolean gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error);
 
 
 G_END_DECLS
