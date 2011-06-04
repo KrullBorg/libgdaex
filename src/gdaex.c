@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -25,6 +25,7 @@
 	#include <config.h>
 #endif
 
+#include <stdarg.h>
 #include <string.h>
 
 #include <gio/gio.h>
@@ -617,12 +618,14 @@ GdaDataModel
 {
 	GError *error;
 
+	GdaStatement *stmt;
+	GdaDataModel *dm;
+
 	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
 
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	error = NULL;
-	GdaStatement *stmt;
 	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
 	if (!GDA_IS_STATEMENT (stmt))
 		{
@@ -638,7 +641,9 @@ GdaDataModel
 		}
 
 	error = NULL;
-	GdaDataModel *dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
+	dm = gda_connection_statement_execute_select (priv->gda_conn, stmt, NULL, &error);
+	g_object_unref (stmt);
+
 	if (!GDA_IS_DATA_MODEL (dm))
 		{
 			g_warning ("Error executing selection query: %s\n%s",
@@ -652,6 +657,8 @@ GdaDataModel
 					g_message ("Selection query executed: %s", sql);
 				}
 		}
+
+	g_object_unref (stmt);
 
 	return dm;
 }
@@ -949,7 +956,7 @@ gchar
 	else
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 			ret = NULL;
 		}
 
@@ -977,7 +984,7 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1015,7 +1022,7 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1053,7 +1060,7 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1091,7 +1098,7 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 	if (error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1142,7 +1149,7 @@ GdaTimestamp
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1219,7 +1226,7 @@ GDate
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1262,13 +1269,613 @@ struct tm
 	if (v == NULL || error != NULL)
 		{
 			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else if (!gda_value_is_null (v))
 		{
 			GdaTimestamp *gdatimestamp;
 
 			gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+
+			if (gdatimestamp != NULL)
+				{
+					ret = g_malloc0 (sizeof (struct tm));
+
+					ret->tm_year = gdatimestamp->year - 1900;
+					ret->tm_mon = gdatimestamp->month - 1;
+					ret->tm_mday = gdatimestamp->day;
+					ret->tm_hour = gdatimestamp->hour;
+					ret->tm_min = gdatimestamp->minute;
+					ret->tm_sec = gdatimestamp->second;
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_stringify_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gchar (stringify)
+ */
+gchar
+*gdaex_data_model_iter_get_field_value_stringify_at (GdaDataModelIter *iter,
+                                               const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	gchar *value;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_stringify_at (iter, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_integer_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gint
+ */
+gint
+gdaex_data_model_iter_get_field_value_integer_at (GdaDataModelIter *iter,
+                                            const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	gint value = 0;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_integer_at (iter, col);
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_float_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gfloat
+ */
+gfloat
+gdaex_data_model_iter_get_field_value_float_at (GdaDataModelIter *iter,
+                                          const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	gfloat value = 0.0f;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_float_at (iter, col);
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_double_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gdouble
+ */
+gdouble
+gdaex_data_model_iter_get_field_value_double_at (GdaDataModelIter *iter,
+                                           const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	gdouble value = 0.0;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_double_at (iter, col);
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_boolean_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gboolean
+ */
+gboolean
+gdaex_data_model_iter_get_field_value_boolean_at (GdaDataModelIter *iter,
+                                            const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	gboolean value = FALSE;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_boolean_at (iter, col);
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_gdatimestamp_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #GdaTimestamp.
+ */
+GdaTimestamp
+*gdaex_data_model_iter_get_field_value_gdatimestamp_at (GdaDataModelIter *iter,
+                                           const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	const GdaTimestamp *value;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return gda_timestamp_copy ((gpointer)value);
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_gdate_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #GDate.
+ */
+GDate
+*gdaex_data_model_iter_get_field_value_gdate_at (GdaDataModelIter *iter,
+                                           const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	GDate *value;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_gdate_at (iter, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
+
+
+/**
+ * gdaex_data_model_iter_get_field_value_tm_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's value as a struct tm.
+ */
+struct tm
+*gdaex_data_model_iter_get_field_value_tm_at (GdaDataModelIter *iter,
+                                           const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	struct tm *value;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_tm_at (iter, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_stringify_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gchar (stringify).
+ */
+gchar
+*gdaex_data_model_iter_get_value_stringify_at (GdaDataModelIter *iter, gint col)
+{
+	gchar *ret;
+	const GValue *v;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else
+		{
+			if (!gda_value_is_null (v))
+				{
+					ret = gda_value_stringify (v);
+				}
+			else
+				{
+					ret = g_strdup ("");
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_integer_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gint.
+ */
+gint
+gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter, gint col)
+{
+	gint ret = 0;
+	const GValue *v;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else
+		{
+			if (gda_value_isa (v, G_TYPE_INT))
+				{
+					ret = g_value_get_int (v);
+				}
+			else
+				{
+					ret = strtol (gda_value_stringify (v), NULL, 10);
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_float_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gfloat.
+ */
+gfloat
+gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter, gint col)
+{
+	gfloat ret = 0.0f;
+	const GValue *v;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else
+		{
+			if (gda_value_isa (v, G_TYPE_FLOAT))
+				{
+					ret = g_value_get_float (v);
+				}
+			else
+				{
+					ret = g_strtod (gda_value_stringify (v), NULL);
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_double_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gdouble.
+ */
+gdouble
+gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter, gint col)
+{
+	gdouble ret = 0.0;
+	const GValue *v;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else
+		{
+			if (gda_value_isa (v, G_TYPE_DOUBLE))
+				{
+					ret = g_value_get_double (v);
+				}
+			else
+				{
+					ret = g_strtod (gda_value_stringify (v), NULL);
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_boolean_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gboolean.
+ */
+gboolean
+gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter, gint col)
+{
+	gboolean ret = FALSE;
+	const GValue *v;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else
+		{
+			if (gda_value_isa (v, G_TYPE_BOOLEAN))
+				{
+					ret = g_value_get_boolean (v);
+				}
+			else
+				{
+					gchar *vstr = g_strstrip (gda_value_stringify (v));
+					if (strcasecmp (vstr, "true") == 0 ||
+						strcasecmp (vstr, "t") == 0 ||
+						strcasecmp (vstr, "yes") == 0 ||
+						strcasecmp (vstr, "y") == 0 ||
+						strtol (vstr, NULL, 10) != 0)
+						{
+							ret = TRUE;
+						}
+					else
+						{
+							ret = FALSE;
+						}
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_gdatimestamp_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #GdaTimestamp.
+ */
+GdaTimestamp
+*gdaex_data_model_iter_get_value_gdatimestamp_at (GdaDataModelIter *iter, gint col)
+{
+	GdaTimestamp *gdatimestamp;
+	const GValue *v;
+
+	gdatimestamp = NULL;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else if (!gda_value_is_null (v))
+		{
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+				{
+					gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					GDate *date;
+
+					date = gdaex_data_model_iter_get_value_gdate_at (iter, col);
+
+					if (date != NULL)
+						{
+							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							if (g_date_valid (date))
+								{
+									gdatimestamp->year = g_date_get_year (date);
+									gdatimestamp->month = g_date_get_month (date);
+									gdatimestamp->day = g_date_get_day (date);
+								}
+							else
+								{
+									gdatimestamp->year = date->year;
+									gdatimestamp->month = date->month;
+									gdatimestamp->day = date->day;
+								}
+						}
+				}
+			else if (gda_value_isa (v, GDA_TYPE_TIME))
+				{
+					const GdaTime *time;
+
+					time = gda_value_get_time (v);
+
+					if (time != NULL)
+						{
+							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							gdatimestamp->hour = time->hour;
+							gdatimestamp->minute = time->minute;
+							gdatimestamp->second = time->second;
+						}
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
+				}
+		}
+
+	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)gdatimestamp);
+}
+
+/**
+ * gdaex_data_model_iter_get_value_gdate_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #GDate without time information.
+ */
+GDate
+*gdaex_data_model_iter_get_value_gdate_at (GdaDataModelIter *iter, gint col)
+{
+	GDate *ret;
+	const GdaTimestamp *gdatimestamp;
+	const GValue *v;
+
+	ret = NULL;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else if (!gda_value_is_null (v))
+		{
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+				{
+					gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					ret = (GDate *)g_value_get_boxed (v);
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_tm_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the field's value as a struct tm.
+ */
+struct tm
+*gdaex_data_model_iter_get_value_tm_at (GdaDataModelIter *iter, gint col)
+{
+	struct tm *ret;
+	const GValue *v;
+
+	ret = NULL;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else if (!gda_value_is_null (v))
+		{
+			GdaTimestamp *gdatimestamp;
+
+			gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
 
 			if (gdatimestamp != NULL)
 				{
@@ -1312,7 +1919,7 @@ gdaex_begin (GdaEx *gdaex)
 	if (error != NULL)
 		{
 			g_warning ("Error opening transaction: %s\n",
-			           error->message);
+			           error->message != NULL ? error->message : "no details");
 		}
 	else
 		{
@@ -1357,8 +1964,9 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	if (error != NULL)
 		{
+			g_object_unref (stmt);
 			g_warning ("Error parsing sql: %s\n%s\n",
-			           error->message, sql);
+			           error->message != NULL ? error->message : "no details", sql);
 			return -1;
 		}
 
@@ -1373,10 +1981,12 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	error = NULL;
 	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);
 
+	g_object_unref (stmt);
+
 	if (error != NULL)
 		{
 			g_warning ("Error executing command query: %s\n%s",
-			           error->message, sql);
+			           error->message != NULL ? error->message : "no details", sql);
 			return -1;
 		}
 	else
@@ -1390,6 +2000,62 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	g_signal_emit (gdaex, klass->after_execute_signal_id, 0, stmt);
 
 	return nrecs;
+}
+
+/**
+ * gdaex_batch_execute:
+ * @gdaex: a #GdaEx object.
+ * @...: a #NULL terminated list of sql texts.
+ *
+ */
+GSList
+*gdaex_batch_execute (GdaEx *gdaex, ...)
+{
+	GSList *ret;
+
+	va_list ap;
+
+	gchar *sql;
+	GdaStatement *stmt;
+	GError *error;
+
+	GdaDataModel *dm;
+	gint recs;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	ret = NULL;
+
+	va_start (ap, gdaex);
+
+	while ((sql = va_arg (ap, gchar *)) != NULL)
+		{
+			error = NULL;
+			stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
+			if (error != NULL)
+				{
+					g_warning ("Error parsing sql: %s\n%s\n",
+					           error->message != NULL ? error->message : "no details", sql);
+					return NULL;
+				}
+
+			if (gda_statement_get_statement_type (stmt) == GDA_SQL_STATEMENT_SELECT)
+				{
+					dm = gdaex_query (gdaex, sql);
+					ret = g_slist_append (ret, dm);
+				}
+			else
+				{
+					recs = gdaex_execute (gdaex, sql);
+					ret = g_slist_append (ret, GINT_TO_POINTER (recs));
+				}
+		}
+
+	va_end (ap);
+
+	return ret;
 }
 
 /**
@@ -1566,6 +2232,140 @@ gdaex_get_chr_quoting (GdaEx *gdaex)
 		}
 
 	return chr;
+}
+
+void
+gdaex_fill_liststore_from_sql (GdaEx *gdaex,
+                               GtkListStore *lstore,
+                               const gchar *sql,
+                               guint *cols_formatted,
+                               gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	GdaDataModel *dm;
+
+	gchar *_sql;
+
+	g_return_if_fail (IS_GDAEX (gdaex));
+	g_return_if_fail (sql != NULL);
+
+	_sql = g_strstrip (g_strdup (sql));
+
+	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
+
+	dm = gdaex_query (gdaex, _sql);
+	gdaex_fill_liststore_from_datamodel (gdaex, lstore, dm, cols_formatted, cols_format_func);
+}
+
+void
+gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
+                                     GtkListStore *lstore,
+                                     GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	GtkTreeIter iter;
+
+	GdaDataModelIter *gda_iter;
+
+	guint cols;
+	guint col;
+
+	GType col_gtype;
+
+	GdaColumn *gcol;
+	GType gcol_gtype;
+
+	gint *columns;
+	GValue *values;
+
+	g_return_if_fail (IS_GDAEX (gdaex));
+	g_return_if_fail (GTK_IS_LIST_STORE (lstore));
+	g_return_if_fail (GDA_IS_DATA_MODEL (dm));
+
+	cols = gtk_tree_model_get_n_columns (GTK_TREE_MODEL (lstore));
+
+	gtk_list_store_clear (lstore);
+
+	gda_iter = gda_data_model_create_iter (dm);
+	if (gda_iter == NULL)
+		{
+			return;
+		}
+
+	columns = g_malloc0 (cols * sizeof (gint));
+	values = g_malloc0 (cols * sizeof (GValue));
+
+	while (gda_data_model_iter_move_next (gda_iter))
+		{
+			gtk_list_store_append (lstore, &iter);
+
+			for (col = 0; col < cols; col++)
+				{
+					columns[col] = col;
+
+					col_gtype = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
+
+					GValue gval = {0};
+					g_value_init (&gval, col_gtype);
+					switch (col_gtype)
+						{
+							case G_TYPE_STRING:
+								gcol = gda_data_model_describe_column (dm, col);
+								gcol_gtype = gda_column_get_g_type (gcol);
+
+								switch (gcol_gtype)
+									{
+										case G_TYPE_STRING:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (gda_iter, col));
+											break;
+
+										case G_TYPE_BOOLEAN:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col) ? "X" : "");
+											break;
+
+										default:
+											if (cols_format_func != NULL)
+												{
+													g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
+												}
+											else
+												{
+													g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (gda_iter, col)));
+												}
+											break;
+									}
+
+								values[col] = gval;
+								break;
+
+							case G_TYPE_INT:
+								g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_FLOAT:
+								g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_DOUBLE:
+								g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_BOOLEAN:
+								g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							default:
+								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (gda_iter, col), col_gtype);
+								break;
+						}
+				}
+
+			gtk_list_store_set_valuesv (lstore, &iter, columns, values, cols);
+		}
 }
 
 /* PRIVATE */

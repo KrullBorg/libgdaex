@@ -1,7 +1,7 @@
 /*
  *  libgdaex.h
  *
- *  Copyright (C) 2005-2010 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -22,7 +22,6 @@
 
 #ifndef __LIBGDAEX_H__
 #define __LIBGDAEX_H__
-
 
 #include "gdaex.h"
 #include "grid.h"
