@@ -21,6 +21,9 @@
 int
 main (int argc, char **argv)
 {
+	GdaEx *gdaex;
+	GdaDataModel *dm;
+
 	GtkWidget *w;
 
 	GdaExGrid *grid;
@@ -28,6 +31,12 @@ main (int argc, char **argv)
 	GtkWidget *wgrid;
 
 	gtk_init (&argc, &argv);
+
+	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=grid.db", TESTSDIR));
+	if (gdaex == NULL)
+		{
+			g_error ("Unable to connect to the db.");
+		}
 
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -39,8 +48,19 @@ main (int argc, char **argv)
 	gcol = gdaex_grid_column_new ("Name", "name", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, 0);
 	gdaex_grid_add_column (grid, gcol);
 
+	gcol = gdaex_grid_column_new ("Surname", "surname", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, 0);
+	gdaex_grid_add_column (grid, gcol);
+
+	gcol = gdaex_grid_column_new ("Age", "age", G_TYPE_INT, TRUE, TRUE, TRUE, TRUE, 0);
+	gdaex_grid_add_column (grid, gcol);
+
+	gcol = gdaex_grid_column_new ("Birthday", "birthday", G_TYPE_DATE, TRUE, TRUE, TRUE, TRUE, 0);
+	gdaex_grid_add_column (grid, gcol);
+
 	wgrid = gdaex_grid_get_widget (grid);
 	gtk_container_add (GTK_CONTAINER (w), wgrid);
+
+	dm = gdaex_query (gdaex, "SELECT * FROM clients");
 
 	gtk_widget_show_all (w);
 

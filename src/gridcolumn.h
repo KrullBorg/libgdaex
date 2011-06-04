@@ -89,7 +89,7 @@ gboolean gdaex_grid_column_get_reorderable (GdaExGridColumn *column);
 void gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals);
 guint gdaex_grid_column_get_decimals (GdaExGridColumn *column);
 
-GtkTreeViewColumn *gdaex_grid_column_get_column (GdaExGridColumn *column, gint model_column_number);
+GtkTreeViewColumn *gdaex_grid_column_get_column (GdaExGridColumn *column);
 
 
 G_END_DECLS

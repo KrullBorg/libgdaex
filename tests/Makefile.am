@@ -10,4 +10,5 @@ noinst_PROGRAMS = test_prefix \
 
 LDADD = $(top_builddir)/src/libgdaex.la
 
-EXTRA_DIST = test_prefix.db
+EXTRA_DIST = test_prefix.db \
+             grid.db

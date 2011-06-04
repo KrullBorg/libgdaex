@@ -207,6 +207,9 @@ static GtkTreeView
 
 	GtkTreeModel *model;
 	GdaExGridColumn *gcolumn;
+	GtkTreeViewColumn *vcolumn;
+
+	GList *cells;
 
 	guint col;
 
@@ -222,7 +225,15 @@ static GtkTreeView
 			gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
 			if (gdaex_grid_column_get_visible (gcolumn))
 				{
-					gtk_tree_view_append_column (GTK_TREE_VIEW (view), gdaex_grid_column_get_column (gcolumn, col));
+					vcolumn = gdaex_grid_column_get_column (gcolumn);
+					if (vcolumn)
+						{
+							cells = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (vcolumn));
+							cells = g_list_first (cells);
+							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
+
+							gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
+						}
 				}
 		}
 

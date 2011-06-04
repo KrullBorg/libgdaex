@@ -25,6 +25,8 @@
 	#include <config.h>
 #endif
 
+#include <libgda/libgda.h>
+
 #include "gridcolumn.h"
 
 static void gdaex_grid_column_class_init (GdaExGridColumnClass *klass);
@@ -52,6 +54,8 @@ struct _GdaExGridColumnPrivate
 		gboolean sortable;
 		gboolean reorderable;
 		guint decimals;
+
+		GtkTreeViewColumn *vcolumn;
 	};
 
 G_DEFINE_TYPE (GdaExGridColumn, gdaex_grid_column, G_TYPE_OBJECT)
@@ -79,7 +83,7 @@ gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 	priv->resizable = FALSE;
 	priv->sortable = FALSE;
 	priv->reorderable = FALSE;
-	priv->decimals = 0;
+	priv->decimals = -1;
 }
 
 GdaExGridColumn
@@ -271,10 +275,8 @@ gdaex_grid_column_get_decimals (GdaExGridColumn *column)
 }
 
 GtkTreeViewColumn
-*gdaex_grid_column_get_column (GdaExGridColumn *column, gint model_column_number)
+*gdaex_grid_column_get_column (GdaExGridColumn *column)
 {
-	GtkTreeViewColumn *col;
-
 	GdaExGridColumnPrivate *priv;
 
 	GtkCellRenderer *renderer;
@@ -284,36 +286,39 @@ GtkTreeViewColumn
 	priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	renderer = NULL;
-	switch (priv->type)
+	if (priv->type == G_TYPE_STRING
+	    || priv->type == G_TYPE_DATE
+	    || priv->type == G_TYPE_DATE_TIME
+	    || priv->type == GDA_TYPE_TIMESTAMP)
 		{
-			case G_TYPE_STRING:
-				renderer = gtk_cell_renderer_text_new ();
-				break;
-
-			case G_TYPE_INT:
-			case G_TYPE_FLOAT:
-			case G_TYPE_DOUBLE:
-				renderer = gtk_cell_renderer_spin_new ();
-				break;
+			renderer = gtk_cell_renderer_text_new ();
 		}
-	if (renderer == NULL)
+	else if (priv->type == G_TYPE_INT
+	    || priv->type == G_TYPE_FLOAT
+	    || priv->type == G_TYPE_DOUBLE)
 		{
-			g_warning ("Error on creating the renderer.");
+			renderer = gtk_cell_renderer_spin_new ();
+		}
+	else
+		{
+			g_warning ("Error on creating the renderer for column «%s».", priv->title);
 			return NULL;
 		}
 
-	col = gtk_tree_view_column_new ();
+	if (priv->vcolumn != NULL)
+		{
+			g_object_unref (priv->vcolumn);
+		}
+	priv->vcolumn = gtk_tree_view_column_new ();
 
-	gtk_tree_view_column_pack_start (col, renderer, TRUE);
+	gtk_tree_view_column_pack_start (priv->vcolumn, renderer, TRUE);
 
-	gtk_tree_view_column_add_attribute (col, renderer, "text", model_column_number);
+	gtk_tree_view_column_set_title (priv->vcolumn, priv->title);
+	gtk_tree_view_column_set_resizable (priv->vcolumn, priv->resizable);
+	gtk_tree_view_column_set_clickable (priv->vcolumn, priv->sortable);
+	gtk_tree_view_column_set_reorderable (priv->vcolumn, priv->reorderable);
 
-	gtk_tree_view_column_set_title (col, priv->title);
-	gtk_tree_view_column_set_resizable (col, priv->resizable);
-	gtk_tree_view_column_set_clickable (col, priv->sortable);
-	gtk_tree_view_column_set_reorderable (col, priv->reorderable);
-
-	return col;
+	return priv->vcolumn;
 }
 
 /* PRIVATE */
@@ -321,7 +326,6 @@ static void
 gdaex_grid_column_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
 	GdaExGridColumn *gdaex_grid_column = GDAEX_GRID_COLUMN (object);
-
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (gdaex_grid_column);
 
 	switch (property_id)
@@ -336,7 +340,6 @@ static void
 gdaex_grid_column_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
 	GdaExGridColumn *gdaex_grid_column = GDAEX_GRID_COLUMN (object);
-
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (gdaex_grid_column);
 
 	switch (property_id)
