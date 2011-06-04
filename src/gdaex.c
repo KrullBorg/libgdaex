@@ -510,9 +510,9 @@ gdaex_set_tables_name_prefix_into_statement (GdaEx *gdaex, GdaStatement **stmt)
 							if (g_ascii_strncasecmp (g_value_get_string (target->expr->value), priv->tables_name_prefix, strlen (priv->tables_name_prefix)) != 0)
 								{
 									g_value_set_string (target->expr->value,
-											            g_strdup_printf ("%s%s",
-											                             priv->tables_name_prefix,
-											                             g_value_get_string (target->expr->value)));
+									                    g_strdup_printf ("%s%s",
+									                                     priv->tables_name_prefix,
+									                                     g_value_get_string (target->expr->value)));
 								}
 							tables_names = g_strconcat (tables_names, g_value_get_string (target->expr->value), "|", NULL);
 							tables = g_slist_next (tables);
@@ -533,8 +533,8 @@ gdaex_set_tables_name_prefix_into_statement (GdaEx *gdaex, GdaStatement **stmt)
 											    && g_ascii_strncasecmp (splits[0], priv->tables_name_prefix, strlen (priv->tables_name_prefix)) != 0)
 												{
 													field_name = g_strdup_printf ("%s%s",
-															                      priv->tables_name_prefix,
-															                      g_value_get_string (((GdaSqlExpr *)operands->data)->value));
+													                              priv->tables_name_prefix,
+													                              g_value_get_string (((GdaSqlExpr *)operands->data)->value));
 												}
 											else
 												{
@@ -1157,6 +1157,19 @@ GdaTimestamp
 				{
 					gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
 				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					GDateTime *gdatetime;
+					
+					gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
+					gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+					gdatimestamp->year = g_date_time_get_year (gdatetime);
+					gdatimestamp->month = g_date_time_get_month (gdatetime);
+					gdatimestamp->day = g_date_time_get_day_of_month (gdatetime);
+					gdatimestamp->hour = g_date_time_get_hour (gdatetime);
+					gdatimestamp->minute = g_date_time_get_minute (gdatetime);
+					gdatimestamp->second = g_date_time_get_second (gdatetime);
+				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					GDate *date;
@@ -1216,6 +1229,7 @@ GDate
 {
 	GDate *ret;
 	const GdaTimestamp *gdatimestamp;
+	const GDateTime *gdatetime;
 	const GValue *v;
 	GError *error;
 
@@ -1233,10 +1247,81 @@ GDate
 			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 				{
 					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+					ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
+					                      (GDateMonth)gdatimestamp->month,
+					                      (GDateDay)gdatimestamp->day);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
+					ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
+					                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
+					                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					ret = (GDate *)g_value_get_boxed (v);
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_get_value_gdatetime_at:
+ * @data_model: a #GdaDataModel object.
+ * @row: row number.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #GDateTime without time information.
+ */
+GDateTime
+*gdaex_data_model_get_value_gdatetime_at (GdaDataModel *data_model, gint row, gint col)
+{
+	GDateTime *ret;
+	const GdaTimestamp *gdatimestamp;
+	const GDate *gdate;
+	const GValue *v;
+	GError *error;
+
+	ret = NULL;
+	error = NULL;
+
+	v = gda_data_model_get_value_at (data_model, col, row, &error);
+	if (v == NULL || error != NULL)
+		{
+			g_warning ("Error on retrieving field's value: %s\n",
+			           error->message != NULL ? error->message : "no details");
+		}
+	else if (!gda_value_is_null (v))
+		{
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+				{
+					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+					ret = g_date_time_new_local ((gint)gdatimestamp->year,
+					                             (gint)gdatimestamp->month,
+					                             (gint)gdatimestamp->day,
+					                             (gint)gdatimestamp->hour,
+					                             (gint)gdatimestamp->minute,
+					                             (gdouble)gdatimestamp->second);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+					ret = g_date_time_new_local ((gint)gdate->year,
+					                             (gint)gdate->month,
+					                             (gint)gdate->day,
+					                             0,
+					                             0,
+					                             0.0);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					ret = (GDateTime *)g_value_get_boxed (v);
 				}
 			else
 				{
@@ -1525,6 +1610,41 @@ GDate
 	return value;
 }
 
+/**
+ * gdaex_data_model_iter_get_field_value_gdatetime_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #GDateTime.
+ */
+GDateTime
+*gdaex_data_model_iter_get_field_value_gdatetime_at (GdaDataModelIter *iter,
+                                           const gchar *field_name)
+{
+	GdaDataModel *data_model;
+	GDateTime *value;
+	gint col;
+
+	g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
 
 /**
  * gdaex_data_model_iter_get_field_value_tm_at:
@@ -1765,6 +1885,19 @@ GdaTimestamp
 				{
 					gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
 				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					GDateTime *gdatetime;
+					
+					gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
+					gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+					gdatimestamp->year = g_date_time_get_year (gdatetime);
+					gdatimestamp->month = g_date_time_get_month (gdatetime);
+					gdatimestamp->day = g_date_time_get_day_of_month (gdatetime);
+					gdatimestamp->hour = g_date_time_get_hour (gdatetime);
+					gdatimestamp->minute = g_date_time_get_minute (gdatetime);
+					gdatimestamp->second = g_date_time_get_second (gdatetime);
+				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					GDate *date;
@@ -1823,6 +1956,7 @@ GDate
 {
 	GDate *ret;
 	const GdaTimestamp *gdatimestamp;
+	const GDateTime *gdatetime;
 	const GValue *v;
 
 	ret = NULL;
@@ -1837,10 +1971,79 @@ GDate
 			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 				{
 					gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
+					ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
+					                      (GDateMonth)gdatimestamp->month,
+					                      (GDateDay)gdatimestamp->day);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
+					ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
+					                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
+					                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					ret = (GDate *)g_value_get_boxed (v);
+				}
+			else
+				{
+					g_warning ("Error on retrieving field's value: unknown GValue type.");
+				}
+		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_gdatetime_at:
+ * @data_model_iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #GDateTime without time information.
+ */
+GDateTime
+*gdaex_data_model_iter_get_value_gdatetime_at (GdaDataModelIter *iter, gint col)
+{
+	GDateTime *ret;
+	const GdaTimestamp *gdatimestamp;
+	const GDate *gdate;
+	const GValue *v;
+	GError *error;
+
+	ret = NULL;
+	error = NULL;
+
+	v = gda_data_model_iter_get_value_at (iter, col);
+	if (v == NULL)
+		{
+			g_warning ("Error on retrieving field's value at column %d.", col);
+		}
+	else if (!gda_value_is_null (v))
+		{
+			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+				{
+					gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
+					ret = g_date_time_new_local ((gint)gdatimestamp->year,
+					                             (gint)gdatimestamp->month,
+					                             (gint)gdatimestamp->day,
+					                             (gint)gdatimestamp->hour,
+					                             (gint)gdatimestamp->minute,
+					                             (gdouble)gdatimestamp->second);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE))
+				{
+					gdate = gdaex_data_model_iter_get_value_gdate_at (iter, col);
+					ret = g_date_time_new_local ((gint)gdate->year,
+					                             (gint)gdate->month,
+					                             (gint)gdate->day,
+					                             0,
+					                             0,
+					                             0.0);
+				}
+			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+				{
+					ret = (GDateTime *)g_value_get_boxed (v);
 				}
 			else
 				{
