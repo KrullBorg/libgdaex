@@ -22,8 +22,12 @@
  */
 
 #include <time.h>
+
 #include <glib.h>
 #include <glib-object.h>
+
+#include <gtk/gtk.h>
+
 #include <libgda/libgda.h>
 
 #ifndef __GDAEX_H__
@@ -173,6 +177,13 @@ void gdaex_free (GdaEx *gdaex);
 gchar *gdaex_strescape (const gchar *source, const gchar *exceptions);
 
 gchar gdaex_get_chr_quoting (GdaEx *gdaex);
+
+void gdaex_fill_liststore_from_sql (GdaEx *gdaex, GtkListStore *lstore, const gchar *sql,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex, GtkListStore *lstore, GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
 
 
 G_END_DECLS

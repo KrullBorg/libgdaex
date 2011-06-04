@@ -2234,6 +2234,140 @@ gdaex_get_chr_quoting (GdaEx *gdaex)
 	return chr;
 }
 
+void
+gdaex_fill_liststore_from_sql (GdaEx *gdaex,
+                               GtkListStore *lstore,
+                               const gchar *sql,
+                               guint *cols_formatted,
+                               gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	GdaDataModel *dm;
+
+	gchar *_sql;
+
+	g_return_if_fail (IS_GDAEX (gdaex));
+	g_return_if_fail (sql != NULL);
+
+	_sql = g_strstrip (g_strdup (sql));
+
+	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
+
+	dm = gdaex_query (gdaex, _sql);
+	gdaex_fill_liststore_from_datamodel (gdaex, lstore, dm, cols_formatted, cols_format_func);
+}
+
+void
+gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
+                                     GtkListStore *lstore,
+                                     GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	GtkTreeIter iter;
+
+	GdaDataModelIter *gda_iter;
+
+	guint cols;
+	guint col;
+
+	GType col_gtype;
+
+	GdaColumn *gcol;
+	GType gcol_gtype;
+
+	gint *columns;
+	GValue *values;
+
+	g_return_if_fail (IS_GDAEX (gdaex));
+	g_return_if_fail (GTK_IS_LIST_STORE (lstore));
+	g_return_if_fail (GDA_IS_DATA_MODEL (dm));
+
+	cols = gtk_tree_model_get_n_columns (GTK_TREE_MODEL (lstore));
+
+	gtk_list_store_clear (lstore);
+
+	gda_iter = gda_data_model_create_iter (dm);
+	if (gda_iter == NULL)
+		{
+			return;
+		}
+
+	columns = g_malloc0 (cols * sizeof (gint));
+	values = g_malloc0 (cols * sizeof (GValue));
+
+	while (gda_data_model_iter_move_next (gda_iter))
+		{
+			gtk_list_store_append (lstore, &iter);
+
+			for (col = 0; col < cols; col++)
+				{
+					columns[col] = col;
+
+					col_gtype = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
+
+					GValue gval = {0};
+					g_value_init (&gval, col_gtype);
+					switch (col_gtype)
+						{
+							case G_TYPE_STRING:
+								gcol = gda_data_model_describe_column (dm, col);
+								gcol_gtype = gda_column_get_g_type (gcol);
+
+								switch (gcol_gtype)
+									{
+										case G_TYPE_STRING:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (gda_iter, col));
+											break;
+
+										case G_TYPE_BOOLEAN:
+											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col) ? "X" : "");
+											break;
+
+										default:
+											if (cols_format_func != NULL)
+												{
+													g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
+												}
+											else
+												{
+													g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (gda_iter, col)));
+												}
+											break;
+									}
+
+								values[col] = gval;
+								break;
+
+							case G_TYPE_INT:
+								g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_FLOAT:
+								g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_DOUBLE:
+								g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							case G_TYPE_BOOLEAN:
+								g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col));
+								values[col] = gval;
+								break;
+
+							default:
+								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (gda_iter, col), col_gtype);
+								break;
+						}
+				}
+
+			gtk_list_store_set_valuesv (lstore, &iter, columns, values, cols);
+		}
+}
+
 /* PRIVATE */
 static void
 gdaex_create_connection_parser (GdaEx *gdaex)
