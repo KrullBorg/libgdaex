@@ -307,6 +307,11 @@ GtkTreeViewColumn
 				}
 			gtk_cell_renderer_set_alignment (renderer, 1.0, 0.5);
 		}
+	else if (priv->type == G_TYPE_BOOLEAN)
+		{
+			renderer = gtk_cell_renderer_toggle_new ();
+			gtk_cell_renderer_set_alignment (renderer, 0.5, 0.5);
+		}
 	else
 		{
 			g_warning ("Error on creating the renderer for column «%s».", priv->title);

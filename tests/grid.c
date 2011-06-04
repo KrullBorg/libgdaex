@@ -64,6 +64,9 @@ main (int argc, char **argv)
 	gcol = gdaex_grid_column_new ("Incoming", "incoming", G_TYPE_DOUBLE, TRUE, TRUE, TRUE, TRUE, 2);
 	gdaex_grid_add_column (grid, gcol);
 
+	gcol = gdaex_grid_column_new ("Married", "married", G_TYPE_BOOLEAN, TRUE, TRUE, TRUE, TRUE, -1);
+	gdaex_grid_add_column (grid, gcol);
+
 	wgrid = gdaex_grid_get_widget (grid);
 	gtk_container_add (GTK_CONTAINER (scrolledw), wgrid);
 

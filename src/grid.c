@@ -375,7 +375,15 @@ static GtkTreeView
 						{
 							cells = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (vcolumn));
 							cells = g_list_first (cells);
-							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
+
+							if (gdaex_grid_column_get_gtype (gcolumn) == G_TYPE_BOOLEAN)
+								{
+									gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "active", col);
+								}
+							else
+								{
+									gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
+								}
 
 							gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
 						}
