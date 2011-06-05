@@ -53,7 +53,7 @@ struct _GdaExGridColumnPrivate
 		gboolean resizable;
 		gboolean sortable;
 		gboolean reorderable;
-		guint decimals;
+		gint decimals;
 
 		GtkTreeViewColumn *vcolumn;
 	};
@@ -94,7 +94,7 @@ GdaExGridColumn
                         gboolean resizable,
                         gboolean sortable,
                         gboolean reorderable,
-                        guint decimals)
+                        gint decimals)
 {
 	GdaExGridColumn *gdaex_grid_column = GDAEX_GRID_COLUMN (g_object_new (gdaex_grid_column_get_type (), NULL));
 
@@ -255,7 +255,7 @@ gdaex_grid_column_get_reorderable (GdaExGridColumn *column)
 }
 
 void
-gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals)
+gdaex_grid_column_set_decimals (GdaExGridColumn *column, gint decimals)
 {
 	g_return_if_fail (GDAEX_IS_GRID_COLUMN (column));
 
@@ -264,7 +264,7 @@ gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals)
 	priv->decimals = decimals;
 }
 
-guint
+gint
 gdaex_grid_column_get_decimals (GdaExGridColumn *column)
 {
 	g_return_val_if_fail (GDAEX_IS_GRID_COLUMN (column), FALSE);

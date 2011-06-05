@@ -63,7 +63,7 @@ GdaExGridColumn *gdaex_grid_column_new (const gchar *title,
                                         gboolean resizable,
                                         gboolean sortable,
                                         gboolean reorderable,
-                                        guint decimals);
+                                        gint decimals);
 
 void gdaex_grid_column_set_title (GdaExGridColumn *column, const gchar *title);
 const gchar *gdaex_grid_column_get_title (GdaExGridColumn *column);
@@ -86,8 +86,8 @@ gboolean gdaex_grid_column_get_sortable (GdaExGridColumn *column);
 void gdaex_grid_column_set_reorderable (GdaExGridColumn *column, gboolean reorderable);
 gboolean gdaex_grid_column_get_reorderable (GdaExGridColumn *column);
 
-void gdaex_grid_column_set_decimals (GdaExGridColumn *column, guint decimals);
-guint gdaex_grid_column_get_decimals (GdaExGridColumn *column);
+void gdaex_grid_column_set_decimals (GdaExGridColumn *column, gint decimals);
+gint gdaex_grid_column_get_decimals (GdaExGridColumn *column);
 
 GtkTreeViewColumn *gdaex_grid_column_get_column (GdaExGridColumn *column);
 

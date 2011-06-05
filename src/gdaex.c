@@ -1312,9 +1312,9 @@ GDateTime
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
-					ret = g_date_time_new_local ((gint)gdate->year,
-					                             (gint)gdate->month,
-					                             (gint)gdate->day,
+					ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
+					                             (gint)g_date_get_month (gdate),
+					                             (gint)g_date_get_day (gdate),
 					                             0,
 					                             0,
 					                             0.0);
@@ -2034,9 +2034,9 @@ GDateTime
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					gdate = gdaex_data_model_iter_get_value_gdate_at (iter, col);
-					ret = g_date_time_new_local ((gint)gdate->year,
-					                             (gint)gdate->month,
-					                             (gint)gdate->day,
+					ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
+					                             (gint)g_date_get_month (gdate),
+					                             (gint)g_date_get_day (gdate),
 					                             0,
 					                             0,
 					                             0.0);
