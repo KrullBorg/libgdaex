@@ -44,10 +44,6 @@ static void gdaex_grid_get_property (GObject *object,
 static GtkTreeModel *gdaex_grid_get_model (GdaExGrid *grid);
 static GtkTreeView *gdaex_grid_get_view (GdaExGrid *grid);
 
-static gchar *grid_format_money (gdouble number,
-                      gint decimals,
-                      gboolean with_currency_symbol);
-
 #define GDAEX_GRID_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GDAEX_TYPE_GRID, GdaExGridPrivate))
 
 typedef struct _GdaExGridPrivate GdaExGridPrivate;
@@ -241,7 +237,7 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 										case G_TYPE_FLOAT:
 										case G_TYPE_DOUBLE:
 											dval = gdaex_data_model_iter_get_value_double_at (dm_iter, col);
-											g_value_set_string (&gval, grid_format_money (dval, gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)), FALSE));
+											g_value_set_string (&gval, gdaex_format_money (dval, gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)), FALSE));
 											break;
 
 										default:
@@ -250,6 +246,7 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 											    || gcol_gtype == GDA_TYPE_TIMESTAMP)
 												{
 													gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (dm_iter, col);
+													/* TODO find default format from locale */
 													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
 												}
 											else
@@ -417,75 +414,5 @@ static GtkTreeView
 		}
 
 	return GTK_TREE_VIEW (view);
-}
-
-static gchar
-*grid_format_money (gdouble number,
-                      gint decimals,
-                      gboolean with_currency_symbol)
-{
-	gchar *ret;
-
-	GRegex *regex;
-	GError *error;
-
-	gchar *str_format;
-	gchar *str;
-	gssize str_len;
-
-	/* TODO
-	 * - get number of decimals from locale
-	 * - get grouping char from locale
-	 * - get currency symbol from locale
-	 */
-
-	ret = g_strdup ("");
-
-	error = NULL;
-	regex = g_regex_new ("(^[-\\d]?\\d+)(\\d\\d\\d)", 0, 0, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on creating regex: %s.",
-			           error->message != NULL ? error->message : "no details");
-			return "";
-		}
-
-	str_format = g_strdup_printf ("%%0%sf", decimals == 0 ? ".0" : (decimals < 0 ? ".2" : g_strdup_printf (".%d", decimals)));
-	ret = g_strdup_printf (str_format, number);
-
-	while (TRUE)
-		{
-			error = NULL;
-			str_len = g_utf8_strlen (ret, -1);
-			str = g_regex_replace ((const GRegex *)regex,
-			                       ret, str_len, 0,
-			                       "\\1.\\2", 0,
-			                       &error);
-			if (error != NULL)
-				{
-					g_warning ("Error on regex replacing: %s.",
-					           error->message != NULL ? error->message : "no details");
-					g_regex_unref (regex);
-					return "";
-				}
-			if (g_strcmp0 (ret, str) != 0)
-				{
-					ret = g_strdup (str);
-					g_free (str);
-				}
-			else
-				{
-					break;
-				}
-		}
-
-	if (with_currency_symbol)
-		{
-			ret = g_strconcat ("€ ", ret, NULL);
-		}
-
-	g_regex_unref (regex);
-
-	return ret;
 }
 

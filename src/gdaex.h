@@ -195,6 +195,10 @@ void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex, GtkListStore *lstore, Gd
                                      guint *cols_formatted,
                                      gchar *(*cols_format_func) (GdaDataModelIter *, guint));
 
+gchar *gdaex_format_money (gdouble number,
+                     gint decimals,
+                     gboolean with_currency_symbol);
+
 
 G_END_DECLS
 

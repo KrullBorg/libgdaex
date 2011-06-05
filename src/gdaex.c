@@ -2481,6 +2481,9 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	gint *columns;
 	GValue *values;
 
+	gdouble dval;
+	GDateTime *gdatetime;
+
 	g_return_if_fail (IS_GDAEX (gdaex));
 	g_return_if_fail (GTK_IS_LIST_STORE (lstore));
 	g_return_if_fail (GDA_IS_DATA_MODEL (dm));
@@ -2526,10 +2529,25 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col) ? "X" : "");
 											break;
 
+										case G_TYPE_INT:
+										case G_TYPE_FLOAT:
+										case G_TYPE_DOUBLE:
+											dval = gdaex_data_model_iter_get_value_double_at (gda_iter, col);
+											g_value_set_string (&gval, gdaex_format_money (dval, -1, FALSE));
+											break;
+
 										default:
 											if (cols_format_func != NULL)
 												{
 													g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
+												}
+											else if (gcol_gtype == G_TYPE_DATE
+											         || gcol_gtype == GDA_TYPE_TIMESTAMP
+											         || gcol_gtype == G_TYPE_DATE_TIME)
+												{
+													gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (gda_iter, col);
+													/* TODO find default format from locale */
+													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
 												}
 											else
 												{
@@ -2571,6 +2589,76 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 		}
 }
 
+gchar
+*gdaex_format_money (gdouble number,
+                     gint decimals,
+                     gboolean with_currency_symbol)
+{
+	gchar *ret;
+
+	GRegex *regex;
+	GError *error;
+
+	gchar *str_format;
+	gchar *str;
+	gssize str_len;
+
+	/* TODO
+	 * - get number of decimals from locale
+	 * - get grouping char from locale
+	 * - get currency symbol from locale
+	 */
+
+	ret = g_strdup ("");
+
+	error = NULL;
+	regex = g_regex_new ("(^[-\\d]?\\d+)(\\d\\d\\d)", 0, 0, &error);
+	if (error != NULL)
+		{
+			g_warning ("Error on creating regex: %s.",
+			           error->message != NULL ? error->message : "no details");
+			return "";
+		}
+
+	str_format = g_strdup_printf ("%%0%sf", decimals == 0 ? ".0" : (decimals < 0 ? ".2" : g_strdup_printf (".%d", decimals)));
+	ret = g_strdup_printf (str_format, number);
+
+	while (TRUE)
+		{
+			error = NULL;
+			str_len = g_utf8_strlen (ret, -1);
+			str = g_regex_replace ((const GRegex *)regex,
+			                       ret, str_len, 0,
+			                       "\\1.\\2", 0,
+			                       &error);
+			if (error != NULL)
+				{
+					g_warning ("Error on regex replacing: %s.",
+					           error->message != NULL ? error->message : "no details");
+					g_regex_unref (regex);
+					return "";
+				}
+			if (g_strcmp0 (ret, str) != 0)
+				{
+					ret = g_strdup (str);
+					g_free (str);
+				}
+			else
+				{
+					break;
+				}
+		}
+
+	if (with_currency_symbol)
+		{
+			ret = g_strconcat ("€ ", ret, NULL);
+		}
+
+	g_regex_unref (regex);
+
+	return ret;
+}
+
 /* PRIVATE */
 static void
 gdaex_create_connection_parser (GdaEx *gdaex)
@@ -2588,7 +2676,6 @@ static void
 gdaex_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
 	GdaEx *gdaex = GDAEX (object);
-
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	switch (property_id)
@@ -2603,7 +2690,6 @@ static void
 gdaex_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
 	GdaEx *gdaex = GDAEX (object);
-
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	switch (property_id)
