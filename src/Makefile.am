@@ -12,9 +12,9 @@ libgdaex_la_SOURCES = gdaex.c \
 
 libgdaex_la_LDFLAGS = -no-undefined
 
-include_HEADERS = libgdaex.h \
-                  gdaex.h \
-                  grid.h \
-                  gridcolumn.h
+libgdaex_include_HEADERS = libgdaex.h \
+                           gdaex.h \
+                           grid.h \
+                           gridcolumn.h
 
 libgdaex_includedir = $(includedir)/libgdaex

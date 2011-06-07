@@ -658,8 +658,6 @@ GdaDataModel
 				}
 		}
 
-	g_object_unref (stmt);
-
 	return dm;
 }
 
@@ -2184,8 +2182,6 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	error = NULL;
 	nrecs = gda_connection_statement_execute_non_select (priv->gda_conn, stmt, NULL, NULL, &error);
 
-	g_object_unref (stmt);
-
 	if (error != NULL)
 		{
 			g_warning ("Error executing command query: %s\n%s",
@@ -2201,6 +2197,8 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 		}
 
 	g_signal_emit (gdaex, klass->after_execute_signal_id, 0, stmt);
+
+	g_object_unref (stmt);
 
 	return nrecs;
 }
