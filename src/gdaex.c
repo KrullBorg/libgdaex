@@ -886,6 +886,40 @@ GDate
 	return value;
 }
 
+/**
+ * gdaex_data_model_get_field_value_gdatetime_at:
+ * @data_model: a #GdaDataModel object.
+ * @row:
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #GDateTime.
+ */
+GDateTime
+*gdaex_data_model_get_field_value_gdatetime_at (GdaDataModel *data_model,
+                                           gint row,
+                                           const gchar *field_name)
+{
+	GDateTime *value;
+	gint col;
+
+	col = gda_data_model_get_column_index (data_model, field_name);
+
+	if (col >= 0)
+		{
+			value = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
+			if (value == NULL)
+				{
+					g_warning ("Error retrieving «%s»'s value.", field_name);
+				}
+		}
+	else
+		{
+			g_warning ("No column found with name «%s».", field_name);
+			value = NULL;
+		}
+
+	return value;
+}
 
 /**
  * gdaex_data_model_get_field_value_tm_at:
