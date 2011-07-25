@@ -25,6 +25,8 @@
 
 
 #include "gdaex.h"
+#include "grid.h"
+#include "gridcolumn.h"
 #include "queryeditor.h"
 
 

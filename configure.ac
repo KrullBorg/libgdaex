@@ -2,12 +2,14 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libgdaex], [0.3.0], [azagli@libero.it])
+AC_INIT([libgdaex], [0.4.0], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/gdaex.c])
 AM_CONFIG_HEADER([config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE(-Wall)
 AM_MAINTAINER_MODE
+
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_LIBTOOL_WIN32_DLL
 

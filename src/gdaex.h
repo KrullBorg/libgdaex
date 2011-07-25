@@ -22,9 +22,12 @@
  */
 
 #include <time.h>
+
 #include <glib.h>
 #include <glib-object.h>
+
 #include <gtk/gtk.h>
+
 #include <libgda/libgda.h>
 
 #ifndef __GDAEX_H__
@@ -97,6 +100,9 @@ GdaTimestamp *gdaex_data_model_get_field_value_gdatimestamp_at (GdaDataModel *da
 GDate *gdaex_data_model_get_field_value_gdate_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
+GDateTime *gdaex_data_model_get_field_value_gdatetime_at (GdaDataModel *data_model,
+                                                 gint row,
+                                                 const gchar *field_name);
 struct tm *gdaex_data_model_get_field_value_tm_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
@@ -122,8 +128,49 @@ GdaTimestamp *gdaex_data_model_get_value_gdatimestamp_at (GdaDataModel *data_mod
 GDate *gdaex_data_model_get_value_gdate_at (GdaDataModel *data_model,
                                            gint row,
                                            gint col);
+GDateTime *gdaex_data_model_get_value_gdatetime_at (GdaDataModel *data_model,
+                                           gint row,
+                                           gint col);
 struct tm *gdaex_data_model_get_value_tm_at (GdaDataModel *data_model,
                                            gint row,
+                                           gint col);
+
+gchar *gdaex_data_model_iter_get_field_value_stringify_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name);
+gint gdaex_data_model_iter_get_field_value_integer_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+gfloat gdaex_data_model_iter_get_field_value_float_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+gdouble gdaex_data_model_iter_get_field_value_double_at (GdaDataModelIter *iter,
+                                                   const gchar *field_name);
+gboolean gdaex_data_model_iter_get_field_value_boolean_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name);
+GdaTimestamp *gdaex_data_model_iter_get_field_value_gdatimestamp_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+GDate *gdaex_data_model_iter_get_field_value_gdate_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+GDateTime *gdaex_data_model_iter_get_field_value_gdatetime_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+struct tm *gdaex_data_model_iter_get_field_value_tm_at (GdaDataModelIter *iter,
+                                                 const gchar *field_name);
+
+gchar *gdaex_data_model_iter_get_value_stringify_at (GdaDataModelIter *iter,
+                                               gint col);
+gint gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter,
+                                           gint col);
+gfloat gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter,
+                                           gint col);
+gdouble gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter,
+                                             gint col);
+gboolean gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter,
+                                               gint col);
+GdaTimestamp *gdaex_data_model_iter_get_value_gdatimestamp_at (GdaDataModelIter *iter,
+                                                          gint col);
+GDate *gdaex_data_model_iter_get_value_gdate_at (GdaDataModelIter *iter,
+                                           gint col);
+GDateTime *gdaex_data_model_iter_get_value_gdatetime_at (GdaDataModelIter *iter,
+                                           gint col);
+struct tm *gdaex_data_model_iter_get_value_tm_at (GdaDataModelIter *iter,
                                            gint col);
 
 gboolean gdaex_begin (GdaEx *gdaex);
@@ -144,6 +191,17 @@ gchar gdaex_get_chr_quoting (GdaEx *gdaex);
 const gchar *gdaex_get_guifile (GdaEx *gdaex);
 
 GtkBuilder *gdaex_get_gtkbuilder (GdaEx *gdaex);
+
+void gdaex_fill_liststore_from_sql (GdaEx *gdaex, GtkListStore *lstore, const gchar *sql,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex, GtkListStore *lstore, GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+
+gchar *gdaex_format_money (gdouble number,
+                     gint decimals,
+                     gboolean with_currency_symbol);
 
 
 G_END_DECLS
