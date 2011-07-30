@@ -58,7 +58,11 @@
       <column type="gchararray"/>
       <!-- column-name condition_from -->
       <column type="gchararray"/>
+      <!-- column-name condition_from_sql -->
+      <column type="gchararray"/>
       <!-- column-name condition_to -->
+      <column type="gchararray"/>
+      <!-- column-name condition_to_sql -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -337,7 +341,7 @@
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext8"/>
                                   <attributes>
-                                    <attribute name="text">9</attribute>
+                                    <attribute name="text">10</attribute>
                                   </attributes>
                                 </child>
                               </object>

@@ -208,6 +208,18 @@ main (int argc, char *argv[])
 	g_free (field);
 
 	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("brithday");
+	field->name_visible = g_strdup ("Birthday");
+	field->description = g_strdup ("The client's birthday");
+	field->type = GDAEX_QE_FIELD_TYPE_DATE;
+	field->for_show = TRUE;
+	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
+	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
+	gdaex_query_editor_table_add_field (qe, "clients", *field);
+	g_free (field);
+
+	field = g_new0 (GdaExQueryEditorField, 1);
 	field->name = g_strdup ("age");
 	field->name_visible = g_strdup ("Age");
 	field->description = g_strdup ("The client's age");
@@ -216,6 +228,18 @@ main (int argc, char *argv[])
 	field->for_show = TRUE;
 	field->for_where = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
+	gdaex_query_editor_table_add_field (qe, "clients", *field);
+	g_free (field);
+
+	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("datetime");
+	field->name_visible = g_strdup ("DateTime");
+	field->description = g_strdup ("???");
+	field->type = GDAEX_QE_FIELD_TYPE_DATETIME;
+	field->for_show = TRUE;
+	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
+	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 

@@ -21,6 +21,8 @@
 #endif
 
 #include <stdarg.h>
+#include <string.h>
+#include <gtkdateentry.h>
 
 #include "queryeditor.h"
 
@@ -220,7 +222,9 @@ enum
 		COL_WHERE_CONDITION_TYPE,
 		COL_WHERE_CONDITION_TYPE_VISIBLE,
 		COL_WHERE_CONDITION_FROM,
-		COL_WHERE_CONDITION_TO
+		COL_WHERE_CONDITION_FROM_SQL,
+		COL_WHERE_CONDITION_TO,
+		COL_WHERE_CONDITION_TO_SQL
 	};
 
 enum
@@ -503,6 +507,64 @@ gdaex_query_editor_clean_choices (GdaExQueryEditor *qe)
 	gtk_button_clicked (GTK_BUTTON (gtk_builder_get_object (priv->gtkbuilder, "button16")));
 }
 
+static GDate
+*gdaex_query_editor_get_gdate_from_sql (const gchar *sql)
+{
+	GDate *ret;
+
+	gint year;
+	gint month;
+	gint day;
+
+	ret = NULL;
+
+	year = 0;
+	month = 0;
+	day = 0;
+
+	if (strlen (sql) >= 10)
+		{
+			year = strtol (g_strndup (sql, 4), NULL, 10);
+			month = strtol (g_strndup (sql + 5, 2), NULL, 10);
+			day = strtol (g_strndup (sql + 8, 2), NULL, 10);
+
+			ret = g_date_new_dmy (day,
+			                      month,
+			                      year);
+		}
+
+	return ret;
+}
+
+static GdaTimestamp
+*gdaex_query_editor_get_gdatimestamp_from_sql (const gchar *sql)
+{
+	GdaTimestamp *ret;
+
+	ret = NULL;
+
+	if (strlen (sql) >= 10)
+		{
+			ret = g_new0 (GdaTimestamp, 1);
+
+			ret->year = strtol (g_strndup (sql, 4), NULL, 10);
+			ret->month = strtol (g_strndup (sql + 5, 2), NULL, 10);
+			ret->day = strtol (g_strndup (sql + 8, 2), NULL, 10);
+
+			if (strlen (sql) >= 12)
+				{
+					ret->hour = strtol (g_strndup (sql + 11, 2), NULL, 10);
+					ret->minute = strtol (g_strndup (sql + 14, 2), NULL, 10);
+					if (strlen (sql) >= 16)
+						{
+							ret->second = strtol (g_strndup (sql + 17, 2), NULL, 10);
+						}
+				}
+		}
+
+	return ret;
+}
+
 const gchar
 *gdaex_query_editor_get_sql (GdaExQueryEditor *qe)
 {
@@ -610,8 +672,8 @@ const gchar
 					                    COL_WHERE_NAME, &field_name,
 					                    COL_WHERE_CONDITION_NOT, &not,
 					                    COL_WHERE_CONDITION_TYPE, &where_type,
-					                    COL_WHERE_CONDITION_FROM, &from_str,
-					                    COL_WHERE_CONDITION_TO, &to_str,
+					                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
+					                    COL_WHERE_CONDITION_TO_SQL, &to_str,
 					                    -1);
 
 					if (from_str == NULL)
@@ -728,13 +790,19 @@ const gchar
 										break;
 
 									case GDAEX_QE_FIELD_TYPE_DATE:
-										/* TODO
-										type = G_TYPE_DATE; */
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_DATE, gdaex_query_editor_get_gdate_from_sql (from_str));
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_DATE, gdaex_query_editor_get_gdate_from_sql (to_str));
+											}
 										break;
 
 									case GDAEX_QE_FIELD_TYPE_DATETIME:
-										/* TODO
-										type = G_TYPE_DATE_TIME; */
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, GDA_TYPE_TIMESTAMP, gdaex_query_editor_get_gdatimestamp_from_sql (from_str));
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, GDA_TYPE_TIMESTAMP, gdaex_query_editor_get_gdatimestamp_from_sql (to_str));
+											}
 										break;
 
 									case GDAEX_QE_FIELD_TYPE_TIME:
@@ -947,8 +1015,8 @@ xmlNode
 					                    COL_WHERE_NAME, &field_name,
 					                    COL_WHERE_CONDITION_NOT, &not,
 					                    COL_WHERE_CONDITION_TYPE, &where_type,
-					                    COL_WHERE_CONDITION_FROM, &from_str,
-					                    COL_WHERE_CONDITION_TO, &to_str,
+					                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
+					                    COL_WHERE_CONDITION_TO_SQL, &to_str,
 					                    -1);
 
 					switch (link_type)
@@ -1119,161 +1187,209 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 					{
 						if (xmlStrEqual (node_field->name, "field"))
 							{
-						table_name = xmlGetProp (node_field, "table");
-						table = g_hash_table_lookup (priv->tables, table_name);
-						if (table == NULL)
-							{
-								g_warning ("Table «%s» not found.", table_name);
-								continue;
-							}
-
-						field_name = xmlGetProp (node_field, "field");
-						field = g_hash_table_lookup (table->fields, field_name);
-						if (field == NULL)
-							{
-								g_warning ("Field «%s» not found in table «%s».", field_name, table_name);
-								continue;
-							}
-
-						name_visible = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
-						v_table_field = gda_value_new (G_TYPE_STRING);
-						g_value_set_string (v_table_field, name_visible);
-
-						if (xmlStrEqual (node->name, "show"))
-							{
-								if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
+								table_name = xmlGetProp (node_field, "table");
+								table = g_hash_table_lookup (priv->tables, table_name);
+								if (table == NULL)
 									{
-										alias = xmlGetProp (node_field, "alias");
-										if (alias == NULL)
+										g_warning ("Table «%s» not found.", table_name);
+										continue;
+									}
+
+								field_name = xmlGetProp (node_field, "field");
+								field = g_hash_table_lookup (table->fields, field_name);
+								if (field == NULL)
+									{
+										g_warning ("Field «%s» not found in table «%s».", field_name, table_name);
+										continue;
+									}
+
+								name_visible = g_strconcat (table->name_visible, " - ", field->name_visible, NULL);
+								v_table_field = gda_value_new (G_TYPE_STRING);
+								g_value_set_string (v_table_field, name_visible);
+
+								if (xmlStrEqual (node->name, "show"))
+									{
+										if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
 											{
-												alias = g_strdup ("");
-											}
+												alias = xmlGetProp (node_field, "alias");
+												if (alias == NULL)
+													{
+														alias = g_strdup ("");
+													}
 
-										gtk_list_store_append (priv->lstore_show, &iter);
-										gtk_list_store_set (priv->lstore_show, &iter,
-										                    COL_SHOW_TABLE_NAME, field->table_name,
-										                    COL_SHOW_NAME, field_name,
-										                    COL_SHOW_VISIBLE_NAME, name_visible,
-										                    COL_SHOW_ALIAS, alias,
-										                    -1);
-									}
-							}
-						else if (xmlStrEqual (node->name, "where"))
-							{
-								gchar *link;
-								gchar *not;
-								gchar *condition;
-								gchar *from;
-								gchar *to;
-								GdaExQueryEditorLinkType link_type;
-								GdaExQueryEditorWhereType where_type;
-
-								link = xmlGetProp (node_field, "link_type");
-								not = xmlGetProp (node_field, "not");
-								condition = xmlGetProp (node_field, "where_type");
-								from = xmlGetProp (node_field, "from");
-								to = xmlGetProp (node_field, "to");
-
-								link_type = 0;
-								if (g_strcmp0 (link, "AND") == 0)
-									{
-										link_type = GDAEX_QE_LINK_TYPE_AND;
-									}
-								else if (g_strcmp0 (link, "OR") == 0)
-									{
-										link_type = GDAEX_QE_LINK_TYPE_OR;
-									}
-
-								if (g_strcmp0 (condition, "EQUAL") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
-									}
-								else if (g_strcmp0 (condition, "STARTS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_STARTS;
-									}
-								else if (g_strcmp0 (condition, "CONTAINS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_CONTAINS;
-									}
-								else if (g_strcmp0 (condition, "ENDS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_ENDS;
-									}
-								else if (g_strcmp0 (condition, "ISTARTS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_ISTARTS;
-									}
-								else if (g_strcmp0 (condition, "ICONTAINS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_ICONTAINS;
-									}
-								else if (g_strcmp0 (condition, "IENDS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_IENDS;
-									}
-								else if (g_strcmp0 (condition, "GREAT") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_GREAT;
-									}
-								else if (g_strcmp0 (condition, "GREAT_EQUAL") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_GREAT_EQUAL;
-									}
-								else if (g_strcmp0 (condition, "LESS") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_LESS;
-									}
-								else if (g_strcmp0 (condition, "LESS_EQUAL") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_LESS_EQUAL;
-									}
-								else if (g_strcmp0 (condition, "BETWEEN") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_BETWEEN;
-									}
-								else if (g_strcmp0 (condition, "IS_NULL") == 0)
-									{
-										where_type = GDAEX_QE_WHERE_TYPE_IS_NULL;
-									}
-
-								if (where_type != 0)
-									{
-										gtk_tree_store_append (priv->tstore_where, &iter, NULL);
-										gtk_tree_store_set (priv->tstore_where, &iter,
-										                    COL_WHERE_LINK_TYPE, link_type,
-										                    COL_WHERE_LINK_TYPE_VISIBLE, gdaex_query_editor_get_link_type_str_from_type (link_type),
-										                    COL_WHERE_TABLE_NAME, table_name,
-										                    COL_WHERE_NAME, field_name,
-										                    COL_WHERE_VISIBLE_NAME, name_visible,
-										                    COL_WHERE_CONDITION_NOT, (g_strcmp0 (not, "n") != 0),
-										                    COL_WHERE_CONDITION_TYPE, where_type,
-										                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
-										                    COL_WHERE_CONDITION_FROM, from,
-										                    COL_WHERE_CONDITION_TO, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to : ""),
-										                    -1);
-									}
-							}
-						else if (xmlStrEqual (node->name, "order"))
-							{
-								if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
-									{
-										gchar *asc_desc;
-										asc_desc = xmlGetProp (node_field, "asc_desc");
-
-										if (g_strcmp0 (asc_desc, "ASC") == 0
-										    || g_strcmp0 (asc_desc, "DESC") == 0)
-											{
-												gtk_list_store_append (priv->lstore_order, &iter);
-												gtk_list_store_set (priv->lstore_order, &iter,
-												                    COL_ORDER_TABLE_NAME, field->table_name,
-												                    COL_ORDER_NAME, field_name,
-												                    COL_ORDER_VISIBLE_NAME, name_visible,
-												                    COL_ORDER_ORDER, asc_desc,
+												gtk_list_store_append (priv->lstore_show, &iter);
+												gtk_list_store_set (priv->lstore_show, &iter,
+												                    COL_SHOW_TABLE_NAME, field->table_name,
+												                    COL_SHOW_NAME, field_name,
+												                    COL_SHOW_VISIBLE_NAME, name_visible,
+												                    COL_SHOW_ALIAS, alias,
 												                    -1);
 											}
 									}
-							}
+								else if (xmlStrEqual (node->name, "where"))
+									{
+										gchar *link;
+										gchar *not;
+										gchar *condition;
+										gchar *from;
+										gchar *to;
+										gchar *from_sql;
+										gchar *to_sql;
+										GdaExQueryEditorLinkType link_type;
+										GdaExQueryEditorWhereType where_type;
+
+										link = xmlGetProp (node_field, "link_type");
+										not = xmlGetProp (node_field, "not");
+										condition = xmlGetProp (node_field, "where_type");
+
+										from_sql = xmlGetProp (node_field, "from");
+										to_sql = xmlGetProp (node_field, "to");
+										if (field->type == GDAEX_QE_FIELD_TYPE_DATE)
+											{
+												GDate *gdate = gdaex_query_editor_get_gdate_from_sql (from_sql);
+												from = g_strdup_printf ("%02d/%02d/%04d",
+												                        g_date_get_day (gdate),
+												                        g_date_get_month (gdate),
+												                        g_date_get_year (gdate));
+
+												gdate = gdaex_query_editor_get_gdate_from_sql (to_sql);
+												to = g_strdup_printf ("%02d/%02d/%04d",
+												                        g_date_get_day (gdate),
+												                        g_date_get_month (gdate),
+												                        g_date_get_year (gdate));
+											}
+										else if (field->type = GDAEX_QE_FIELD_TYPE_DATETIME)
+											{
+												GdaTimestamp *gdate = gdaex_query_editor_get_gdatimestamp_from_sql (from_sql);
+												from = g_strdup_printf ("%02d/%02d/%04d %02d.%02d.%02d",
+												                        gdate->day,
+												                        gdate->month,
+												                        gdate->year,
+												                        gdate->hour,
+												                        gdate->minute,
+												                        gdate->second);
+
+												gdate = gdaex_query_editor_get_gdatimestamp_from_sql (to_sql);
+												to = g_strdup_printf ("%02d/%02d/%04d %02d.%02d.%02d",
+												                        gdate->day,
+												                        gdate->month,
+												                        gdate->year,
+												                        gdate->hour,
+												                        gdate->minute,
+												                        gdate->second);
+											}
+										else if (field->type = GDAEX_QE_FIELD_TYPE_TIME)
+											{
+												/* TODO */
+											}
+										else
+											{
+												from = xmlGetProp (node_field, "from");
+												to = xmlGetProp (node_field, "to");
+											}
+
+										link_type = 0;
+										if (g_strcmp0 (link, "AND") == 0)
+											{
+												link_type = GDAEX_QE_LINK_TYPE_AND;
+											}
+										else if (g_strcmp0 (link, "OR") == 0)
+											{
+												link_type = GDAEX_QE_LINK_TYPE_OR;
+											}
+
+										if (g_strcmp0 (condition, "EQUAL") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
+											}
+										else if (g_strcmp0 (condition, "STARTS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_STARTS;
+											}
+										else if (g_strcmp0 (condition, "CONTAINS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_CONTAINS;
+											}
+										else if (g_strcmp0 (condition, "ENDS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_ENDS;
+											}
+										else if (g_strcmp0 (condition, "ISTARTS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_ISTARTS;
+											}
+										else if (g_strcmp0 (condition, "ICONTAINS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_ICONTAINS;
+											}
+										else if (g_strcmp0 (condition, "IENDS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_IENDS;
+											}
+										else if (g_strcmp0 (condition, "GREAT") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_GREAT;
+											}
+										else if (g_strcmp0 (condition, "GREAT_EQUAL") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_GREAT_EQUAL;
+											}
+										else if (g_strcmp0 (condition, "LESS") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_LESS;
+											}
+										else if (g_strcmp0 (condition, "LESS_EQUAL") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_LESS_EQUAL;
+											}
+										else if (g_strcmp0 (condition, "BETWEEN") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_BETWEEN;
+											}
+										else if (g_strcmp0 (condition, "IS_NULL") == 0)
+											{
+												where_type = GDAEX_QE_WHERE_TYPE_IS_NULL;
+											}
+
+										if (where_type != 0)
+											{
+												gtk_tree_store_append (priv->tstore_where, &iter, NULL);
+												gtk_tree_store_set (priv->tstore_where, &iter,
+												                    COL_WHERE_LINK_TYPE, link_type,
+												                    COL_WHERE_LINK_TYPE_VISIBLE, gdaex_query_editor_get_link_type_str_from_type (link_type),
+												                    COL_WHERE_TABLE_NAME, table_name,
+												                    COL_WHERE_NAME, field_name,
+												                    COL_WHERE_VISIBLE_NAME, name_visible,
+												                    COL_WHERE_CONDITION_NOT, (g_strcmp0 (not, "n") != 0),
+												                    COL_WHERE_CONDITION_TYPE, where_type,
+												                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+												                    COL_WHERE_CONDITION_FROM, from,
+												                    COL_WHERE_CONDITION_FROM_SQL, from_sql,
+												                    COL_WHERE_CONDITION_TO, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to : ""),
+												                    COL_WHERE_CONDITION_TO_SQL, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to_sql : ""),
+												                    -1);
+											}
+									}
+								else if (xmlStrEqual (node->name, "order"))
+									{
+										if (!gdaex_query_editor_model_has_value (GTK_TREE_MODEL (priv->lstore_show), COL_SHOW_VISIBLE_NAME, v_table_field))
+											{
+												gchar *asc_desc;
+												asc_desc = xmlGetProp (node_field, "asc_desc");
+
+												if (g_strcmp0 (asc_desc, "ASC") == 0
+												    || g_strcmp0 (asc_desc, "DESC") == 0)
+													{
+														gtk_list_store_append (priv->lstore_order, &iter);
+														gtk_list_store_set (priv->lstore_order, &iter,
+														                    COL_ORDER_TABLE_NAME, field->table_name,
+														                    COL_ORDER_NAME, field_name,
+														                    COL_ORDER_VISIBLE_NAME, name_visible,
+														                    COL_ORDER_ORDER, asc_desc,
+														                    -1);
+													}
+											}
+									}
 							}
 
 						node_field = node_field->next;
@@ -1862,7 +1978,15 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 
 			if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
 				{
-					gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
+					if (GTK_IS_DATE_ENTRY (priv->txt1))
+						{
+							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt1),
+							                                   g_date_time_new_now_local ());
+						}
+					else
+						{
+							gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
+						}
 				}
 
 			gtk_widget_set_visible (priv->lbl_txt2, where_type == GDAEX_QE_WHERE_TYPE_BETWEEN);
@@ -1870,16 +1994,20 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 
 			if (where_type != GDAEX_QE_WHERE_TYPE_BETWEEN)
 				{
-					gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 0);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 0);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 0);
+					if (GTK_IS_DATE_ENTRY (priv->txt2))
+						{
+							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt2),
+							                                   g_date_time_new_now_local ());
+						}
+					else
+						{
+							gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
+						}
+					gtk_table_set_row_spacing (GTK_TABLE (priv->tbl), 1, 0);
 				}
 			else
 				{
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 5);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 5);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 5);
+					gtk_table_set_row_spacing (GTK_TABLE (priv->tbl), 1, 5);
 				}
 		}
 }
@@ -1920,6 +2048,8 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 	GdaExQueryEditor *qe;
 	GdaExQueryEditorPrivate *priv;
 
+	GtkWidget *dialog;
+
 	GtkTreeIter iter;
 
 	gchar *val1;
@@ -1956,8 +2086,17 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 					{
 						GtkTreeModel *model;
 						GtkTreeIter iter_val;
+
 						guint link_type;
 						guint where_type;
+
+						gchar *val1_sql;
+						gchar *val2_sql;
+
+						val1 = NULL;
+						val2 = NULL;
+						val1_sql = NULL;
+						val2_sql = NULL;
 
 						/* if it is the first condition, "link" doesn't is visibile */
 						GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
@@ -1967,19 +2106,19 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_link_type));
 								if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_val))
 									{
-										GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
-										                                            GTK_DIALOG_DESTROY_WITH_PARENT,
-										                                            GTK_MESSAGE_WARNING,
-										                                            GTK_BUTTONS_OK,
-										                                            "You must select a link's type before.");
+										dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
+										                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+										                                 GTK_MESSAGE_WARNING,
+										                                 GTK_BUTTONS_OK,
+										                                 "You must select a link's type before.");
 										gtk_dialog_run (GTK_DIALOG (dialog));
 										gtk_widget_destroy (dialog);
 										return;
 									}
 
 								gtk_tree_model_get (model, &iter_val,
-										            0, &link_type,
-										            -1);
+								                    0, &link_type,
+								                    -1);
 							}
 						else
 							{
@@ -1989,11 +2128,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_where_type));
 						if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_val))
 							{
-								GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
-								                                            GTK_DIALOG_DESTROY_WITH_PARENT,
-								                                            GTK_MESSAGE_WARNING,
-								                                            GTK_BUTTONS_OK,
-								                                            "You must select a condition's type before.");
+								dialog = gtk_message_dialog_new (GTK_WINDOW (gtk_widget_get_toplevel (priv->hpaned_main)),
+								                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+								                                 GTK_MESSAGE_WARNING,
+								                                 GTK_BUTTONS_OK,
+								                                 "You must select a condition's type before.");
 								gtk_dialog_run (GTK_DIALOG (dialog));
 								gtk_widget_destroy (dialog);
 								return;
@@ -2003,24 +2142,58 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						                    0, &where_type,
 						                    -1);
 
-						val1 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
+						if (GTK_IS_DATE_ENTRY (priv->txt1))
+							{
+								val1 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt1), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt1)) ? "dmYHMS" : "dmY", NULL, NULL);
+								val1_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt1));
+							}
+						else
+							{
+								val1 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
+								val1_sql = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
+							}
 						if (val1 == NULL)
 							{
 								val1 = g_strdup ("");
 							}
 						else
 							{
-								val1 = g_strstrip (g_strdup (val1));
+								val1 = g_strdup (val1);
+							}
+						if (val1_sql == NULL)
+							{
+								val1_sql = g_strdup ("");
+							}
+						else
+							{
+								val1_sql = g_strdup (val1_sql);
 							}
 
-						val2 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt2));
+						if (GTK_IS_DATE_ENTRY (priv->txt2))
+							{
+								val2 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt2), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt2)) ? "dmYHMS" : "dmY", NULL, NULL);
+								val2_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt2));
+							}
+						else
+							{
+								val2 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt2));
+								val2_sql = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt2));
+							}
 						if (val2 == NULL)
 							{
 								val2 = g_strdup ("");
 							}
 						else
 							{
-								val2 = g_strstrip (g_strdup (val2));
+								val2 = g_strdup (val2);
+							}
+						if (val2_sql == NULL)
+							{
+								val2_sql = g_strdup ("");
+							}
+						else
+							{
+								val2_sql = g_strdup (val2_sql);
 							}
 
 						gtk_tree_store_set (priv->tstore_where, &iter,
@@ -2030,7 +2203,9 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						                    COL_WHERE_CONDITION_TYPE, where_type,
 						                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
 						                    COL_WHERE_CONDITION_FROM, val1,
+						                    COL_WHERE_CONDITION_FROM_SQL, val1_sql,
 						                    COL_WHERE_CONDITION_TO, val2,
+						                    COL_WHERE_CONDITION_TO_SQL, val2_sql,
 						                    -1);
 
 						gtk_tree_selection_unselect_all (priv->sel_where);
@@ -2343,6 +2518,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	guint where_type;
 	gchar *from;
 	gchar *to;
+	gchar *from_sql;
+	gchar *to_sql;
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
@@ -2373,7 +2550,9 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			                    COL_WHERE_CONDITION_NOT, &not,
 			                    COL_WHERE_CONDITION_TYPE, &where_type,
 			                    COL_WHERE_CONDITION_FROM, &from,
+			                    COL_WHERE_CONDITION_FROM_SQL, &from_sql,
 			                    COL_WHERE_CONDITION_TO, &to,
+			                    COL_WHERE_CONDITION_TO_SQL, &to_sql,
 			                    -1);
 
 			table = g_hash_table_lookup (priv->tables, table_name);
@@ -2381,12 +2560,12 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 			priv->hbox = gtk_hbox_new (TRUE, 0);
 
-			priv->tbl = gtk_table_new (2, 7, FALSE);
+			priv->tbl = gtk_table_new (3, 5, FALSE);
 			gtk_table_set_row_spacings (GTK_TABLE (priv->tbl), 5);
 			gtk_table_set_col_spacings (GTK_TABLE (priv->tbl), 5);
 			gtk_box_pack_start (GTK_BOX (priv->hbox), priv->tbl, TRUE, TRUE, 0);
 
-			/* if it is the first condition, "link" doesn't is visibile */
+			/* if it is the first condition, "link" isn't visibile */
 			path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
 			indices = gtk_tree_path_get_indices (path);
 			if (indices[0] != 0)
@@ -2404,7 +2583,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			priv->lbl_txt1 = gtk_label_new ("Value");
 			gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt1, 4, 5, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
-			/* if it is the first condition, "link" doesn't is visibile */
+			/* if it is the first condition, "link" isn't visibile */
 			if (indices[0] != 0)
 				{
 					priv->cb_link_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_link_type));
@@ -2417,18 +2596,18 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 					gtk_list_store_append (priv->lstore_link_type, &iter_cb);
 					gtk_list_store_set (priv->lstore_link_type, &iter_cb,
-							            0, GDAEX_QE_LINK_TYPE_AND,
-							            1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_AND),
-							            -1);
+					                    0, GDAEX_QE_LINK_TYPE_AND,
+					                    1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_AND),
+					                    -1);
 					if (link_type == GDAEX_QE_LINK_TYPE_AND)
 						{
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
 						}
 					gtk_list_store_append (priv->lstore_link_type, &iter_cb);
 					gtk_list_store_set (priv->lstore_link_type, &iter_cb,
-							            0, GDAEX_QE_LINK_TYPE_OR,
-							            1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_OR),
-							            -1);
+					                    0, GDAEX_QE_LINK_TYPE_OR,
+					                    1, gdaex_query_editor_get_link_type_str_from_type (GDAEX_QE_LINK_TYPE_OR),
+					                    -1);
 					if (link_type == GDAEX_QE_LINK_TYPE_OR)
 						{
 							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
@@ -2613,7 +2792,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_table_attach (GTK_TABLE (priv->tbl), priv->cb_where_type, 3, 4, 1, 2, 0, 0, 0, 0);
 
 			priv->lbl_txt2 = gtk_label_new ("and");
-			gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt2, 5, 6, 1, 2, 0, 0, 0, 0);
+			gtk_misc_set_alignment (GTK_MISC (priv->lbl_txt2), 1.0, 0.5);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt2, 3, 4, 2, 3, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0, 0);
 
 			switch (field->type)
 				{
@@ -2649,24 +2829,26 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATE:
-						priv->txt1 = gtk_entry_new ();
-						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 10);
-						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
+						priv->txt1 = gtk_date_entry_new (NULL, NULL, TRUE);
+						gtk_date_entry_set_time_visible (GTK_DATE_ENTRY (priv->txt1), FALSE);
+						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt1), from_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d") : from_sql, "Ymd");
 						widget_val1 = priv->txt1;
 
-						priv->txt2 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+						priv->txt2 = gtk_date_entry_new (NULL, NULL, TRUE);
+						gtk_date_entry_set_time_visible (GTK_DATE_ENTRY (priv->txt2), FALSE);
+						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt2), to_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d") : to_sql, "Ymd");
 						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATETIME:
-						priv->txt1 = gtk_entry_new ();
-						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 19);
-						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
+						priv->txt1 = gtk_date_entry_new (NULL, NULL, TRUE);
+						gtk_date_entry_set_time_separator (GTK_DATE_ENTRY (priv->txt1), ".");
+						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt1), from_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d %H.%M.%S") : from_sql, "YmdHMS");
 						widget_val1 = priv->txt1;
 
-						priv->txt2 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+						priv->txt2 = gtk_date_entry_new (NULL, NULL, TRUE);
+						gtk_date_entry_set_time_separator (GTK_DATE_ENTRY (priv->txt2), ".");
+						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt2), to_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d %H.%M.%S") : to_sql, "YmdHMS");
 						widget_val2 = priv->txt2;
 						break;
 
@@ -2687,7 +2869,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 				};
 
 			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val1, 4, 5, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
-			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val2, 6, 7, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val2, 4, 5, 2, 3, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 
@@ -2708,9 +2890,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			if (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN
 			    || where_type == 0)
 				{
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 4, 0);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 5, 0);
-					gtk_table_set_col_spacing (GTK_TABLE (priv->tbl), 6, 0);
+					gtk_table_set_row_spacing (GTK_TABLE (priv->tbl), 1, 0);
 				}
 
 			g_signal_connect (G_OBJECT (priv->cb_where_type), "changed",
