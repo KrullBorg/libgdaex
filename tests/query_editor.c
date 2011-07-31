@@ -117,10 +117,10 @@ on_btn_get_sql_clicked (GtkButton *button,
 	buf = g_strjoinv ("%%", g_strsplit (buf, "%", -1));
 
 	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                            GTK_MESSAGE_INFO,
-	                                            GTK_BUTTONS_OK,
-	                                            buf);
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 buf);
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);;
 }

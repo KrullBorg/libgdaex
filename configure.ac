@@ -25,6 +25,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
+AC_PROG_RANLIB
 
 GTK_DOC_CHECK(1.0)
 
@@ -45,7 +46,7 @@ AC_CHECK_HEADERS([string.h])
 AC_C_CONST
 
 # Checks for library functions.
-AC_CHECK_FUNCS([strchr strcasecmp])
+AC_CHECK_FUNCS([strchr strcasecmp strtol])
 
 AC_CONFIG_FILES([
 	libgdaex.pc

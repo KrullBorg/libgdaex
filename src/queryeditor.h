@@ -55,11 +55,11 @@ GType gdaex_query_editor_get_type (void) G_GNUC_CONST;
 
 GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 
-GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *gdaex_query_editor);
+GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *qe);
 
 typedef enum
 	{
-		GDAEX_QE_FIELD_TYPE_TEXT,
+		GDAEX_QE_FIELD_TYPE_TEXT = 1,
 		GDAEX_QE_FIELD_TYPE_INTEGER,
 		GDAEX_QE_FIELD_TYPE_DOUBLE,
 		GDAEX_QE_FIELD_TYPE_DATE,
@@ -74,7 +74,7 @@ typedef enum
 		GDAEX_QE_WHERE_TYPE_CONTAINS = 4,
 		GDAEX_QE_WHERE_TYPE_ENDS = 8,
 		GDAEX_QE_WHERE_TYPE_ISTARTS = 16,
-		GDAEX_QE_WHERE_TYPE_ICONTAINS =32,
+		GDAEX_QE_WHERE_TYPE_ICONTAINS = 32,
 		GDAEX_QE_WHERE_TYPE_IENDS = 64,
 		GDAEX_QE_WHERE_TYPE_GREAT = 128,
 		GDAEX_QE_WHERE_TYPE_GREAT_EQUAL = 256,
@@ -103,12 +103,15 @@ typedef struct
 		gboolean always_showed;
 		gboolean for_where;
 		guint available_where_type;
+
+		/* TODO 
+		 * to refactor
+		 */
 		gchar *decode_table2;
 		/* TODO 
 		GSList *decode_fields1;
 		GSList *decode_fields2;
 		*/
-		/* TODO to test */
 		gchar *decode_field2;
 		gchar *decode_field_to_show;
 		gchar *decode_field_alias;
@@ -130,7 +133,9 @@ void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
 
 xmlNode *gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe);
-void gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
+
+void gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe,
+                                               xmlNode *root,
                                                gboolean clean);
 
 
