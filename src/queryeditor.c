@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <gtkdateentry.h>
+#include <libgtkformui/gtkformdecoder.h>
 
 #include "queryeditor.h"
 
@@ -145,6 +146,10 @@ static void gdaex_query_editor_on_btn_order_clean_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
                                                     gpointer user_data);
+
+static void gdaex_query_editor_on_txt1_btn_browse_clicked (gpointer instance, gpointer user_data);
+static void gdaex_query_editor_on_txt2_btn_browse_clicked (gpointer instance, gpointer user_data);
+
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
@@ -2002,6 +2007,13 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 						{
 							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt1), NULL);
 						}
+					else if (GTK_IS_FORM_DECODER (priv->txt1))
+						{
+							/* TODO
+							 * change the passed value to reflect field type
+							 */
+							gtk_form_decoder_set_key (GTK_FORM_DECODER (priv->txt1), "0");
+						}
 					else
 						{
 							gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
@@ -2017,6 +2029,13 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 						{
 							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt2), NULL);
 						}
+					else if (GTK_IS_FORM_DECODER (priv->txt2))
+						{
+							/* TODO
+							 * change the passed value to reflect field type
+							 */
+							gtk_form_decoder_set_key (GTK_FORM_DECODER (priv->txt2), "0");
+						}
 					else
 						{
 							gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
@@ -2025,10 +2044,30 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 				}
 			else
 				{
-					gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt1),
-					                                   g_date_time_new_now_local ());
-					gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt2),
-					                                   g_date_time_new_now_local ());
+					if (GTK_IS_DATE_ENTRY (priv->txt1))
+						{
+							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt1),
+							                                   g_date_time_new_now_local ());
+							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt2),
+							                                   g_date_time_new_now_local ());
+						}
+					else if (GTK_IS_FORM_DECODER (priv->txt1))
+						{
+							/* TODO
+							 * change the passed value to reflect field type
+							 */
+							gtk_form_decoder_set_key (GTK_FORM_DECODER (priv->txt1), "0");
+							/* TODO
+							 * change the passed value to reflect field type
+							 */
+							gtk_form_decoder_set_key (GTK_FORM_DECODER (priv->txt2), "0");
+						}
+					else
+						{
+							gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
+							gtk_entry_set_text (GTK_ENTRY (priv->txt2), "");
+						}
+
 					gtk_table_set_row_spacing (GTK_TABLE (priv->tbl), 1, 5);
 				}
 		}
@@ -2171,6 +2210,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								val1 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt1), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt1)) ? "dmYHMS" : "dmY", NULL, NULL);
 								val1_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt1));
 							}
+						else if (GTK_IS_FORM_DECODER (priv->txt1))
+							{
+								val1 = (gchar *)gtk_form_decoder_get_decoded (GTK_FORM_DECODER (priv->txt1));
+								val1_sql = (gchar *)gtk_form_decoder_get_key (GTK_FORM_DECODER (priv->txt1));
+							}
 						else
 							{
 								val1 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
@@ -2197,6 +2241,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 							{
 								val2 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt2), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt2)) ? "dmYHMS" : "dmY", NULL, NULL);
 								val2_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt2));
+							}
+						else if (GTK_IS_FORM_DECODER (priv->txt2))
+							{
+								val2 = (gchar *)gtk_form_decoder_get_decoded (GTK_FORM_DECODER (priv->txt2));
+								val2_sql = (gchar *)gtk_form_decoder_get_key (GTK_FORM_DECODER (priv->txt2));
 							}
 						else
 							{
@@ -2850,13 +2899,51 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_INTEGER:
-						priv->txt1 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						widget_val1 = priv->txt1;
+						if (field->decode_table2 != NULL)
+							{
+								/* TODO
+								 * change the passed value to reflect field type
+								 */
+								priv->txt1 = gtk_form_decoder_new ();
+								g_object_set (G_OBJECT (priv->txt1),
+								              "gdaex", priv->gdaex,
+								              "sql", g_strdup_printf ("SELECT %s"
+								                                      " FROM %s"
+								                                      " WHERE %s = ##key0::gint",
+								                                      field->decode_field_to_show,
+								                                      field->decode_table2,
+								                                      field->decode_field2),
+								              NULL);
+								g_signal_connect (G_OBJECT (priv->txt1), "btn_browse_clicked",
+								                  G_CALLBACK (gdaex_query_editor_on_txt1_btn_browse_clicked), NULL);
 
-						priv->txt2 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+								/* TODO
+								 * change the passed value to reflect field type
+								 */
+								priv->txt2 = gtk_form_decoder_new ();
+								g_object_set (G_OBJECT (priv->txt2),
+								              "gdaex", priv->gdaex,
+								              "sql", g_strdup_printf ("SELECT %s"
+								                                      " FROM %s"
+								                                      " WHERE %s = ##key0::gint",
+								                                      field->decode_field_to_show,
+								                                      field->decode_table2,
+								                                      field->decode_field2),
+								              NULL);
+								g_signal_connect (G_OBJECT (priv->txt2), "btn_browse_clicked",
+								                  G_CALLBACK (gdaex_query_editor_on_txt2_btn_browse_clicked), NULL);
+							}
+						else
+							{
+								priv->txt1 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
+
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+							}
+
 						widget_val2 = priv->txt2;
+						widget_val1 = priv->txt1;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DOUBLE:
@@ -3099,4 +3186,16 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 			g_free (field_name);
 			g_free (order);
 		}
+}
+
+static void
+gdaex_query_editor_on_txt1_btn_browse_clicked (gpointer instance, gpointer user_data)
+{
+	g_debug ("Txt1 Open clicked.");
+}
+
+static void
+gdaex_query_editor_on_txt2_btn_browse_clicked (gpointer instance, gpointer user_data)
+{
+	g_debug ("Txt2 Open clicked.");
 }

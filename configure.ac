@@ -33,7 +33,8 @@ GTK_DOC_CHECK(1.0)
 PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
                           gio-2.0 >= 2.24
                           gtk+-2.0 >= 2.20
-                          libgtkdateentry >= 0.0.4])
+                          libgtkdateentry >= 0.0.4
+                          libgtkformui >= 0.3.0])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)

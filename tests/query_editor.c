@@ -148,7 +148,7 @@ main (int argc, char *argv[])
 
 	gtk_init (&argc, &argv);
 
-	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
+	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=query_editor.db", TESTSDIR));
 	if (gdaex == NULL)
 		{
 			g_error ("Error on GdaEx initialization.");
@@ -256,7 +256,8 @@ main (int argc, char *argv[])
 	field->decode_field2 = g_strdup ("id");
 	field->decode_field_to_show = g_strdup ("name");
 	field->decode_field_alias = g_strdup ("city_name");
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL
+	                              | GDAEX_QE_WHERE_TYPE_BETWEEN;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
