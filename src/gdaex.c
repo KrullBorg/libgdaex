@@ -2129,6 +2129,42 @@ struct tm
 }
 
 /**
+ * gdaex_data_model_columns_to_hashtable:
+ * @dm: a #GdaDataModel object.
+ *
+ * Returns: a #GHashTable with keys as the columns names from @dm,
+ * and values as columns numbers.
+ */
+GHashTable
+*gdaex_data_model_columns_to_hashtable (GdaDataModel *dm)
+{
+	GHashTable *ret;
+
+	guint cols;
+	guint col;
+
+	g_return_val_if_fail (GDA_IS_DATA_MODEL (dm), NULL);
+
+	ret = NULL;
+
+	cols = gda_data_model_get_n_columns (dm);
+
+	if (cols > 0)
+		{
+			ret = g_hash_table_new (g_str_hash, g_str_equal);
+
+			for (col = 0; col < cols; col++)
+				{
+					g_hash_table_insert (ret,
+					                     g_strdup (gda_data_model_get_column_name (dm, col)),
+					                     g_strdup_printf ("%d", col));
+				}
+		}
+
+	return ret;
+}
+
+/**
  * gdaex_begin:
  * @gdaex: a #GdaEx object.
  *
