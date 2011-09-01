@@ -2165,6 +2165,76 @@ GHashTable
 }
 
 /**
+ * gdaex_data_model_to_gtkliststore:
+ * @dm: a #GdaDataModel object.
+ * @only_schema:
+ *
+ * Returns: a #GtkListStore, filled or not, that reflects the #GdaDataModel @dm.
+ */
+GtkListStore
+*gdaex_data_model_to_gtkliststore (GdaDataModel *dm,
+                                   gboolean only_schema)
+{
+	GtkListStore *ret;
+
+	guint cols;
+	guint col;
+
+	GdaColumn *column;
+	GType *gtypes;
+
+	guint rows;
+	guint row;
+
+	GtkTreeIter iter;
+	GValue *gval;
+
+	g_return_val_if_fail (GDA_IS_DATA_MODEL (dm), NULL);
+
+	ret = NULL;
+
+	/* GtkListStore creation */
+
+	cols = gda_data_model_get_n_columns (dm);
+	if (cols == 0)
+		{
+			g_warning ("Invalid GdaDataModel.");
+			return NULL;
+		}
+
+	gtypes = (GType *)g_malloc0 (cols * sizeof (GType));
+
+	for (col = 0; col < cols; col++)
+		{
+			column = gda_data_model_describe_column (dm, col);
+			gtypes[col] = gda_column_get_g_type (column);
+		}
+	ret = gtk_list_store_newv (cols, gtypes);
+	if (ret == NULL)
+		{
+			g_warning ("Unable to create the GtkTreeModel.");
+			return NULL;
+		}
+
+	if (!only_schema)
+		{
+			/* Filling GtkListStore */
+			rows = gda_data_model_get_n_rows (dm);
+			for (row = 0; row < rows; row++)
+				{
+					gtk_list_store_append (ret, &iter);
+					for (col = 0; col < cols; col++)
+						{
+							gval = (GValue *)gda_data_model_get_value_at (dm, col, row, NULL);
+							gtk_list_store_set_value (ret, &iter, col, gval);
+						}
+				}
+		}
+
+	return ret;
+}
+
+/**
  * gdaex_begin:
  * @gdaex: a #GdaEx object.
  *
