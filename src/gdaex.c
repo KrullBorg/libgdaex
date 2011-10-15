@@ -682,10 +682,6 @@ gchar
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_stringify_at (data_model, row, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -837,10 +833,6 @@ GdaTimestamp
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -848,7 +840,7 @@ GdaTimestamp
 			value = NULL;
 		}
 
-	return gda_timestamp_copy ((gpointer)value);
+	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)value);
 }
 
 /**
@@ -872,10 +864,6 @@ GDate
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_gdate_at (data_model, row, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -907,10 +895,6 @@ GDateTime
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -942,10 +926,6 @@ struct tm
 	if (col >= 0)
 		{
 			value = gdaex_data_model_get_value_tm_at (data_model, row, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -974,7 +954,7 @@ gchar
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (error == NULL)
+	if (v != NULL && error == NULL)
 		{
 			if (!gda_value_is_null (v))
 				{
@@ -987,7 +967,8 @@ gchar
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: %s\n",
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
 			           error->message != NULL ? error->message : "no details");
 			ret = NULL;
 		}
@@ -1013,12 +994,7 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else
+	if (v != NULL && error == NULL)
 		{
 			if (gda_value_isa (v, G_TYPE_INT))
 				{
@@ -1028,6 +1004,12 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 				{
 					ret = strtol (gda_value_stringify (v), NULL, 10);
 				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1051,12 +1033,7 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else
+	if (v != NULL && error == NULL)
 		{
 			if (gda_value_isa (v, G_TYPE_FLOAT))
 				{
@@ -1066,6 +1043,12 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 				{
 					ret = g_strtod (gda_value_stringify (v), NULL);
 				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1089,12 +1072,7 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else
+	if (v != NULL && error == NULL)
 		{
 			if (gda_value_isa (v, G_TYPE_DOUBLE))
 				{
@@ -1104,6 +1082,12 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 				{
 					ret = g_strtod (gda_value_stringify (v), NULL);
 				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1127,12 +1111,7 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else
+	if (v != NULL && error == NULL)
 		{
 			if (gda_value_isa (v, G_TYPE_BOOLEAN))
 				{
@@ -1140,7 +1119,7 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 				}
 			else
 				{
-					gchar *vstr = g_strstrip (gda_value_stringify (v));
+					gchar *vstr = g_strstrip (g_strdup (gda_value_stringify (v)));
 					if (strcasecmp (vstr, "true") == 0 ||
 						strcasecmp (vstr, "t") == 0 ||
 						strcasecmp (vstr, "yes") == 0 ||
@@ -1153,7 +1132,14 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 						{
 							ret = FALSE;
 						}
+					g_free (vstr);
 				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1178,71 +1164,77 @@ GdaTimestamp
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (v != NULL && error == NULL)
 		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else if (!gda_value_is_null (v))
-		{
-			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+			if (!gda_value_is_null (v))
 				{
-					gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
-				{
-					GDateTime *gdatetime;
+					if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+						{
+							gdatimestamp = (GdaTimestamp *)gda_value_get_timestamp (v);
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+						{
+							GDateTime *gdatetime;
 					
-					gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
-					gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
-					gdatimestamp->year = g_date_time_get_year (gdatetime);
-					gdatimestamp->month = g_date_time_get_month (gdatetime);
-					gdatimestamp->day = g_date_time_get_day_of_month (gdatetime);
-					gdatimestamp->hour = g_date_time_get_hour (gdatetime);
-					gdatimestamp->minute = g_date_time_get_minute (gdatetime);
-					gdatimestamp->second = g_date_time_get_second (gdatetime);
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE))
-				{
-					GDate *date;
-
-					date = gdaex_data_model_get_value_gdate_at (data_model, row, col);
-
-					if (date != NULL)
-						{
+							gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
 							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
-							if (g_date_valid (date))
+							gdatimestamp->year = g_date_time_get_year (gdatetime);
+							gdatimestamp->month = g_date_time_get_month (gdatetime);
+							gdatimestamp->day = g_date_time_get_day_of_month (gdatetime);
+							gdatimestamp->hour = g_date_time_get_hour (gdatetime);
+							gdatimestamp->minute = g_date_time_get_minute (gdatetime);
+							gdatimestamp->second = g_date_time_get_second (gdatetime);
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE))
+						{
+							GDate *date;
+
+							date = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+
+							if (date != NULL)
 								{
-									gdatimestamp->year = g_date_get_year (date);
-									gdatimestamp->month = g_date_get_month (date);
-									gdatimestamp->day = g_date_get_day (date);
-								}
-							else
-								{
-									gdatimestamp->year = date->year;
-									gdatimestamp->month = date->month;
-									gdatimestamp->day = date->day;
+									gdatimestamp = g_new0 (GdaTimestamp, 1);
+									if (g_date_valid (date))
+										{
+											gdatimestamp->year = g_date_get_year (date);
+											gdatimestamp->month = g_date_get_month (date);
+											gdatimestamp->day = g_date_get_day (date);
+										}
+									else
+										{
+											gdatimestamp->year = date->year;
+											gdatimestamp->month = date->month;
+											gdatimestamp->day = date->day;
+										}
+									g_date_free (date);
 								}
 						}
-				}
-			else if (gda_value_isa (v, GDA_TYPE_TIME))
-				{
-					const GdaTime *time;
-
-					time = gda_value_get_time (v);
-
-					if (time != NULL)
+					else if (gda_value_isa (v, GDA_TYPE_TIME))
 						{
-							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
-							gdatimestamp->hour = time->hour;
-							gdatimestamp->minute = time->minute;
-							gdatimestamp->second = time->second;
+							const GdaTime *time;
+
+							time = gda_value_get_time (v);
+
+							if (time != NULL)
+								{
+									gdatimestamp = g_new0 (GdaTimestamp, 1);
+									gdatimestamp->hour = time->hour;
+									gdatimestamp->minute = time->minute;
+									gdatimestamp->second = time->second;
+								}
+						}
+					else
+						{
+							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							           gda_data_model_get_column_name (data_model, col));
 						}
 				}
-			else
-				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
-				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)gdatimestamp);
@@ -1269,35 +1261,40 @@ GDate
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (v != NULL && error == NULL)
 		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
+			if (!gda_value_is_null (v))
+				{
+					if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+						{
+							gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+							ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
+							                      (GDateMonth)gdatimestamp->month,
+							                      (GDateDay)gdatimestamp->day);
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+						{
+							gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
+							ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
+							                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
+							                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE))
+						{
+							ret = (GDate *)g_value_get_boxed (v);
+						}
+					else
+						{
+							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							           gda_data_model_get_column_name (data_model, col));
+						}
+				}
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
-			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
-				{
-					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
-					ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
-					                      (GDateMonth)gdatimestamp->month,
-					                      (GDateDay)gdatimestamp->day);
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
-				{
-					gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
-					ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
-					                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
-					                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE))
-				{
-					ret = (GDate *)g_value_get_boxed (v);
-				}
-			else
-				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
-				}
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1324,41 +1321,46 @@ GDateTime
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (v != NULL && error == NULL)
 		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
+			if (!gda_value_is_null (v))
+				{
+					if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
+						{
+							gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+							ret = g_date_time_new_local ((gint)gdatimestamp->year,
+							                             (gint)gdatimestamp->month,
+							                             (gint)gdatimestamp->day,
+							                             (gint)gdatimestamp->hour,
+							                             (gint)gdatimestamp->minute,
+							                             (gdouble)gdatimestamp->second);
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE))
+						{
+							gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+							ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
+							                             (gint)g_date_get_month (gdate),
+							                             (gint)g_date_get_day (gdate),
+							                             0,
+							                             0,
+							                             0.0);
+						}
+					else if (gda_value_isa (v, G_TYPE_DATE_TIME))
+						{
+							ret = (GDateTime *)g_value_get_boxed (v);
+						}
+					else
+						{
+							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							           gda_data_model_get_column_name (data_model, col));
+						}
+				}
 		}
-	else if (!gda_value_is_null (v))
+	else
 		{
-			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
-				{
-					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
-					ret = g_date_time_new_local ((gint)gdatimestamp->year,
-					                             (gint)gdatimestamp->month,
-					                             (gint)gdatimestamp->day,
-					                             (gint)gdatimestamp->hour,
-					                             (gint)gdatimestamp->minute,
-					                             (gdouble)gdatimestamp->second);
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE))
-				{
-					gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
-					ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
-					                             (gint)g_date_get_month (gdate),
-					                             (gint)g_date_get_day (gdate),
-					                             0,
-					                             0,
-					                             0.0);
-				}
-			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
-				{
-					ret = (GDateTime *)g_value_get_boxed (v);
-				}
-			else
-				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
-				}
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1383,28 +1385,32 @@ struct tm
 	error = NULL;
 
 	v = gda_data_model_get_value_at (data_model, col, row, &error);
-	if (v == NULL || error != NULL)
+	if (v != NULL && error == NULL)
 		{
-			g_warning ("Error on retrieving field's value: %s\n",
-			           error->message != NULL ? error->message : "no details");
-		}
-	else if (!gda_value_is_null (v))
-		{
-			GdaTimestamp *gdatimestamp;
-
-			gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
-
-			if (gdatimestamp != NULL)
+			if (!gda_value_is_null (v))
 				{
-					ret = g_malloc0 (sizeof (struct tm));
+					GdaTimestamp *gdatimestamp;
 
-					ret->tm_year = gdatimestamp->year - 1900;
-					ret->tm_mon = gdatimestamp->month - 1;
-					ret->tm_mday = gdatimestamp->day;
-					ret->tm_hour = gdatimestamp->hour;
-					ret->tm_min = gdatimestamp->minute;
-					ret->tm_sec = gdatimestamp->second;
+					gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
+
+					if (gdatimestamp != NULL)
+						{
+							ret = g_new0 (struct tm, 1);
+
+							ret->tm_year = gdatimestamp->year - 1900;
+							ret->tm_mon = gdatimestamp->month - 1;
+							ret->tm_mday = gdatimestamp->day;
+							ret->tm_hour = gdatimestamp->hour;
+							ret->tm_min = gdatimestamp->minute;
+							ret->tm_sec = gdatimestamp->second;
+						}
 				}
+		}
+	else
+		{
+			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			           gda_data_model_get_column_name (data_model, col),
+			           error->message != NULL ? error->message : "no details");
 		}
 
 	return ret;
@@ -1419,7 +1425,7 @@ struct tm
  */
 gchar
 *gdaex_data_model_iter_get_field_value_stringify_at (GdaDataModelIter *iter,
-                                               const gchar *field_name)
+                                                     const gchar *field_name)
 {
 	GdaDataModel *data_model;
 	gchar *value;
@@ -1432,10 +1438,6 @@ gchar
 	if (col >= 0)
 		{
 			value = gdaex_data_model_iter_get_value_stringify_at (iter, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -1592,10 +1594,6 @@ GdaTimestamp
 	if (col >= 0)
 		{
 			value = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -1603,7 +1601,7 @@ GdaTimestamp
 			value = NULL;
 		}
 
-	return gda_timestamp_copy ((gpointer)value);
+	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)value);
 }
 
 /**
@@ -1628,10 +1626,6 @@ GDate
 	if (col >= 0)
 		{
 			value = gdaex_data_model_iter_get_value_gdate_at (iter, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -1664,10 +1658,6 @@ GDateTime
 	if (col >= 0)
 		{
 			value = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -1700,10 +1690,6 @@ struct tm
 	if (col >= 0)
 		{
 			value = gdaex_data_model_iter_get_value_tm_at (iter, col);
-			if (value == NULL)
-				{
-					g_warning ("Error retrieving «%s»'s value.", field_name);
-				}
 		}
 	else
 		{
@@ -1730,7 +1716,12 @@ gchar
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
 		{
@@ -1763,7 +1754,12 @@ gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter, gint col)
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
 		{
@@ -1796,7 +1792,12 @@ gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter, gint col)
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
 		{
@@ -1829,7 +1830,12 @@ gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter, gint col)
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
 		{
@@ -1862,7 +1868,12 @@ gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter, gint col)
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
 		{
@@ -1872,7 +1883,7 @@ gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					gchar *vstr = g_strstrip (gda_value_stringify (v));
+					gchar *vstr = g_strstrip (g_strdup (gda_value_stringify (v)));
 					if (strcasecmp (vstr, "true") == 0 ||
 						strcasecmp (vstr, "t") == 0 ||
 						strcasecmp (vstr, "yes") == 0 ||
@@ -1885,6 +1896,7 @@ gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter, gint col)
 						{
 							ret = FALSE;
 						}
+					g_free (vstr);
 				}
 		}
 
@@ -1909,7 +1921,12 @@ GdaTimestamp
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -1938,7 +1955,7 @@ GdaTimestamp
 
 					if (date != NULL)
 						{
-							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							gdatimestamp = g_new0 (GdaTimestamp, 1);
 							if (g_date_valid (date))
 								{
 									gdatimestamp->year = g_date_get_year (date);
@@ -1951,6 +1968,7 @@ GdaTimestamp
 									gdatimestamp->month = date->month;
 									gdatimestamp->day = date->day;
 								}
+							g_date_free (date);
 						}
 				}
 			else if (gda_value_isa (v, GDA_TYPE_TIME))
@@ -1961,7 +1979,7 @@ GdaTimestamp
 
 					if (time != NULL)
 						{
-							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
+							gdatimestamp = g_new0 (GdaTimestamp,1 );
 							gdatimestamp->hour = time->hour;
 							gdatimestamp->minute = time->minute;
 							gdatimestamp->second = time->second;
@@ -1996,7 +2014,12 @@ GDate
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -2049,7 +2072,12 @@ GDateTime
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -2104,7 +2132,12 @@ struct tm
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
 		{
-			g_warning ("Error on retrieving field's value at column %d.", col);
+			GdaDataModel *data_model;
+
+			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
+
+			g_warning ("Error on retrieving field's value: «%s».",
+			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
 		{
@@ -2114,7 +2147,7 @@ struct tm
 
 			if (gdatimestamp != NULL)
 				{
-					ret = g_malloc0 (sizeof (struct tm));
+					ret = g_new0 (struct tm, 1);
 
 					ret->tm_year = gdatimestamp->year - 1900;
 					ret->tm_mon = gdatimestamp->month - 1;
