@@ -2198,6 +2198,59 @@ GHashTable
 }
 
 /**
+ * gdaex_data_modelrow_to_hashtable:
+ * @dm: a #GdaDataModel object.
+ * @row: row number.
+ *
+ * Returns: a #GHashTable with keys as the columns names from @dm,
+ * and values as #GValue.
+ */
+GHashTable
+*gdaex_data_model_row_to_hashtable (GdaDataModel *dm, guint row)
+{
+	GHashTable *ret;
+
+	guint cols;
+	guint col;
+
+	const GValue *v;
+	GError *error;
+
+	g_return_val_if_fail (GDA_IS_DATA_MODEL (dm), NULL);
+	g_return_val_if_fail (row >= 0, NULL);
+	g_return_val_if_fail (row < gda_data_model_get_n_rows (dm), NULL);
+
+	ret = NULL;
+
+	cols = gda_data_model_get_n_columns (dm);
+
+	if (cols > 0)
+		{
+			ret = g_hash_table_new (g_str_hash, g_str_equal);
+
+			for (col = 0; col < cols; col++)
+				{
+					error = NULL;
+					v = gda_data_model_get_value_at (dm, col, row, &error);
+					if (v == NULL || error != NULL)
+						{
+							g_warning ("Error on retrieving column %d: %s",
+							           col,
+							           error != NULL && error->message != NULL ? error->message : "no details");
+						}
+					else
+						{
+							g_hash_table_insert (ret,
+							                     g_strdup (gda_data_model_get_column_name (dm, col)),
+							                     (gpointer)v);
+						}
+				}
+		}
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_to_gtkliststore:
  * @dm: a #GdaDataModel object.
  * @only_schema:
