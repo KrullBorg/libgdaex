@@ -261,6 +261,20 @@ main (int argc, char *argv[])
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
 
+	gdaex_query_editor_add_table (qe, "orders", "Orders");
+
+	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("id");
+	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+	gdaex_query_editor_table_add_field (qe, "orders", *field);
+	g_free (field);
+
+	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("id_clients");
+	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+	gdaex_query_editor_table_add_field (qe, "orders", *field);
+	g_free (field);
+
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 610, 400);
 	gtk_window_set_modal (GTK_WINDOW (w), TRUE);

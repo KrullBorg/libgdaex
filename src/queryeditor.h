@@ -117,6 +117,7 @@ typedef struct
 		gboolean always_showed;
 		gboolean for_where;
 		guint available_where_type;
+		gboolean for_order;
 
 		/* TODO 
 		 * to refactor
@@ -134,7 +135,7 @@ typedef struct
 
 gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe,
                                        const gchar *table_name,
-                                       const gchar *table_name_visibile);
+                                       const gchar *table_name_visible);
 gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
                                              const gchar *table_name,
                                              GdaExQueryEditorField field);

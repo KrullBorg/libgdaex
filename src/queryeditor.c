@@ -37,8 +37,8 @@ typedef struct
 
 typedef struct
 	{
-		gchar *table1;
-		gchar *table2;
+		GdaExQueryEditorTable *table1;
+		GdaExQueryEditorTable *table2;
 
 		GSList *fields1;
 		GSList *fields2;
@@ -547,6 +547,35 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 
 	_field = g_memdup (&field, sizeof (GdaExQueryEditorField));
 	_field->table_name = g_strdup (table_name);
+
+	if (_field->name == NULL)
+		{
+			g_warning ("No field added: the field must have a name.");
+			g_free (_field);
+			return FALSE;
+		}
+	else
+		{
+			if (g_strcmp0 (g_strstrip (_field->name), "") == 0)
+				{
+					g_warning ("No field added: the field must have a name.");
+					g_free (_field);
+					return FALSE;
+				}
+		}
+
+	if (_field->name_visible == NULL)
+		{
+			_field->name_visible = g_strdup (_field->name);
+		}
+	else
+		{
+			if (g_strcmp0 (g_strstrip (_field->name_visible), "") == 0)
+				{
+					_field->name_visible = g_strdup (_field->name);
+				}
+		}
+
 	g_hash_table_insert (table->fields, _field->name, _field);
 
 	ret = TRUE;
@@ -570,43 +599,77 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 {
 	GdaExQueryEditorPrivate *priv;
 
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field1;
+	GdaExQueryEditorField *field2;
+
 	GdaExQueryEditorRelation *relation;
 
 	va_list fields;
 	gchar *field_name1;
 	gchar *field_name2;
 
+	gboolean create_relation;
+
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
+	create_relation = FALSE;
+
 	relation = g_new0 (GdaExQueryEditorRelation, 1);
 
-	relation->table1 = g_strdup (table1);
-	/* TODO if table1 doesn't exists, create with visible = FALSE */
+	/* check if table exists */
+	table = g_hash_table_lookup (priv->tables, table1);
+	if (table == NULL)
+		{
+			g_warning ("Table «%s» doesn't exists.", table1);
+			return FALSE;
+		}
+	relation->table1 = table;
 
-	relation->table2 = g_strdup (table2);
-	/* TODO if table2 doesn't exists, create with visible = FALSE */
+	table = g_hash_table_lookup (priv->tables, table2);
+	if (table == NULL)
+		{
+			g_warning ("Table «%s» doesn't exists.", table2);
+			return FALSE;
+		}
+	relation->table2 = table;
 
 	va_start (fields, table2);
 
 	while ((field_name1 = va_arg (fields, gchar *)) != NULL
 	       && (field_name2 = va_arg (fields, gchar *)) != NULL)
 		{
-			if (field_name2 != NULL)
+			field1 = g_hash_table_lookup (relation->table1->fields, field_name1);
+			if (field1 == NULL)
 				{
-					relation->fields1 = g_slist_append (relation->fields1, g_strdup (field_name1));
-					relation->fields2 = g_slist_append (relation->fields1, g_strdup (field_name2));
+					continue;
 				}
-			else
+
+			field2 = g_hash_table_lookup (relation->table2->fields, field_name2);
+			if (field2 == NULL)
 				{
-					break;
+					continue;
 				}
+
+			relation->fields1 = g_slist_append (relation->fields1, field1);
+			relation->fields2 = g_slist_append (relation->fields1, field2);
+			create_relation = TRUE;
 		}
 
 	va_end (fields);
 
-	priv->relations = g_slist_append (priv->relations, relation);
+	if (create_relation)
+		{
+			priv->relations = g_slist_append (priv->relations, relation);
+		}
+	else
+		{
+			g_warning ("Relation not created: no field added to the relation.");
+			g_free (relation);
+			return FALSE;
+		}
 
 	return TRUE;
 }
@@ -1594,19 +1657,47 @@ gdaex_query_editor_get_property (GObject *object,
 static gboolean
 _gdaex_query_editor_add_table (GdaExQueryEditor *qe,
                               const gchar *table_name,
-                              const gchar *table_name_visibile,
+                              const gchar *table_name_visible,
                               gboolean is_visible)
 {
 	GdaExQueryEditorPrivate *priv;
 	GdaExQueryEditorTable *table;
 
+	gchar *_table_name;
+
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+	g_return_val_if_fail (table_name != NULL, FALSE);
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	table = g_new0 (GdaExQueryEditorTable, 1);
-	table->name = g_strstrip (g_strdup (table_name));
-	table->name_visible = g_strstrip (g_strdup (table_name_visibile));
+
+	_table_name = g_strdup (table_name);
+
+	g_return_val_if_fail (g_strcmp0 (g_strstrip (_table_name), "") != 0, FALSE);
+
+	table->name = g_strdup (_table_name);
+	g_free (_table_name);
+
+	if (table_name_visible == NULL)
+		{
+			table->name_visible = g_strdup (table->name);
+		}
+	else
+		{
+			_table_name = g_strdup (table_name_visible);
+			if (g_strcmp0 (g_strstrip (_table_name), "") == 0)
+				{
+					table->name_visible = g_strdup (table->name);
+					g_free (_table_name);
+				}
+			else
+				{
+					table->name_visible = g_strdup (_table_name);
+					g_free (_table_name);
+				}
+		}
+
 	table->fields = g_hash_table_new (g_str_hash, g_str_equal);
 	table->visible = is_visible;
 
@@ -1643,9 +1734,15 @@ gdaex_query_editor_refresh_gui (GdaExQueryEditor *qe)
 					                    COL_FIELDS_NAME, table->name,
 					                    COL_FIELDS_VISIBLE_NAME, table->name_visible,
 					                    -1);
-				}
 
-			gdaex_query_editor_refresh_gui_add_fields (qe, table, &iter);
+					gdaex_query_editor_refresh_gui_add_fields (qe, table, &iter);
+
+					/* if no fields, remove table */
+					if (!gtk_tree_model_iter_has_child (GTK_TREE_MODEL (priv->tstore_fields), &iter))
+						{
+							gtk_tree_store_remove (priv->tstore_fields, &iter);
+						}
+				}
 		}
 }
 
@@ -1668,15 +1765,18 @@ gdaex_query_editor_refresh_gui_add_fields (GdaExQueryEditor *qe,
 		{
 			field = (GdaExQueryEditorField *)value;
 
-			gtk_tree_store_append (priv->tstore_fields, &iter, iter_parent);
-			gtk_tree_store_set (priv->tstore_fields, &iter,
-			                    COL_FIELDS_TABLE_NAME, table->name,
-			                    COL_FIELDS_NAME, field->name,
-			                    COL_FIELDS_VISIBLE_NAME, field->name_visible,
-			                    COL_FIELDS_DESCRIPTION, field->description,
-			                    -1);
+			if (field->for_show || field->for_where || field->for_order)
+				{
+					gtk_tree_store_append (priv->tstore_fields, &iter, iter_parent);
+					gtk_tree_store_set (priv->tstore_fields, &iter,
+					                    COL_FIELDS_TABLE_NAME, table->name,
+					                    COL_FIELDS_NAME, field->name,
+					                    COL_FIELDS_VISIBLE_NAME, field->name_visible,
+					                    COL_FIELDS_DESCRIPTION, field->description,
+					                    -1);
+				}
 
-			if (field->always_showed)
+			if (field->for_show && field->always_showed)
 				{
 					gdaex_query_editor_show_add_iter (qe, &iter);
 				}
@@ -2055,7 +2155,10 @@ gdaex_query_editor_on_sel_fields_changed (GtkTreeSelection *treeselection,
 			                                         COL_ORDER_VISIBLE_NAME,
 			                                         v_table_field))
 				{
-					gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), TRUE);
+				if (field->for_order)
+					{
+						gtk_widget_set_sensitive (GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "button11")), TRUE);
+					}
 				}
 
 			g_free (table_field);
