@@ -150,6 +150,10 @@ void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 GdaSqlBuilder *gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe);
 
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
+const gchar *gdaex_query_editor_get_sql_select (GdaExQueryEditor *qe);
+const gchar *gdaex_query_editor_get_sql_from (GdaExQueryEditor *qe);
+const gchar *gdaex_query_editor_get_sql_where (GdaExQueryEditor *qe);
+const gchar *gdaex_query_editor_get_sql_order (GdaExQueryEditor *qe);
 
 xmlNode *gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe);
 

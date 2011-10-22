@@ -100,6 +100,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 
 	gint size;
 
+	/* SQL */
 	sql = (gchar *)gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data);
 	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
 	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
@@ -108,8 +109,57 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                            GTK_BUTTONS_OK,
 	                                            sql);
 	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);;
+	gtk_widget_destroy (dialog);
 
+	/* SQL SELECT */
+	sql = (gchar *)gdaex_query_editor_get_sql_select ((GdaExQueryEditor *)user_data);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL FROM */
+	sql = (gchar *)gdaex_query_editor_get_sql_from ((GdaExQueryEditor *)user_data);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL WHERE */
+	sql = (gchar *)gdaex_query_editor_get_sql_where ((GdaExQueryEditor *)user_data);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL ORDER */
+	sql = (gchar *)gdaex_query_editor_get_sql_order ((GdaExQueryEditor *)user_data);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* XML */
 	doc = xmlNewDoc ("1.0");
 	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
 	xmlDocSetRootElement (doc, node);
@@ -122,7 +172,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_BUTTONS_OK,
 	                                 buf);
 	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);;
+	gtk_widget_destroy (dialog);
 }
 
 int
@@ -186,6 +236,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_STARTS
 	                              | GDAEX_QE_WHERE_TYPE_CONTAINS
 	                              | GDAEX_QE_WHERE_TYPE_ENDS
@@ -202,6 +253,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING
 	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
@@ -214,6 +266,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_DATE;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
 	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
@@ -227,6 +280,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
 	g_free (field);
@@ -238,6 +292,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_DATETIME;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
 	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
 	gdaex_query_editor_table_add_field (qe, "clients", *field);
@@ -250,6 +305,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->decode_table2 = g_strdup ("cities");
 	field->decode_join_type = GDAEX_QE_JOIN_TYPE_LEFT;
 	/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
@@ -287,6 +343,7 @@ main (int argc, char *argv[])
 	field->type = GDAEX_QE_FIELD_TYPE_DOUBLE;
 	field->for_show = TRUE;
 	field->for_where = TRUE;
+	field->for_order = TRUE;
 	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
 	gdaex_query_editor_table_add_field (qe, "orders", *field);
 	g_free (field);

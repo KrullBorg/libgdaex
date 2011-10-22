@@ -1141,6 +1141,132 @@ const gchar
 	return ret;
 }
 
+const gchar
+*gdaex_query_editor_get_sql_select (GdaExQueryEditor *qe)
+{
+	gchar *ret;
+	const gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_query_editor_get_sql (qe);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "SELECT");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "FROM");
+	if (end == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 7, strlen (sql) - 8 - strlen (end));
+
+	return ret;
+}
+
+const gchar
+*gdaex_query_editor_get_sql_from (GdaExQueryEditor *qe)
+{
+	gchar *ret;
+	const gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_query_editor_get_sql (qe);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "FROM");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "WHERE");
+	if (end == NULL)
+		{
+			end = g_strstr_len (sql, -1, "ORDER BY");
+		}
+
+	ret = g_strndup (start + 5, strlen (start) - (end != NULL ? 6 : 5) - (end != NULL ? strlen (end) : 0));
+
+	return ret;
+}
+
+const gchar
+*gdaex_query_editor_get_sql_where (GdaExQueryEditor *qe)
+{
+	gchar *ret;
+	const gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_query_editor_get_sql (qe);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "WHERE");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "ORDER BY");
+
+	ret = g_strndup (start + 6, strlen (start) - (end != NULL ? 7 : 6) - (end != NULL ? strlen (end) : 0));
+
+	return ret;
+}
+
+const gchar
+*gdaex_query_editor_get_sql_order (GdaExQueryEditor *qe)
+{
+	gchar *ret;
+	const gchar *sql;
+
+	gchar *start;
+
+	ret = NULL;
+
+	sql = gdaex_query_editor_get_sql (qe);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "ORDER BY");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 9, strlen (start) - 9);
+
+	return ret;
+}
+
+
 xmlNode
 *gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe)
 {
