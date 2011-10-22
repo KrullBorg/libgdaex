@@ -251,6 +251,7 @@ main (int argc, char *argv[])
 	field->for_show = TRUE;
 	field->for_where = TRUE;
 	field->decode_table2 = g_strdup ("cities");
+	field->decode_join_type = GDAEX_QE_JOIN_TYPE_LEFT;
 	/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
 	field->decode_fields2 = g_slist_append (field->decode_fields2, "id");*/
 	field->decode_field2 = g_strdup ("id");

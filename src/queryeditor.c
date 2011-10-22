@@ -745,7 +745,8 @@ GdaSqlBuilder
 							                                      id_join1, id_join2, 0);
 
 							gda_sql_builder_select_join_targets (sqlbuilder, id_target1, id_target2,
-							                                     GDA_SQL_SELECT_JOIN_INNER, join_cond);
+							                                     field->decode_join_type == GDAEX_QE_JOIN_TYPE_LEFT ? GDA_SQL_SELECT_JOIN_LEFT : GDA_SQL_SELECT_JOIN_INNER,
+							                                     join_cond);
 							gda_sql_builder_select_add_field (sqlbuilder, field->decode_field_to_show,
 							                                  field->decode_table2,
 							                                  alias != NULL && g_strcmp0 (alias, "") != 0 ? alias : field->decode_field_alias);
