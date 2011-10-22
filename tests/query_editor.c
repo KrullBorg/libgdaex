@@ -108,6 +108,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                            GTK_MESSAGE_INFO,
 	                                            GTK_BUTTONS_OK,
 	                                            sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 
@@ -119,6 +120,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_OK,
 	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Select");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 	g_free (sql);
@@ -131,6 +133,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_OK,
 	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql From");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 	g_free (sql);
@@ -143,6 +146,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_OK,
 	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Where");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 	g_free (sql);
@@ -155,6 +159,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_OK,
 	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Order By");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 	g_free (sql);
@@ -171,6 +176,7 @@ on_btn_get_sql_clicked (GtkButton *button,
 	                                 GTK_MESSAGE_INFO,
 	                                 GTK_BUTTONS_OK,
 	                                 buf);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Xml");
 	gtk_dialog_run (GTK_DIALOG (dialog));
 	gtk_widget_destroy (dialog);
 }

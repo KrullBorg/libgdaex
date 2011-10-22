@@ -268,8 +268,8 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 	priv->relations = NULL;
 
 	priv->lstore_link_type = gtk_list_store_new (2,
-	                                              G_TYPE_UINT,
-	                                              G_TYPE_STRING);
+	                                             G_TYPE_UINT,
+	                                             G_TYPE_STRING);
 	priv->lstore_where_type = gtk_list_store_new (2,
 	                                              G_TYPE_UINT,
 	                                              G_TYPE_STRING);
@@ -657,7 +657,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 				}
 
 			relation->fields1 = g_slist_append (relation->fields1, field1);
-			relation->fields2 = g_slist_append (relation->fields1, field2);
+			relation->fields2 = g_slist_append (relation->fields2, field2);
 			create_relation = TRUE;
 		}
 
@@ -754,6 +754,40 @@ static GdaTimestamp
 	return ret;
 }
 
+GdaExQueryEditorRelation
+*gdaex_query_editor_get_table_relation (GdaExQueryEditor *qe,
+                                        const gchar *table_name)
+{
+	GdaExQueryEditorRelation *ret;
+
+	GdaExQueryEditorPrivate *priv;
+
+	GSList *relations;
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (priv->relations == NULL)
+		{
+			return NULL;
+		}
+
+	ret = NULL;
+
+	relations = priv->relations;
+	while (relations != NULL)
+		{
+			if (g_strcmp0 (((GdaExQueryEditorRelation *)relations->data)->table2->name, table_name) == 0)
+				{
+					ret = (GdaExQueryEditorRelation *)relations->data;
+					break;
+				}
+
+			relations = g_slist_next (relations);
+		}
+
+	return ret;
+}
+
 GdaSqlBuilder
 *gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe)
 {
@@ -770,6 +804,10 @@ GdaSqlBuilder
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
+	GdaExQueryEditorRelation *relation;
+
+	GSList *fields1;
+	GSList *fields2;
 
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
 
@@ -796,6 +834,37 @@ GdaSqlBuilder
 
 					table = g_hash_table_lookup (priv->tables, table_name);
 					field = g_hash_table_lookup (table->fields, field_name);
+
+					/* check if table is part of a relation */
+					relation = gdaex_query_editor_get_table_relation (qe, table_name);
+					if (relation != NULL)
+						{
+							id_target1 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							                                                   gda_sql_builder_add_id (sqlbuilder, relation->table1->name),
+							                                                   NULL);
+							id_target2 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							                                                   gda_sql_builder_add_id (sqlbuilder, relation->table2->name),
+							                                                   NULL);
+
+							/* for each fields couple */
+							fields1 = relation->fields1;
+							fields2 = relation->fields2;
+							while (fields1 != NULL)
+								{
+									id_join1 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (relation->table1->name, ".", ((GdaExQueryEditorField *)fields1->data)->name, NULL));
+									id_join2 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (relation->table2->name, ".", ((GdaExQueryEditorField *)fields2->data)->name, NULL));
+
+									join_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_EQ,
+									                                      id_join1, id_join2, 0);
+
+									gda_sql_builder_select_join_targets (sqlbuilder, id_target1, id_target2,
+									                                     relation->join_type == GDAEX_QE_JOIN_TYPE_LEFT ? GDA_SQL_SELECT_JOIN_LEFT : GDA_SQL_SELECT_JOIN_INNER,
+									                                     join_cond);
+
+									fields1 = g_slist_next (fields1);
+									fields2 = g_slist_next (fields2);
+								}
+						}
 
 					if (field->decode_table2 != NULL)
 						{
