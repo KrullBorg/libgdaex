@@ -184,7 +184,7 @@ struct _GdaExQueryEditorPrivate
 		GSList *relations;	/* GdaExQueryEditorRelation */
 
 		/* for value choosing */
-		guint editor_type; /* 1 - show; 2 - where; 3 - order */
+		guint editor_type;
 
 		GtkWidget *hbox;
 		GtkWidget *tbl;
@@ -687,11 +687,9 @@ static GdaTimestamp
 	return ret;
 }
 
-const gchar
-*gdaex_query_editor_get_sql (GdaExQueryEditor *qe)
+GdaSqlBuilder
+*gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe)
 {
-	const gchar *ret;
-
 	GdaExQueryEditorPrivate *priv;
 
 	GdaSqlBuilder *sqlbuilder;
@@ -705,11 +703,6 @@ const gchar
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
-
-	GdaStatement *stmt;
-	GError *error;
-
-	ret = NULL;
 
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
 
@@ -1026,6 +1019,30 @@ const gchar
 					                                 NULL);
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_order), &iter));
 		}
+
+	return sqlbuilder;
+}
+
+const gchar
+*gdaex_query_editor_get_sql (GdaExQueryEditor *qe)
+{
+	const gchar *ret;
+
+	GdaExQueryEditorPrivate *priv;
+
+	GdaSqlBuilder *sqlbuilder;
+	GdaStatement *stmt;
+	GError *error;
+
+	ret = NULL;
+
+	sqlbuilder = gdaex_query_editor_get_sql_as_gdasqlbuilder (qe);
+	if (sqlbuilder == NULL)
+		{
+			return ret;
+		}
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	error = NULL;
 	stmt = gda_sql_builder_get_statement (sqlbuilder, &error);
@@ -2169,15 +2186,15 @@ gdaex_query_editor_on_btn_cancel_clicked (GtkButton *button,
 
 	switch (priv->editor_type)
 		{
-			case 1:
+			case GDAEX_QE_PAGE_SHOW:
 				gtk_tree_selection_unselect_all (priv->sel_show);
 				break;
 
-			case 2:
+			case GDAEX_QE_PAGE_WHERE:
 				gtk_tree_selection_unselect_all (priv->sel_where);
 				break;
 
-			case 3:
+			case GDAEX_QE_PAGE_ORDER:
 				gtk_tree_selection_unselect_all (priv->sel_order);
 				break;
 		}
@@ -2207,7 +2224,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 
 	switch (priv->editor_type)
 		{
-			case 1:
+			case GDAEX_QE_PAGE_SHOW:
 				if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
 					{
 						val1 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
@@ -2227,7 +2244,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 					}
 				break;
 
-			case 2:
+			case GDAEX_QE_PAGE_WHERE:
 				if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
 					{
 						GtkTreeModel *model;
@@ -2359,7 +2376,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 					}
 				break;
 
-			case 3:
+			case GDAEX_QE_PAGE_ORDER:
 				if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
 					{
 						if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->opt_asc)))
@@ -2520,7 +2537,7 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 
 	if (gtk_tree_selection_get_selected (priv->sel_show, NULL, &iter))
 		{
-			priv->editor_type = 1;
+			priv->editor_type = GDAEX_QE_PAGE_SHOW;
 
 			gtk_tree_selection_unselect_all (priv->sel_where);
 			gtk_tree_selection_unselect_all (priv->sel_order);
@@ -2699,7 +2716,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 	if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter))
 		{
-			priv->editor_type = 2;
+			priv->editor_type = GDAEX_QE_PAGE_WHERE;
 
 			gtk_tree_selection_unselect_all (priv->sel_show);
 			gtk_tree_selection_unselect_all (priv->sel_order);
@@ -3181,7 +3198,7 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 
 	if (gtk_tree_selection_get_selected (priv->sel_order, NULL, &iter))
 		{
-			priv->editor_type = 3;
+			priv->editor_type = GDAEX_QE_PAGE_ORDER;
 
 			gtk_tree_selection_unselect_all (priv->sel_show);
 			gtk_tree_selection_unselect_all (priv->sel_where);

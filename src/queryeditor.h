@@ -138,6 +138,8 @@ gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 
 void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 
+GdaSqlBuilder *gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe);
+
 const gchar *gdaex_query_editor_get_sql (GdaExQueryEditor *qe);
 
 xmlNode *gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe);
