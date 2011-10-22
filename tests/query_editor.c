@@ -275,6 +275,22 @@ main (int argc, char *argv[])
 	gdaex_query_editor_table_add_field (qe, "orders", *field);
 	g_free (field);
 
+	gdaex_query_editor_add_relation (qe,
+	                                 "clients", "orders",
+	                                 GDAEX_QE_JOIN_TYPE_LEFT,
+	                                 "id", "id_clients",
+	                                 NULL);
+
+	field = g_new0 (GdaExQueryEditorField, 1);
+	field->name = g_strdup ("amount");
+	field->name_visible = g_strdup ("Amount");
+	field->type = GDAEX_QE_FIELD_TYPE_DOUBLE;
+	field->for_show = TRUE;
+	field->for_where = TRUE;
+	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
+	gdaex_query_editor_table_add_field (qe, "orders", *field);
+	g_free (field);
+
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 610, 400);
 	gtk_window_set_modal (GTK_WINDOW (w), TRUE);

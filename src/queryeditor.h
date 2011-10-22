@@ -142,6 +142,7 @@ gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
                                           const gchar *table1,
                                           const gchar *table2,
+                                          GdaExQueryEditorJoinType join_type,
                                           ...);
 
 void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);

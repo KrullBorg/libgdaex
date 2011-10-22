@@ -40,6 +40,8 @@ typedef struct
 		GdaExQueryEditorTable *table1;
 		GdaExQueryEditorTable *table2;
 
+		GdaExQueryEditorJoinType join_type;
+
 		GSList *fields1;
 		GSList *fields2;
 	} GdaExQueryEditorRelation;
@@ -595,6 +597,7 @@ gboolean
 gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
                                  const gchar *table1,
                                  const gchar *table2,
+                                 GdaExQueryEditorJoinType join_type,
                                  ...)
 {
 	GdaExQueryEditorPrivate *priv;
@@ -636,7 +639,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 		}
 	relation->table2 = table;
 
-	va_start (fields, table2);
+	va_start (fields, join_type);
 
 	while ((field_name1 = va_arg (fields, gchar *)) != NULL
 	       && (field_name2 = va_arg (fields, gchar *)) != NULL)
@@ -662,6 +665,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 
 	if (create_relation)
 		{
+			relation->join_type = join_type;
 			priv->relations = g_slist_append (priv->relations, relation);
 		}
 	else
@@ -773,6 +777,7 @@ GdaSqlBuilder
 
 	sqlbuilder = gda_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
 
+	/* SHOW */
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
 		{
 			guint id_target1;
@@ -825,6 +830,7 @@ GdaSqlBuilder
 				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
 		}
 
+	/* WHERE */
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
 		{
 			guint link_type;
@@ -921,7 +927,7 @@ GdaSqlBuilder
 					field = g_hash_table_lookup (table->fields, field_name);
 
 					id_field = gda_sql_builder_add_id (sqlbuilder,
-					                                   g_strconcat (case_insensitive ? "lower(" : "",
+					                                   g_strconcat (case_insensitive ? "LOWER(" : "",
 					                                                table->name, ".", field->name,
 					                                                case_insensitive ? ")" : "",
 					                                                NULL));
@@ -1064,6 +1070,7 @@ GdaSqlBuilder
 				}
 		}
 
+	/* ORDER */
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_order), &iter))
 		{
 			do
