@@ -28,7 +28,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <glib/gi18n-lib.h>
+
 #include <gio/gio.h>
+
 #include <libgda/sql-parser/gda-sql-parser.h>
 
 #include "gdaex.h"
@@ -129,9 +132,48 @@ gdaex_init (GdaEx *gdaex)
 static GdaEx
 *gdaex_new_ ()
 {
+	gchar *localedir;
+
 	GdaEx *gdaex = GDAEX (g_object_new (gdaex_get_type (), NULL));
 
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	setlocale (LC_ALL, "");
+	gda_locale_changed ();
+
+#ifdef G_OS_WIN32
+
+	gchar *moddir;
+	gchar *p;
+
+	moddir = g_win32_get_package_installation_directory_of_module (NULL);
+
+	p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
+	if (p != NULL
+	    && (g_ascii_strcasecmp (p + 1, "src") == 0
+	        || g_ascii_strcasecmp (p + 1, ".libs") == 0))
+		{
+			localedir = g_strdup (LOCALEDIR);
+		}
+	else
+		{
+			localedir = g_build_filename (moddir, "share", "locale", NULL);
+		}
+
+	g_free (moddir);
+	g_free (p);
+
+#else
+
+	localedir = g_strdup (LOCALEDIR);
+
+#endif
+
+	bindtextdomain (GETTEXT_PACKAGE, localedir);
+	textdomain (GETTEXT_PACKAGE);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+
+	g_free (localedir);
 
 	return gdaex;
 }
@@ -161,7 +203,7 @@ GdaEx
 	if (dsn == NULL || strcmp (g_strstrip (g_strdup (dsn)), "") == 0)
 		{
 			/* TO DO */
-			g_warning ("datasource must not be empty.");
+			g_warning (_("Datasource cannot be empty."));
 			return NULL;
 		}
 
@@ -169,6 +211,7 @@ GdaEx
 	if (gdaex == NULL)
 		{
 			/* TO DO */
+			g_warning (_("Unable to create GdaEx object."));
 			return NULL;
 		}
 
@@ -227,8 +270,8 @@ GdaEx
 	                                               &error);
 	if (error != NULL)
 		{
-			g_warning ("Error creating database connection: %s\n",
-			           error->message);
+			g_warning (_("Error creating database connection: %s"),
+			           error->message != NULL ? error->message : _("no details"));
 			return NULL;
 		}
 
@@ -253,7 +296,7 @@ GdaEx
 	if (cnc_string == NULL || strcmp (g_strstrip (g_strdup (cnc_string)), "") == 0)
 		{
 			/* TO DO */
-			g_warning ("cnc_string must not be empty.");
+			g_warning (_("cnc_string must not be empty."));
 			return NULL;
 		}
 
@@ -261,6 +304,7 @@ GdaEx
 	if (gdaex == NULL)
 		{
 			/* TO DO */
+			g_warning (_("Unable to create GdaEx object."));
 			return NULL;
 		}
 
@@ -275,8 +319,8 @@ GdaEx
                                                       &error);
 	if (error != NULL)
 		{
-			g_warning ("Error creating database connection: %s",
-			           error->message != NULL ? error->message : "no details.");
+			g_warning (_("Error creating database connection: %s"),
+			           error->message != NULL ? error->message : _("no details."));
 			return NULL;
 		}
 
@@ -329,8 +373,8 @@ gdaex_log_handler (const gchar *log_domain,
 	if (g_output_stream_write (G_OUTPUT_STREAM (priv->log_file),
 	    msg, strlen (msg), NULL, &error) < 0)
 		{
-			g_warning ("Error on writing on log file: %s",
-			           error != NULL && error->message != NULL ? error->message : "no details.");
+			g_warning (_("Error on writing on log file: %s"),
+			           error != NULL && error->message != NULL ? error->message : _("no details."));
 		}
 }
 
@@ -363,8 +407,8 @@ gdaex_post_parse_options (GOptionContext *context,
 					                                 NULL, FALSE, G_FILE_CREATE_NONE, NULL, &my_error);
 					if (priv->log_file == NULL)
 						{
-							g_warning ("Error on opening log file: %s.",
-							           my_error != NULL && my_error->message != NULL ? my_error->message : "no details.");
+							g_warning (_("Error on opening log file: %s"),
+							           my_error != NULL && my_error->message != NULL ? my_error->message : _("no details."));
 						}
 					else
 						{
@@ -481,7 +525,7 @@ gdaex_set_tables_name_prefix_into_statement (GdaEx *gdaex, GdaStatement **stmt)
 	g_object_get (G_OBJECT (stmp), "structure", &sstmt, NULL);
 	if (sstmt == NULL)
 		{
-			g_warning ("Unable to get the GdaSqlStatement from the GdaStatement.");
+			g_warning (_("Unable to get the GdaSqlStatement from the GdaStatement."));
 			return;
 		}
 
@@ -595,7 +639,7 @@ gdaex_set_tables_name_prefix_into_statement (GdaEx *gdaex, GdaStatement **stmt)
 				break;
 
 			default:
-				g_warning ("Statement type %s not implemented.",
+				g_warning (_("Statement type %s not implemented."),
 				           gda_sql_statement_type_to_string (sstmt->stmt_type));
 				return;
 		}
@@ -629,8 +673,8 @@ GdaDataModel
 	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
 	if (!GDA_IS_STATEMENT (stmt))
 		{
-			g_warning ("Error parsing query string: %s\n%s",
-			           error != NULL && error->message != NULL ? error->message : "no details", sql);
+			g_warning (_("Error parsing query string: %s\n%s"),
+			           error != NULL && error->message != NULL ? error->message : _("no details"), sql);
 			return NULL;
 		}
 
@@ -646,15 +690,15 @@ GdaDataModel
 
 	if (!GDA_IS_DATA_MODEL (dm))
 		{
-			g_warning ("Error executing selection query: %s\n%s",
-			           error != NULL && error->message != NULL ? error->message : "no details", sql);
+			g_warning (_("Error executing selection query: %s\n%s"),
+			           error != NULL && error->message != NULL ? error->message : _("no details"), sql);
 			return NULL;
 		}
 	else
 		{
 			if (priv->debug > 0)
 				{
-					g_message ("Selection query executed: %s", sql);
+					g_message (_("Selection query executed: %s"), sql);
 				}
 		}
 
@@ -685,7 +729,7 @@ gchar
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -716,7 +760,7 @@ gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -746,7 +790,7 @@ gdaex_data_model_get_field_value_float_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -776,7 +820,7 @@ gdaex_data_model_get_field_value_double_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -806,7 +850,7 @@ gdaex_data_model_get_field_value_boolean_at (GdaDataModel *data_model,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -836,7 +880,7 @@ GdaTimestamp
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -867,7 +911,7 @@ GDate
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -898,7 +942,7 @@ GDateTime
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -929,7 +973,7 @@ struct tm
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -967,9 +1011,9 @@ gchar
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 			ret = NULL;
 		}
 
@@ -1007,9 +1051,9 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1046,9 +1090,9 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1085,9 +1129,9 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1137,9 +1181,9 @@ gdaex_data_model_get_value_boolean_at (GdaDataModel *data_model, gint row, gint 
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1225,16 +1269,16 @@ GdaTimestamp
 						}
 					else
 						{
-							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							g_warning (_("Error on retrieving field's value: «%s».\nUnknown GValue type."),
 							           gda_data_model_get_column_name (data_model, col));
 						}
 				}
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return (GdaTimestamp *)gda_timestamp_copy ((gpointer)gdatimestamp);
@@ -1285,16 +1329,16 @@ GDate
 						}
 					else
 						{
-							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							g_warning (_("Error on retrieving field's value: «%s».\nUnknown GValue type."),
 							           gda_data_model_get_column_name (data_model, col));
 						}
 				}
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1351,16 +1395,16 @@ GDateTime
 						}
 					else
 						{
-							g_warning ("Error on retrieving field's value: «%s».\nUnknown GValue type.",
+							g_warning (_("Error on retrieving field's value: «%s».\nUnknown GValue type."),
 							           gda_data_model_get_column_name (data_model, col));
 						}
 				}
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1408,9 +1452,9 @@ struct tm
 		}
 	else
 		{
-			g_warning ("Error on retrieving field's value: «%s».\n%s\n",
+			g_warning (_("Error on retrieving field's value: «%s».\n%s\n"),
 			           gda_data_model_get_column_name (data_model, col),
-			           error->message != NULL ? error->message : "no details");
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	return ret;
@@ -1441,7 +1485,7 @@ gchar
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -1473,7 +1517,7 @@ gdaex_data_model_iter_get_field_value_integer_at (GdaDataModelIter *iter,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -1504,7 +1548,7 @@ gdaex_data_model_iter_get_field_value_float_at (GdaDataModelIter *iter,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -1535,7 +1579,7 @@ gdaex_data_model_iter_get_field_value_double_at (GdaDataModelIter *iter,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -1566,7 +1610,7 @@ gdaex_data_model_iter_get_field_value_boolean_at (GdaDataModelIter *iter,
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 		}
 
 	return value;
@@ -1597,7 +1641,7 @@ GdaTimestamp
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -1629,7 +1673,7 @@ GDate
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -1661,7 +1705,7 @@ GDateTime
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -1693,7 +1737,7 @@ struct tm
 		}
 	else
 		{
-			g_warning ("No column found with name «%s».", field_name);
+			g_warning (_("No column found with name «%s»."), field_name);
 			value = NULL;
 		}
 
@@ -1720,7 +1764,7 @@ gchar
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
@@ -1758,7 +1802,7 @@ gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter, gint col)
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
@@ -1796,7 +1840,7 @@ gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter, gint col)
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
@@ -1834,7 +1878,7 @@ gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter, gint col)
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
@@ -1872,7 +1916,7 @@ gdaex_data_model_iter_get_value_boolean_at (GdaDataModelIter *iter, gint col)
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else
@@ -1925,7 +1969,7 @@ GdaTimestamp
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
@@ -1987,7 +2031,7 @@ GdaTimestamp
 				}
 			else
 				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
+					g_warning (_("Error on retrieving field's value: unknown GValue type."));
 				}
 		}
 
@@ -2018,7 +2062,7 @@ GDate
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
@@ -2043,7 +2087,7 @@ GDate
 				}
 			else
 				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
+					g_warning (_("Error on retrieving field's value: unknown GValue type."));
 				}
 		}
 
@@ -2076,7 +2120,7 @@ GDateTime
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
@@ -2107,7 +2151,7 @@ GDateTime
 				}
 			else
 				{
-					g_warning ("Error on retrieving field's value: unknown GValue type.");
+					g_warning (_("Error on retrieving field's value: unknown GValue type."));
 				}
 		}
 
@@ -2136,7 +2180,7 @@ struct tm
 
 			g_object_get (G_OBJECT (iter), "data-model", &data_model, NULL);
 
-			g_warning ("Error on retrieving field's value: «%s».",
+			g_warning (_("Error on retrieving field's value: «%s»."),
 			           gda_data_model_get_column_name (data_model, col));
 		}
 	else if (!gda_value_is_null (v))
@@ -2234,9 +2278,9 @@ GHashTable
 					v = gda_data_model_get_value_at (dm, col, row, &error);
 					if (v == NULL || error != NULL)
 						{
-							g_warning ("Error on retrieving column %d: %s",
+							g_warning (_("Error on retrieving column %d: %s"),
 							           col,
-							           error != NULL && error->message != NULL ? error->message : "no details");
+							           error != NULL && error->message != NULL ? error->message : _("no details"));
 						}
 					else
 						{
@@ -2284,7 +2328,7 @@ GtkListStore
 	cols = gda_data_model_get_n_columns (dm);
 	if (cols == 0)
 		{
-			g_warning ("Invalid GdaDataModel.");
+			g_warning (_("Invalid GdaDataModel."));
 			return NULL;
 		}
 
@@ -2298,7 +2342,7 @@ GtkListStore
 	ret = gtk_list_store_newv (cols, gtypes);
 	if (ret == NULL)
 		{
-			g_warning ("Unable to create the GtkTreeModel.");
+			g_warning (_("Unable to create the GtkTreeModel."));
 			return NULL;
 		}
 
@@ -2345,14 +2389,14 @@ gdaex_begin (GdaEx *gdaex)
 
 	if (error != NULL)
 		{
-			g_warning ("Error opening transaction: %s\n",
-			           error->message != NULL ? error->message : "no details");
+			g_warning (_("Error opening transaction: %s\n"),
+			           error->message != NULL ? error->message : _("no details"));
 		}
 	else
 		{
 			if (priv->debug > 0)
 				{
-					g_message ("Transaction opened.");
+					g_message (_("Transaction opened."));
 				}
 		}
 
@@ -2386,14 +2430,14 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 	stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, &remain, &error);
 	if (remain)
 		{
-			g_warning ("REMAINS:\n%s\nfrom\n%s", remain, sql);
+			g_warning (_("REMAINS:\n%s\nfrom\n%s"), remain, sql);
 		}
 
 	if (error != NULL)
 		{
 			g_object_unref (stmt);
-			g_warning ("Error parsing sql: %s\n%s\n",
-			           error->message != NULL ? error->message : "no details", sql);
+			g_warning (_("Error parsing sql: %s\n%s"),
+			           error->message != NULL ? error->message : _("no details"), sql);
 			return -1;
 		}
 
@@ -2410,15 +2454,15 @@ gdaex_execute (GdaEx *gdaex, const gchar *sql)
 
 	if (error != NULL)
 		{
-			g_warning ("Error executing command query: %s\n%s",
-			           error->message != NULL ? error->message : "no details", sql);
+			g_warning (_("Error executing command query: %s\n%s"),
+			           error->message != NULL ? error->message : _("no details"), sql);
 			return -1;
 		}
 	else
 		{
 			if (priv->debug > 0)
 				{
-					g_message ("Query executed: %s", sql);
+					g_message (_("Query executed: %s"), sql);
 				}
 		}
 
@@ -2463,8 +2507,8 @@ GSList
 			stmt = gda_sql_parser_parse_string (priv->gda_parser, sql, NULL, &error);
 			if (error != NULL)
 				{
-					g_warning ("Error parsing sql: %s\n%s\n",
-					           error->message != NULL ? error->message : "no details", sql);
+					g_warning (_("Error parsing sql: %s\n%s"),
+					           error->message != NULL ? error->message : _("no details"), sql);
 					return NULL;
 				}
 
@@ -2512,7 +2556,7 @@ gdaex_commit (GdaEx *gdaex)
 			ret = TRUE;
 			if (priv->debug > 0)
 				{
-					g_message ("No transaction opened.");
+					g_message (_("No transaction opened."));
 				}
 		}
 	else
@@ -2522,15 +2566,15 @@ gdaex_commit (GdaEx *gdaex)
 
 			if (error != NULL)
 				{
-					g_warning ("Error committing transaction: %s\n",
-							   error->message);
+					g_warning (_("Error committing transaction: %s"),
+					           error->message != NULL ? error->message : _("no details"));
 					ret = FALSE;
 				}
 			else
 				{
 					if (priv->debug > 0)
 						{
-							g_message ("Transaction committed.");
+							g_message (_("Transaction committed."));
 						}
 				}
 		}
@@ -2565,7 +2609,7 @@ gdaex_rollback (GdaEx *gdaex)
 			ret = TRUE;
 			if (priv->debug > 0)
 				{
-					g_message ("No transaction opened.");
+					g_message (_("No transaction opened."));
 				}
 		}
 	else
@@ -2575,15 +2619,15 @@ gdaex_rollback (GdaEx *gdaex)
 
 			if (error != NULL)
 				{
-					g_warning ("Error rollbacking transaction: %s\n",
-							   error->message);
+					g_warning (_("Error rollbacking transaction: %s"),
+					           error->message != NULL ? error->message : _("no details"));
 					ret = FALSE;
 				}
 			else
 				{
 					if (priv->debug > 0)
 						{
-							g_message ("Transaction rolled back.");
+							g_message (_("Transaction rolled back."));
 						}
 				}
 		}
@@ -2839,8 +2883,8 @@ gchar
 	regex = g_regex_new ("(^[-\\d]?\\d+)(\\d\\d\\d)", 0, 0, &error);
 	if (error != NULL)
 		{
-			g_warning ("Error on creating regex: %s.",
-			           error->message != NULL ? error->message : "no details");
+			g_warning (_("Error on creating regex: %s"),
+			           error->message != NULL ? error->message : _("no details"));
 			return "";
 		}
 
@@ -2857,8 +2901,8 @@ gchar
 			                       &error);
 			if (error != NULL)
 				{
-					g_warning ("Error on regex replacing: %s.",
-					           error->message != NULL ? error->message : "no details");
+					g_warning (_("Error on regex replacing: %s"),
+					           error->message != NULL ? error->message : _("no details"));
 					g_regex_unref (regex);
 					return "";
 				}

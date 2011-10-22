@@ -1,0 +1,225 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Andrea Zagli <azagli@libero.it>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libgdaex 0.4.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-22 10:42+0200\n"
+"PO-Revision-Date: 2011-10-22 10:52+0200\n"
+"Last-Translator: Andrea Zagli <azagli@libero.it>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. TO DO
+#: ../src/gdaex.c:206
+msgid "Datasource cannot be empty."
+msgstr "Datasource non può essere vuota."
+
+#. TO DO
+#: ../src/gdaex.c:214 ../src/gdaex.c:307
+msgid "Unable to create GdaEx object."
+msgstr "Impossibile creare l'oggetto GdaEx."
+
+#: ../src/gdaex.c:273 ../src/gdaex.c:322
+#, c-format
+msgid "Error creating database connection: %s"
+msgstr "Errore nella creazione della connessione al database: %s"
+
+#: ../src/gdaex.c:274 ../src/gdaex.c:677 ../src/gdaex.c:694
+#: ../src/gdaex.c:1016 ../src/gdaex.c:1056 ../src/gdaex.c:1095
+#: ../src/gdaex.c:1134 ../src/gdaex.c:1186 ../src/gdaex.c:1281
+#: ../src/gdaex.c:1341 ../src/gdaex.c:1407 ../src/gdaex.c:1457
+#: ../src/gdaex.c:2283 ../src/gdaex.c:2393 ../src/gdaex.c:2440
+#: ../src/gdaex.c:2458 ../src/gdaex.c:2511 ../src/gdaex.c:2570
+#: ../src/gdaex.c:2623 ../src/gdaex.c:2887 ../src/gdaex.c:2905
+msgid "no details"
+msgstr "nessun dettaglio"
+
+#. TO DO
+#: ../src/gdaex.c:299
+msgid "cnc_string must not be empty."
+msgstr "cnc_string non può essere vuota."
+
+#: ../src/gdaex.c:323 ../src/gdaex.c:377 ../src/gdaex.c:411
+msgid "no details."
+msgstr "nessun dettaglio."
+
+#: ../src/gdaex.c:376
+#, c-format
+msgid "Error on writing on log file: %s"
+msgstr "Errore nella scrittura del file di registro: %s"
+
+#: ../src/gdaex.c:410
+#, c-format
+msgid "Error on opening log file: %s"
+msgstr "Errore nell'apertura del file di registro: %s"
+
+#: ../src/gdaex.c:528
+msgid "Unable to get the GdaSqlStatement from the GdaStatement."
+msgstr "Impossibile ottenere il GdaSqlStatement dal GdaStatement."
+
+#: ../src/gdaex.c:642
+#, c-format
+msgid "Statement type %s not implemented."
+msgstr "Tipo di istruzione %s non implementato."
+
+#: ../src/gdaex.c:676
+#, c-format
+msgid ""
+"Error parsing query string: %s\n"
+"%s"
+msgstr ""
+"Errore nell'analisi della stringa della query: %s\n"
+"%s"
+
+#: ../src/gdaex.c:693
+#, c-format
+msgid ""
+"Error executing selection query: %s\n"
+"%s"
+msgstr ""
+"Errore nell'esecuzione della query di selezione: %s\n"
+"%s"
+
+#: ../src/gdaex.c:701
+#, c-format
+msgid "Selection query executed: %s"
+msgstr "Query di selezione eseguita: %s"
+
+#: ../src/gdaex.c:732 ../src/gdaex.c:763 ../src/gdaex.c:793 ../src/gdaex.c:823
+#: ../src/gdaex.c:853 ../src/gdaex.c:883 ../src/gdaex.c:914 ../src/gdaex.c:945
+#: ../src/gdaex.c:976 ../src/gdaex.c:1488 ../src/gdaex.c:1520
+#: ../src/gdaex.c:1551 ../src/gdaex.c:1582 ../src/gdaex.c:1613
+#: ../src/gdaex.c:1644 ../src/gdaex.c:1676 ../src/gdaex.c:1708
+#: ../src/gdaex.c:1740
+#, c-format
+msgid "No column found with name «%s»."
+msgstr "Nessuna colonna trovata con il nome «%s»."
+
+#: ../src/gdaex.c:1014 ../src/gdaex.c:1054 ../src/gdaex.c:1093
+#: ../src/gdaex.c:1132 ../src/gdaex.c:1184 ../src/gdaex.c:1279
+#: ../src/gdaex.c:1339 ../src/gdaex.c:1405 ../src/gdaex.c:1455
+#, c-format
+msgid ""
+"Error on retrieving field's value: «%s».\n"
+"%s\n"
+msgstr ""
+"Errore nell'ottenere il valore del campo: «%s»\n"
+"%s\n"
+
+#: ../src/gdaex.c:1272 ../src/gdaex.c:1332 ../src/gdaex.c:1398
+#, c-format
+msgid ""
+"Error on retrieving field's value: «%s».\n"
+"Unknown GValue type."
+msgstr ""
+"Errore nell'ottenere il valore del campo: «%s».\n"
+"Tipo GValue sconosciuto."
+
+#: ../src/gdaex.c:1767 ../src/gdaex.c:1805 ../src/gdaex.c:1843
+#: ../src/gdaex.c:1881 ../src/gdaex.c:1919 ../src/gdaex.c:1972
+#: ../src/gdaex.c:2065 ../src/gdaex.c:2123 ../src/gdaex.c:2183
+#, c-format
+msgid "Error on retrieving field's value: «%s»."
+msgstr "Errore nell'ottenere il valore del campo: «%s»."
+
+#: ../src/gdaex.c:2034 ../src/gdaex.c:2090 ../src/gdaex.c:2154
+msgid "Error on retrieving field's value: unknown GValue type."
+msgstr "Impossibile ottenere il valore del campo: tipo GValue sconosciuto."
+
+#: ../src/gdaex.c:2281
+#, c-format
+msgid "Error on retrieving column %d: %s"
+msgstr "Errore nell'ottenere la colonna %d: %s"
+
+#: ../src/gdaex.c:2331
+msgid "Invalid GdaDataModel."
+msgstr "GdaDataModel non valido."
+
+#: ../src/gdaex.c:2345
+msgid "Unable to create the GtkTreeModel."
+msgstr "Impossibile creare il GtkTreeModel."
+
+#: ../src/gdaex.c:2392
+#, c-format
+msgid "Error opening transaction: %s\n"
+msgstr "Errore nell'apertura della transazione: %s\n"
+
+#: ../src/gdaex.c:2399
+msgid "Transaction opened."
+msgstr "Transazione aperta."
+
+#: ../src/gdaex.c:2433
+#, c-format
+msgid ""
+"REMAINS:\n"
+"%s\n"
+"from\n"
+"%s"
+msgstr ""
+"RIMANE:\n"
+"%s\n"
+"da\n"
+"%s"
+
+#: ../src/gdaex.c:2439 ../src/gdaex.c:2510
+#, c-format
+msgid ""
+"Error parsing sql: %s\n"
+"%s"
+msgstr ""
+"Errore nell'analisi dell'sql: %s\n"
+"%s"
+
+#: ../src/gdaex.c:2457
+#, c-format
+msgid ""
+"Error executing command query: %s\n"
+"%s"
+msgstr ""
+"Errore nell'esecuzione della query di comando: %s\n"
+"%s"
+
+#: ../src/gdaex.c:2465
+#, c-format
+msgid "Query executed: %s"
+msgstr "Query eseguita: %s"
+
+#: ../src/gdaex.c:2559 ../src/gdaex.c:2612
+msgid "No transaction opened."
+msgstr "Nessuna transazione aperta."
+
+#: ../src/gdaex.c:2569
+#, c-format
+msgid "Error committing transaction: %s"
+msgstr "Errore nel committare la transazione: %s"
+
+#: ../src/gdaex.c:2577
+msgid "Transaction committed."
+msgstr "Transazione committata."
+
+#: ../src/gdaex.c:2622
+#, c-format
+msgid "Error rollbacking transaction: %s"
+msgstr "Errore nel rollbacking della transazione: %s"
+
+#: ../src/gdaex.c:2630
+msgid "Transaction rolled back."
+msgstr "Transazione rolled back."
+
+#: ../src/gdaex.c:2886
+#, c-format
+msgid "Error on creating regex: %s"
+msgstr "Errore nella creazione dell'espressione regolare: %s"
+
+#: ../src/gdaex.c:2904
+#, c-format
+msgid "Error on regex replacing: %s"
+msgstr "Errore nell'espressione regolare di sostituzione: %s"

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([libgdaex], [0.3.1], [azagli@libero.it])
+AC_INIT([libgdaex], [0.4.0], [azagli@libero.it])
 AC_CONFIG_SRCDIR([src/gdaex.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -27,6 +27,16 @@ AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
 
 GTK_DOC_CHECK(1.0)
+IT_PROG_INTLTOOL
+
+dnl ******************************
+dnl Translations
+dnl ******************************
+GETTEXT_PACKAGE=libgdaex
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
+                   [The prefix for our gettext translation domains.])
+AM_GLIB_GNU_GETTEXT
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
@@ -47,12 +57,13 @@ AC_C_CONST
 AC_CHECK_FUNCS([strchr strcasecmp])
 
 AC_CONFIG_FILES([
-  libgdaex.pc
-  Makefile
-  src/Makefile
-  docs/Makefile
-  docs/reference/Makefile
-  docs/reference/version.xml
-  tests/Makefile
+	libgdaex.pc
+	Makefile
+	src/Makefile
+	docs/Makefile
+	docs/reference/Makefile
+	docs/reference/version.xml
+	tests/Makefile
+	po/Makefile.in
 ])
 AC_OUTPUT
