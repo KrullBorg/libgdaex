@@ -28,6 +28,7 @@
 #include "grid.h"
 #include "gridcolumn.h"
 #include "queryeditor.h"
+#include "queryeditor_widget_interface.h"
 
 
 #endif /* __LIBGDAEX_H__ */

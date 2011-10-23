@@ -2229,10 +2229,9 @@ gdaex_query_editor_remove_child_from_vbx_values (GdaExQueryEditor *qe)
 {
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	GList *lw = gtk_container_get_children (GTK_CONTAINER (priv->vbx_values));
-	if (lw != NULL && lw->data != NULL)
+	if (GTK_IS_HBOX (priv->hbox))
 		{
-			gtk_container_remove (GTK_CONTAINER (priv->vbx_values), (GtkWidget *)lw->data);
+			gtk_container_remove (GTK_CONTAINER (priv->vbx_values), (GtkWidget *)priv->hbox);
 		}
 }
 
@@ -2468,6 +2467,10 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 						{
 							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt1), NULL);
 						}
+					else if (GDAEX_QUERY_EDITOR_IS_IWIDGET (priv->txt1))
+						{
+							gdaex_query_editor_iwidget_set_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt1), "");
+						}
 					else
 						{
 							gtk_entry_set_text (GTK_ENTRY (priv->txt1), "");
@@ -2482,6 +2485,10 @@ gdaex_query_editor_on_cb_where_type_changed (GtkComboBox *widget,
 					if (GTK_IS_DATE_ENTRY (priv->txt2))
 						{
 							gtk_date_entry_set_date_gdatetime (GTK_DATE_ENTRY (priv->txt2), NULL);
+						}
+					else if (GDAEX_QUERY_EDITOR_IS_IWIDGET (priv->txt2))
+						{
+							gdaex_query_editor_iwidget_set_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt2), "");
 						}
 					else
 						{
@@ -2637,6 +2644,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								val1 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt1), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt1)) ? "dmYHMS" : "dmY", NULL, NULL);
 								val1_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt1));
 							}
+						else if (GDAEX_QUERY_EDITOR_IS_IWIDGET (priv->txt1))
+							{
+								val1 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt1));
+								val1_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt1));
+							}
 						else
 							{
 								val1 = (gchar *)gtk_entry_get_text (GTK_ENTRY (priv->txt1));
@@ -2663,6 +2675,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 							{
 								val2 = (gchar *)gtk_date_entry_get_strf (GTK_DATE_ENTRY (priv->txt2), gtk_date_entry_is_time_visible (GTK_DATE_ENTRY (priv->txt2)) ? "dmYHMS" : "dmY", NULL, NULL);
 								val2_sql = (gchar *)gtk_date_entry_get_sql (GTK_DATE_ENTRY (priv->txt2));
+							}
+						else if (GDAEX_QUERY_EDITOR_IS_IWIDGET (priv->txt2))
+							{
+								val2 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt2));
+								val2_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt2));
 							}
 						else
 							{
@@ -3032,8 +3049,6 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	GdaExQueryEditorField *field;
 
 	GtkWidget *lbl;
-	GtkWidget *widget_val1;
-	GtkWidget *widget_val2;
 	GtkTreeIter iter_cb;
 	GtkCellRenderer *renderer;
 
@@ -3308,66 +3323,70 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					case GDAEX_QE_FIELD_TYPE_TEXT:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_INTEGER:
-						priv->txt1 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						widget_val1 = priv->txt1;
+						if (GDAEX_QUERY_EDITOR_IS_IWIDGET (field->iwidget_from))
+							{
+								priv->txt1 = GTK_WIDGET (field->iwidget_from);
+								gdaex_query_editor_iwidget_set_value (field->iwidget_from, from_sql == NULL ? "0" : from_sql);
+							}
+						else
+							{
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+							}
 
-						priv->txt2 = gtk_entry_new ();
-						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						widget_val2 = priv->txt2;
+						if (GDAEX_QUERY_EDITOR_IS_IWIDGET (field->iwidget_to))
+							{
+								priv->txt2 = GTK_WIDGET (field->iwidget_to);
+								gdaex_query_editor_iwidget_set_value (field->iwidget_to, to_sql == NULL ? "0" : to_sql);
+							}
+						else
+							{
+								priv->txt2 = gtk_entry_new ();
+								gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
+							}
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DOUBLE:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATE:
 						priv->txt1 = gtk_date_entry_new (NULL, NULL, TRUE);
 						gtk_date_entry_set_time_visible (GTK_DATE_ENTRY (priv->txt1), FALSE);
 						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt1), from_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d") : from_sql, "Ymd");
-						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_date_entry_new (NULL, NULL, TRUE);
 						gtk_date_entry_set_time_visible (GTK_DATE_ENTRY (priv->txt2), FALSE);
 						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt2), to_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d") : to_sql, "Ymd");
-						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_DATETIME:
 						priv->txt1 = gtk_date_entry_new (NULL, NULL, TRUE);
 						gtk_date_entry_set_time_separator (GTK_DATE_ENTRY (priv->txt1), ".");
 						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt1), from_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d %H.%M.%S") : from_sql, "YmdHMS");
-						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_date_entry_new (NULL, NULL, TRUE);
 						gtk_date_entry_set_time_separator (GTK_DATE_ENTRY (priv->txt2), ".");
 						gtk_date_entry_set_date_strf (GTK_DATE_ENTRY (priv->txt2), to_sql == NULL ? g_date_time_format (g_date_time_new_now_local (), "%Y-%m-%d %H.%M.%S") : to_sql, "YmdHMS");
-						widget_val2 = priv->txt2;
 						break;
 
 					case GDAEX_QE_FIELD_TYPE_TIME:
 						priv->txt1 = gtk_entry_new ();
 						gtk_entry_set_max_length (GTK_ENTRY (priv->txt1), 8);
 						gtk_entry_set_text (GTK_ENTRY (priv->txt1), from == NULL ? "" : from);
-						widget_val1 = priv->txt1;
 
 						priv->txt2 = gtk_entry_new ();
 						gtk_entry_set_text (GTK_ENTRY (priv->txt2), to == NULL ? "" : to);
-						widget_val2 = priv->txt2;
 						break;
 
 					default:
@@ -3375,8 +3394,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 				};
 
-			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val1, 4, 5, 1, 2, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0, 0);
-			gtk_table_attach (GTK_TABLE (priv->tbl), widget_val2, 4, 5, 2, 3, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->txt1, 4, 5, 1, 2, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0, 0);
+			gtk_table_attach (GTK_TABLE (priv->tbl), priv->txt2, 4, 5, 2, 3, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0, 0);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox, FALSE, FALSE, 0);
 

@@ -11,9 +11,10 @@ LIBS = $(GDAEX_LIBS)
 lib_LTLIBRARIES = libgdaex.la
 
 libgdaex_la_SOURCES = gdaex.c \
-                      queryeditor.c \
                       grid.c \
-                      gridcolumn.c
+                      gridcolumn.c \
+                      queryeditor.c \
+                      queryeditor_widget_interface.c
 
 libgdaex_la_LDFLAGS = -no-undefined
 
@@ -21,6 +22,7 @@ libgdaex_include_HEADERS = libgdaex.h \
                            gdaex.h \
                            grid.h \
                            gridcolumn.h \
-                           queryeditor.h
+                           queryeditor.h \
+                           queryeditor_widget_interface.h
 
 libgdaex_includedir = $(includedir)/libgdaex

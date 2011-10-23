@@ -24,7 +24,8 @@
 
 #include <gtk/gtk.h>
 
-#include <libgdaex.h>
+#include "libgdaex.h"
+#include "queryeditor_widget_interface.h"
 
 
 G_BEGIN_DECLS
@@ -118,6 +119,9 @@ typedef struct
 		gboolean for_where;
 		guint available_where_type;
 		gboolean for_order;
+
+		GdaExQueryEditorIWidget *iwidget_from;
+		GdaExQueryEditorIWidget *iwidget_to;
 
 		/* TODO 
 		 * to refactor
