@@ -5,9 +5,10 @@ AM_CPPFLAGS = $(GDAEX_CFLAGS) \
               -I$(top_srcdir)/src \
               -DTESTSDIR="\"@abs_builddir@\""
 
-noinst_PROGRAMS = test_prefix \
+noinst_PROGRAMS = grid \
                   query_editor \
-                  grid
+                  select \
+                  test_prefix
 
 LDADD = $(top_builddir)/src/libgdaex.la
 

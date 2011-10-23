@@ -3,6 +3,7 @@ guidir = $(datadir)/$(PACKAGE)/gui
 AM_CPPFLAGS = -I$(top_srcdir) \
               $(GDAEX_CFLAGS) \
               -DGUIDIR=\""$(guidir)"\" \
+              -DLOCALEDIR=\"$(localedir)\" \
               -DG_LOG_DOMAIN=\"GdaEx\"
 
 LIBS = $(GDAEX_LIBS)

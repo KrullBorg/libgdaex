@@ -20,13 +20,19 @@ ltmain.sh
 m4/
 missing
 stamp-h1
+stamp-it
 *.stamp
+mkinstalldirs
 docs/reference/html/
 docs/reference/xml/
 src/.libs/
 src/.deps/
 tests/.libs/
 tests/.deps/
+po/POTFILES
+po/Makefile.in.in
+po/*.gmo
+po/libgdaex.pot
 *.lo
 *.o
 *.la
@@ -36,3 +42,4 @@ tests/test_prefix*
 tests/query_editor
 tests/grid
 tests/*.exe
+tests/select

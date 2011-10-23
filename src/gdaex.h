@@ -173,6 +173,12 @@ GDateTime *gdaex_data_model_iter_get_value_gdatetime_at (GdaDataModelIter *iter,
 struct tm *gdaex_data_model_iter_get_value_tm_at (GdaDataModelIter *iter,
                                            gint col);
 
+GHashTable *gdaex_data_model_columns_to_hashtable (GdaDataModel *dm);
+GHashTable *gdaex_data_model_row_to_hashtable (GdaDataModel *dm, guint row);
+
+GtkListStore *gdaex_data_model_to_gtkliststore (GdaDataModel *dm,
+                                                gboolean only_schema);
+
 gboolean gdaex_begin (GdaEx *gdaex);
 
 gint gdaex_execute (GdaEx *gdaex, const gchar *sql);

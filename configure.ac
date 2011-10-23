@@ -28,6 +28,16 @@ AC_PROG_LIBTOOL
 AC_PROG_RANLIB
 
 GTK_DOC_CHECK(1.0)
+IT_PROG_INTLTOOL
+
+dnl ******************************
+dnl Translations
+dnl ******************************
+GETTEXT_PACKAGE=libgdaex
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
+                   [The prefix for our gettext translation domains.])
+AM_GLIB_GNU_GETTEXT
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
@@ -59,5 +69,6 @@ AC_CONFIG_FILES([
 	docs/reference/Makefile
 	docs/reference/version.xml
 	tests/Makefile
+	po/Makefile.in
 ])
 AC_OUTPUT
