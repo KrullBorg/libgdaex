@@ -1,2 +1,4 @@
 # List of source files which contain translatable strings.
 src/gdaex.c
+src/queryeditor.c
+[type: gettext/glade]data/libgdaex/gui/libgdaex.ui

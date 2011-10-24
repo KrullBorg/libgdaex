@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkListStore" id="lstore_order">
     <columns>
@@ -92,7 +92,7 @@
                 <property name="tooltip_column">3</property>
                 <child>
                   <object class="GtkTreeViewColumn" id="treeviewcolumn1">
-                    <property name="title">Fields</property>
+                    <property name="title" translatable="yes">Fields</property>
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext1"/>
                       <attributes>
@@ -143,7 +143,7 @@
                             <property name="search_column">2</property>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn2">
-                                <property name="title">Field</property>
+                                <property name="title" translatable="yes">Field</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext2"/>
                                   <attributes>
@@ -154,7 +154,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn10">
-                                <property name="title">Alias</property>
+                                <property name="title" translatable="yes">Alias</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext9"/>
                                   <attributes>
@@ -296,7 +296,7 @@
                             <property name="search_column">4</property>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn11">
-                                <property name="title">Link</property>
+                                <property name="title" translatable="yes">Link</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext10"/>
                                   <attributes>
@@ -307,7 +307,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn5">
-                                <property name="title">Field</property>
+                                <property name="title" translatable="yes">Field</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext5"/>
                                   <attributes>
@@ -318,7 +318,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn9">
-                                <property name="title">Not</property>
+                                <property name="title" translatable="yes">Not</property>
                                 <child>
                                   <object class="GtkCellRendererToggle" id="cellrenderertoggle1"/>
                                   <attributes>
@@ -329,7 +329,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn6">
-                                <property name="title">Condition</property>
+                                <property name="title" translatable="yes">Condition</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext6"/>
                                   <attributes>
@@ -340,7 +340,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn7">
-                                <property name="title">From</property>
+                                <property name="title" translatable="yes">From</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext7"/>
                                   <attributes>
@@ -351,7 +351,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn8">
-                                <property name="title">To</property>
+                                <property name="title" translatable="yes">To</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext8"/>
                                   <attributes>
@@ -498,7 +498,7 @@
                             <property name="search_column">2</property>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn3">
-                                <property name="title">Field</property>
+                                <property name="title" translatable="yes">Field</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext3"/>
                                   <attributes>
@@ -509,7 +509,7 @@
                             </child>
                             <child>
                               <object class="GtkTreeViewColumn" id="treeviewcolumn4">
-                                <property name="title">Order</property>
+                                <property name="title" translatable="yes">Order</property>
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext4"/>
                                   <attributes>

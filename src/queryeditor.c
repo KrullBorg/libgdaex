@@ -22,6 +22,9 @@
 
 #include <stdarg.h>
 #include <string.h>
+
+#include <glib/gi18n-lib.h>
+
 #include <gtkdateentry.h>
 
 #include "queryeditor.h"
@@ -315,8 +318,8 @@ GdaExQueryEditor
 	                                   &error);
 	if (error != NULL)
 		{
-			g_warning ("Error on gui initialization: %s.",
-			           error->message != NULL ? error->message : "no details");
+			g_warning (_("Error on gui initialization: %s."),
+			           error->message != NULL ? error->message : _("no details"));
 			return NULL;
 		}
 
@@ -547,7 +550,7 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 	table = g_hash_table_lookup (priv->tables, table_name);
 	if (table == NULL)
 		{
-			g_warning ("Table «%s» doesn't exists.", table_name);
+			g_warning (_("Table «%s» doesn't exists."), table_name);
 			return FALSE;
 		}
 
@@ -556,7 +559,7 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 
 	if (_field->name == NULL)
 		{
-			g_warning ("No field added: the field must have a name.");
+			g_warning (_("No field added: the field must have a name."));
 			g_free (_field);
 			return FALSE;
 		}
@@ -564,7 +567,7 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 		{
 			if (g_strcmp0 (g_strstrip (_field->name), "") == 0)
 				{
-					g_warning ("No field added: the field must have a name.");
+					g_warning (_("No field added: the field must have a name."));
 					g_free (_field);
 					return FALSE;
 				}
@@ -630,7 +633,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 	table = g_hash_table_lookup (priv->tables, table1);
 	if (table == NULL)
 		{
-			g_warning ("Table «%s» doesn't exists.", table1);
+			g_warning (_("Table «%s» doesn't exists."), table1);
 			return FALSE;
 		}
 	relation->table1 = table;
@@ -638,7 +641,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 	table = g_hash_table_lookup (priv->tables, table2);
 	if (table == NULL)
 		{
-			g_warning ("Table «%s» doesn't exists.", table2);
+			g_warning (_("Table «%s» doesn't exists."), table2);
 			return FALSE;
 		}
 	relation->table2 = table;
@@ -674,7 +677,7 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 		}
 	else
 		{
-			g_warning ("Relation not created: no field added to the relation.");
+			g_warning (_("Relation not created: no field added to the relation."));
 			g_free (relation);
 			return FALSE;
 		}
@@ -1139,7 +1142,7 @@ GdaSqlBuilder
 								break;
 
 							default:
-								g_warning ("Where type «%d» not valid.", where_type);
+								g_warning (_("Where type «%d» not valid."), where_type);
 								continue;
 						}
 
@@ -1216,8 +1219,8 @@ const gchar
 	if (stmt == NULL || error != NULL)
 		{
 			g_object_unref (sqlbuilder);
-			g_warning ("Unable to create GdaStatement: %s.",
-			           error != NULL && error->message != NULL ? error->message : "no details");
+			g_warning (_("Unable to create GdaStatement: %s."),
+			           error != NULL && error->message != NULL ? error->message : _("no details"));
 			return NULL;
 		}
 
@@ -1228,8 +1231,8 @@ const gchar
 	if (error != NULL)
 		{
 			ret = NULL;
-			g_warning ("Unable to create sql: %s.",
-			           error->message != NULL ? error->message : "no details");
+			g_warning (_("Unable to create sql: %s."),
+			           error->message != NULL ? error->message : _("no details"));
 		}
 
 	g_object_unref (sqlbuilder);
@@ -1467,7 +1470,7 @@ xmlNode
 								indices = gtk_tree_path_get_indices (path);
 								if (indices[0] != 0)
 									{
-										g_warning ("Link type «%d» not valid.", link_type);
+										g_warning (_("Link type «%d» not valid."), link_type);
 										continue;
 									}
 								else
@@ -1532,7 +1535,7 @@ xmlNode
 								break;
 
 							default:
-								g_warning ("Where type «%d» not valid.", where_type);
+								g_warning (_("Where type «%d» not valid."), where_type);
 								continue;
 						}
 
@@ -1627,7 +1630,7 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 								table = g_hash_table_lookup (priv->tables, table_name);
 								if (table == NULL)
 									{
-										g_warning ("Table «%s» not found.", table_name);
+										g_warning (_("Table «%s» not found."), table_name);
 										continue;
 									}
 
@@ -1635,7 +1638,7 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 								field = g_hash_table_lookup (table->fields, field_name);
 								if (field == NULL)
 									{
-										g_warning ("Field «%s» not found in table «%s».", field_name, table_name);
+										g_warning (_("Field «%s» not found in table «%s»."), field_name, table_name);
 										continue;
 									}
 
@@ -2074,7 +2077,7 @@ gdaex_query_editor_store_remove_iter (GdaExQueryEditor *qe,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_QUESTION,
 			                                 GTK_BUTTONS_YES_NO,
-			                                 "Are you sure you want to remove the selected field?");
+			                                 _("Are you sure you want to remove the selected field?"));
 			risp = gtk_dialog_run (GTK_DIALOG (dialog));
 			if (risp == GTK_RESPONSE_YES)
 				{
@@ -2095,7 +2098,7 @@ gdaex_query_editor_store_remove_iter (GdaExQueryEditor *qe,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
+			                                 _("You must select a field before."));
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -2191,7 +2194,7 @@ gdaex_query_editor_store_move_iter_up_down (GdaExQueryEditor *qe,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
+			                                 _("You must select a field before."));
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -2253,55 +2256,55 @@ gdaex_query_editor_get_where_type_str_from_type (guint where_type)
 	switch (where_type)
 		{
 			case GDAEX_QE_WHERE_TYPE_EQUAL:
-				ret = g_strdup ("Equal");
+				ret = g_strdup (_("Equal"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_STARTS:
-				ret = g_strdup ("Starts with");
+				ret = g_strdup (_("Starts with"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_CONTAINS:
-				ret = g_strdup ("Contains");
+				ret = g_strdup (_("Contains"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_ENDS:
-				ret = g_strdup ("Ends with");
+				ret = g_strdup (_("Ends with"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_ISTARTS:
-				ret = g_strdup ("Case-insensitive starts with");
+				ret = g_strdup (_("Case-insensitive starts with"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_ICONTAINS:
-				ret = g_strdup ("Case-insensitive contains");
+				ret = g_strdup (_("Case-insensitive contains"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_IENDS:
-				ret = g_strdup ("Case-insensitive ends with");
+				ret = g_strdup (_("Case-insensitive ends with"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_GREAT:
-				ret = g_strdup ("Greater");
+				ret = g_strdup (_("Greater"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_GREAT_EQUAL:
-				ret = g_strdup ("Greater or equal");
+				ret = g_strdup (_("Greater or equal"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_LESS:
-				ret = g_strdup ("Lesser");
+				ret = g_strdup (_("Lesser"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_LESS_EQUAL:
-				ret = g_strdup ("Lesser or equal");
+				ret = g_strdup (_("Lesser or equal"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_BETWEEN:
-				ret = g_strdup ("Between");
+				ret = g_strdup (_("Between"));
 				break;
 
 			case GDAEX_QE_WHERE_TYPE_IS_NULL:
-				ret = g_strdup ("Is NULL");
+				ret = g_strdup (_("Is NULL"));
 				break;
 		};
 
@@ -2318,11 +2321,11 @@ gdaex_query_editor_get_link_type_str_from_type (guint link_type)
 	switch (link_type)
 		{
 			case GDAEX_QE_LINK_TYPE_AND:
-				ret = g_strdup ("And");
+				ret = g_strdup (_("And"));
 				break;
 
 			case GDAEX_QE_LINK_TYPE_OR:
-				ret = g_strdup ("Or");
+				ret = g_strdup (_("Or"));
 				break;
 		};
 
@@ -2636,7 +2639,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 										                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 										                                 GTK_MESSAGE_WARNING,
 										                                 GTK_BUTTONS_OK,
-										                                 "You must select a link's type before.");
+										                                 _("You must select a link's type before."));
 										gtk_dialog_run (GTK_DIALOG (dialog));
 										gtk_widget_destroy (dialog);
 										return;
@@ -2658,7 +2661,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 								                                 GTK_MESSAGE_WARNING,
 								                                 GTK_BUTTONS_OK,
-								                                 "You must select a condition's type before.");
+								                                 _("You must select a condition's type before."));
 								gtk_dialog_run (GTK_DIALOG (dialog));
 								gtk_widget_destroy (dialog);
 								return;
@@ -2834,7 +2837,7 @@ gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
+			                                 _("You must select a field before."));
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -3005,7 +3008,7 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
+			                                 _("You must select a field before."));
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -3137,17 +3140,17 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					gtk_box_pack_start (GTK_BOX (priv->hbox_where), priv->tbl, TRUE, TRUE, 0);
 
 					/* if it is the first condition, "link" isn't visibile */
-					priv->lbl_link_type = gtk_label_new ("Link");
+					priv->lbl_link_type = gtk_label_new (_("Link"));
 					gtk_widget_set_no_show_all (priv->lbl_link_type, TRUE);
 					gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_link_type, 0, 1, 0, 1, GTK_FILL, 0, 0, 0);
 
-					lbl = gtk_label_new ("Not");
+					lbl = gtk_label_new (_("Not"));
 					gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 2, 3, 0, 1, GTK_FILL, 0, 0, 0);
 
-					lbl = gtk_label_new ("Condition");
+					lbl = gtk_label_new (_("Condition"));
 					gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 3, 4, 0, 1, GTK_FILL, 0, 0, 0);
 
-					priv->lbl_txt1 = gtk_label_new ("Value");
+					priv->lbl_txt1 = gtk_label_new (_("Value"));
 					gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_txt1, 4, 5, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 					/* link */
@@ -3392,7 +3395,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						break;
 
 					default:
-						g_warning ("Field's type «%d» not valid.", field->type);
+						g_warning (_("Field's type «%d» not valid."), field->type);
 						break;
 				};
 
@@ -3550,7 +3553,7 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 			                                 GTK_DIALOG_DESTROY_WITH_PARENT,
 			                                 GTK_MESSAGE_WARNING,
 			                                 GTK_BUTTONS_OK,
-			                                 "You must select a field before.");
+			                                 _("You must select a field before."));
 			gtk_dialog_run (GTK_DIALOG (dialog));
 			gtk_widget_destroy (dialog);
 		}
@@ -3642,10 +3645,10 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 					lbl = gtk_label_new (field_name);
 					gtk_box_pack_start (GTK_BOX (priv->hbox_order), lbl, FALSE, FALSE, 0);
 
-					priv->opt_asc = gtk_radio_button_new_with_label (NULL, "Ascending");
+					priv->opt_asc = gtk_radio_button_new_with_label (NULL, _("Ascending"));
 					gtk_box_pack_start (GTK_BOX (priv->hbox_order), priv->opt_asc, FALSE, FALSE, 0);
 
-					priv->opt_desc = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (priv->opt_asc), "Descending");
+					priv->opt_desc = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (priv->opt_asc), _("Descending"));
 					gtk_box_pack_start (GTK_BOX (priv->hbox_order), priv->opt_desc, FALSE, FALSE, 0);
 
 					if (g_strcmp0 (order, "ASC") == 0)

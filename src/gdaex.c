@@ -177,13 +177,13 @@ static GdaEx
 
 #endif
 
-	priv->guifile = g_build_filename (priv->guidir, "libgdaex.ui", NULL);
-	priv->gtkbuilder = gtk_builder_new ();
-
-
 	bindtextdomain (GETTEXT_PACKAGE, localedir);
 	textdomain (GETTEXT_PACKAGE);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+
+	priv->guifile = g_build_filename (priv->guidir, "libgdaex.ui", NULL);
+	priv->gtkbuilder = gtk_builder_new ();
+	gtk_builder_set_translation_domain (priv->gtkbuilder, GETTEXT_PACKAGE);
 
 	g_free (localedir);
 
