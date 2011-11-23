@@ -42,8 +42,7 @@ AM_GLIB_GNU_GETTEXT
 # Checks for libraries.
 PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
                           gio-2.0 >= 2.24
-                          gtk+-2.0 >= 2.20
-                          libgtkdateentry >= 0.0.4])
+                          gtk+-2.0 >= 2.20])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)

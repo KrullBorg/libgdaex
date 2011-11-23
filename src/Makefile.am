@@ -14,7 +14,8 @@ libgdaex_la_SOURCES = gdaex.c \
                       grid.c \
                       gridcolumn.c \
                       queryeditor.c \
-                      queryeditor_widget_interface.c
+                      queryeditor_widget_interface.c \
+                      queryeditorentry.c
 
 libgdaex_la_LDFLAGS = -no-undefined
 
@@ -23,6 +24,7 @@ libgdaex_include_HEADERS = libgdaex.h \
                            grid.h \
                            gridcolumn.h \
                            queryeditor.h \
-                           queryeditor_widget_interface.h
+                           queryeditor_widget_interface.h \
+                           queryeditorentry.h
 
 libgdaex_includedir = $(includedir)/libgdaex
