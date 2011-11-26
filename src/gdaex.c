@@ -2785,6 +2785,7 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	gint *columns;
 	GValue *values;
 
+	gint ival;
 	gdouble dval;
 	GDateTime *gdatetime;
 
@@ -2834,6 +2835,10 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 											break;
 
 										case G_TYPE_INT:
+											ival = gdaex_data_model_iter_get_value_integer_at (gda_iter, col);
+											g_value_set_string (&gval, gdaex_format_money ((gdouble)ival, 0, FALSE));
+											break;
+
 										case G_TYPE_FLOAT:
 										case G_TYPE_DOUBLE:
 											dval = gdaex_data_model_iter_get_value_double_at (gda_iter, col);

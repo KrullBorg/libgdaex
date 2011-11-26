@@ -41,5 +41,6 @@ libgdaex*tar*
 tests/test_prefix*
 tests/query_editor
 tests/grid
+tests/fill_liststore
 tests/*.exe
 tests/select

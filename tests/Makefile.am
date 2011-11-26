@@ -5,7 +5,8 @@ AM_CPPFLAGS = $(GDAEX_CFLAGS) \
               -I$(top_srcdir)/src \
               -DTESTSDIR="\"@abs_builddir@\""
 
-noinst_PROGRAMS = grid \
+noinst_PROGRAMS = fill_liststore \
+                  grid \
                   query_editor \
                   select \
                   test_prefix
