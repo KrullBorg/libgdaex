@@ -2790,10 +2790,9 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	guint cols;
 	guint col;
 
-	GType col_gtype;
+	GType *col_gtypes;
 
-	GdaColumn *gcol;
-	GType gcol_gtype;
+	GType *gcol_gtypes;
 
 	gint *columns;
 	GValue *values;
@@ -2806,9 +2805,13 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	g_return_if_fail (GTK_IS_LIST_STORE (lstore));
 	g_return_if_fail (GDA_IS_DATA_MODEL (dm));
 
-	cols = gtk_tree_model_get_n_columns (GTK_TREE_MODEL (lstore));
-
 	gtk_list_store_clear (lstore);
+
+	cols = gtk_tree_model_get_n_columns (GTK_TREE_MODEL (lstore));
+	if (cols == 0)
+		{
+			return;
+		}
 
 	gda_iter = gda_data_model_create_iter (dm);
 	if (gda_iter == NULL)
@@ -2816,8 +2819,20 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 			return;
 		}
 
-	columns = g_malloc0 (cols * sizeof (gint));
-	values = g_malloc0 (cols * sizeof (GValue));
+	columns = (gint *)g_new0 (gint, cols);
+	values = (GValue *)g_new0 (GValue, cols);
+	col_gtypes = (GType *)g_new0 (GType, cols);
+	gcol_gtypes = (GType *)g_new0 (GType, cols);
+
+	/* caching of columns types */
+	for (col = 0; col < cols; col++)
+		{
+			col_gtypes[col] = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
+			if (col_gtypes[col] == G_TYPE_STRING)
+				{
+					gcol_gtypes[col] = gda_column_get_g_type (gda_data_model_describe_column (dm, col));
+				}
+		}
 
 	while (gda_data_model_iter_move_next (gda_iter))
 		{
@@ -2827,17 +2842,12 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 				{
 					columns[col] = col;
 
-					col_gtype = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
-
 					GValue gval = {0};
-					g_value_init (&gval, col_gtype);
-					switch (col_gtype)
+					g_value_init (&gval, col_gtypes[col]);
+					switch (col_gtypes[col])
 						{
 							case G_TYPE_STRING:
-								gcol = gda_data_model_describe_column (dm, col);
-								gcol_gtype = gda_column_get_g_type (gcol);
-
-								switch (gcol_gtype)
+								switch (gcol_gtypes[col])
 									{
 										case G_TYPE_STRING:
 											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (gda_iter, col));
@@ -2863,13 +2873,13 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 												{
 													g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
 												}
-											else if (gcol_gtype == G_TYPE_DATE
-											         || gcol_gtype == GDA_TYPE_TIMESTAMP
-											         || gcol_gtype == G_TYPE_DATE_TIME)
+											else if (gcol_gtypes[col] == G_TYPE_DATE
+											         || gcol_gtypes[col] == GDA_TYPE_TIMESTAMP
+											         || gcol_gtypes[col] == G_TYPE_DATE_TIME)
 												{
 													gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (gda_iter, col);
 													/* TODO find default format from locale */
-													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
+													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtypes[col] == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
 												}
 											else
 												{
@@ -2902,7 +2912,7 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 								break;
 
 							default:
-								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (gda_iter, col), col_gtype);
+								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (gda_iter, col), col_gtypes[col]);
 								break;
 						}
 				}
