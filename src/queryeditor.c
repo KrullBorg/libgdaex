@@ -159,13 +159,21 @@ static void gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselec
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
-typedef GtkWidget *(* GtkDateEntryNew) (void);
+typedef GtkWidget *(* GtkDateEntryNew) (const gchar *format,
+                                        const gchar *separator,
+                                        gboolean calendar_button_is_visible);
+typedef void (* GtkDateEntrySetDateVisible) (gpointer gtkdateentry, gboolean visible);
 typedef void (* GtkDateEntrySetTimeVisible) (gpointer gtkdateentry, gboolean visible);
 
 typedef struct _GdaExQueryEditorPrivate GdaExQueryEditorPrivate;
 struct _GdaExQueryEditorPrivate
 	{
 		GdaEx *gdaex;
+
+		GModule *gtk_date_entry_module;
+		GtkDateEntryNew gtk_date_entry_new;
+		GtkDateEntrySetDateVisible gtk_date_entry_set_date_visible;
+		GtkDateEntrySetTimeVisible gtk_date_entry_set_time_visible;
 
 		GtkBuilder *gtkbuilder;
 
@@ -307,6 +315,34 @@ GdaExQueryEditor
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
 
 	priv->gdaex = gdaex;
+
+	/* test if we can use GtkDateEntry */
+	priv->gtk_date_entry_module = NULL;
+	priv->gtk_date_entry_new = NULL;
+	priv->gtk_date_entry_set_date_visible = NULL;
+	priv->gtk_date_entry_set_time_visible = NULL;
+	if (g_module_supported ())
+		{
+			/* TODO it must be found in a better way */
+#ifdef G_OS_WIN32
+			priv->gtk_date_entry_module = g_module_open (g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "libgtkdateentry-0.dll", NULL), G_MODULE_BIND_LAZY);
+#else
+			priv->gtk_date_entry_module = g_module_open ("/usr/local/lib/libgtkdateentry.la", G_MODULE_BIND_LAZY);
+#endif
+			if (priv->gtk_date_entry_module != NULL)
+				{
+					if (!g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_new", (gpointer *)&(priv->gtk_date_entry_new))
+					    || !g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_set_date_visible", (gpointer *)&(priv->gtk_date_entry_set_date_visible))
+					    || !g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_set_time_visible", (gpointer *)&(priv->gtk_date_entry_set_time_visible)))
+						{
+							g_module_close (priv->gtk_date_entry_module);
+							priv->gtk_date_entry_module = NULL;
+							priv->gtk_date_entry_new = NULL;
+							priv->gtk_date_entry_set_date_visible = NULL;
+							priv->gtk_date_entry_set_time_visible = NULL;
+						}
+				}
+		}
 
 	priv->gtkbuilder = gdaex_get_gtkbuilder (priv->gdaex);
 
@@ -591,34 +627,80 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 
 	if (!GDAEX_QUERY_EDITOR_IS_IWIDGET (_field->iwidget_from))
 		{
-			_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
-			if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+			if (priv->gtk_date_entry_module != NULL
+			    && (_field->type == GDAEX_QE_FIELD_TYPE_DATE
+			        || _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
+			        || _field->type == GDAEX_QE_FIELD_TYPE_TIME))
 				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 10);
+					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (priv->gtk_date_entry_new (NULL, NULL, TRUE));
+					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+						{
+							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_from, TRUE);
+							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_from, FALSE);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+						{
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
+						{
+							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_from, FALSE);
+							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_from, TRUE);
+						}
 				}
-			else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+			else
 				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 19);
-				}
-			else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
-				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 8);
+					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
+					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 10);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 19);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 8);
+						}
 				}
 		}
 	if (!GDAEX_QUERY_EDITOR_IS_IWIDGET (_field->iwidget_to))
 		{
-			_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
-			if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+			if (priv->gtk_date_entry_module != NULL
+			    && (_field->type == GDAEX_QE_FIELD_TYPE_DATE
+			        || _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
+			        || _field->type == GDAEX_QE_FIELD_TYPE_TIME))
 				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 10);
+					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (priv->gtk_date_entry_new (NULL, NULL, TRUE));
+					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+						{
+							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_to, TRUE);
+							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_to, FALSE);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+						{
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
+						{
+							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_to, FALSE);
+							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_to, TRUE);
+						}
 				}
-			else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+			else
 				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 19);
-				}
-			else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
-				{
-					gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 8);
+					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
+					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 10);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 19);
+						}
+					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
+						{
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 8);
+						}
 				}
 		}
 

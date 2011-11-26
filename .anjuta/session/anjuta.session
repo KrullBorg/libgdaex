@@ -1,14 +1,14 @@
 
 [Anjuta]
 Maximized=1
-Geometry=1366x716+0+30
+Geometry=1366x745+0+1
 
 [Project Manager]
-Shortcut=libgdaex//libgdaex//src//libgdaex.la%%%libgdaex//libgdaex//tests//test_prefix%%%libgdaex//libgdaex//tests//grid%%%libgdaex//libgdaex//tests//query_editor
-Expand=libgdaex
+Shortcut=libgdaex//libgdaex//src//libgdaex.la%%%libgdaex//libgdaex//tests//grid%%%libgdaex//libgdaex//tests//query_editor%%%libgdaex//libgdaex//tests//select%%%libgdaex//libgdaex//tests//test_prefix
+Expand=libgdaex.la%%%libgdaex
 
 [File Loader]
-Files=file:///home/andreaz/files/c/libgdaex/src/queryeditor.c#15
+Files=file:///home/andreaz/files/c/libgdaex/src/queryeditor.c#668
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n

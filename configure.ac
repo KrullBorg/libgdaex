@@ -40,7 +40,8 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 AM_GLIB_GNU_GETTEXT
 
 # Checks for libraries.
-PKG_CHECK_MODULES(GDAEX, [libgda-4.0 >= 4
+PKG_CHECK_MODULES(GDAEX, [gmodule-2.0 >= 2
+                          libgda-4.0 >= 4
                           gio-2.0 >= 2.24
                           gtk+-2.0 >= 2.20])
 
