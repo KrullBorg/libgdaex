@@ -718,6 +718,19 @@ GdaDataModel
 }
 
 /**
+ * gdaex_data_model_is_empty:
+ * @data_model: a #GdaDataModel object.
+ *
+ * Returns: #TRUE if #GdaDataModel is #NULL or it doesn't have any row.
+ */
+gboolean
+gdaex_data_model_is_empty (GdaDataModel *data_model)
+{
+	return (!GDA_IS_DATA_MODEL (data_model)
+	        || gda_data_model_get_n_rows (data_model) == 0);
+}
+
+/**
  * gdaex_data_model_get_field_value_stringify_at:
  * @data_model: a #GdaDataModel object.
  * @row:

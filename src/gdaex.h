@@ -79,6 +79,8 @@ void gdaex_set_tables_name_prefix (GdaEx *gdaex, const gchar *tables_name_prefix
 
 GdaDataModel *gdaex_query (GdaEx *gdaex, const gchar *sql);
 
+gboolean gdaex_data_model_is_empty (GdaDataModel *data_model);
+
 gchar *gdaex_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
                                                      gint row,
                                                      const gchar *field_name);
