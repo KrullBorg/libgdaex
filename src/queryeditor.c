@@ -28,6 +28,8 @@
 #include "queryeditor.h"
 #include "queryeditorentry.h"
 
+#define GROUP "{--group--}"
+
 typedef struct
 	{
 		gchar *name;
@@ -133,6 +135,8 @@ static void gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselect
 
 static void gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
                                     gpointer user_data);
+static void gdaex_query_editor_on_btn_where_add_group_clicked (GtkButton *button,
+                                    gpointer user_data);
 static void gdaex_query_editor_on_btn_where_remove_clicked (GtkButton *button,
                                     gpointer user_data);
 static void gdaex_query_editor_on_btn_where_up_clicked (GtkButton *button,
@@ -183,6 +187,8 @@ struct _GdaExQueryEditorPrivate
 
 		GtkWidget *vbx_values_container;
 		GtkWidget *vbx_values;
+
+		GtkWidget *trv_where;
 
 		GtkTreeStore *tstore_fields;
 		GtkListStore *lstore_show;
@@ -365,6 +371,8 @@ GdaExQueryEditor
 
 	priv->notebook = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "notebook1"));
 
+	priv->trv_where = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "treeview3"));
+
 	priv->tstore_fields = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_fields"));
 	priv->lstore_show = GTK_LIST_STORE (gtk_builder_get_object (priv->gtkbuilder, "lstore_show"));
 	priv->tstore_where = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_where"));
@@ -372,7 +380,7 @@ GdaExQueryEditor
 
 	priv->sel_fields = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview1")));
 	priv->sel_show = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview2")));
-	priv->sel_where = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview3")));
+	priv->sel_where = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->trv_where));
 	priv->sel_order = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview4")));
 
 	priv->vbx_values_container = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "vbox3"));
@@ -403,6 +411,8 @@ GdaExQueryEditor
 
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button7"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_where_add_clicked), (gpointer)gdaex_query_editor);
+	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button18"), "clicked",
+	                  G_CALLBACK (gdaex_query_editor_on_btn_where_add_group_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button8"), "clicked",
 	                  G_CALLBACK (gdaex_query_editor_on_btn_where_remove_clicked), (gpointer)gdaex_query_editor);
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button9"), "clicked",
@@ -3017,7 +3027,11 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 	GdaExQueryEditorPrivate *priv;
 
 	GtkTreeIter iter;
+	GtkTreeIter iter_parent;
 	GtkWidget *dialog;
+
+	gchar *group;
+	gboolean with_parent;
 
 	gchar *table_name;
 	gchar *field_name;
@@ -3029,6 +3043,8 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 
 	if (gtk_tree_selection_get_selected (priv->sel_fields, NULL, &iter))
 		{
+			with_parent = FALSE;
+
 			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_fields), &iter,
 			                    COL_FIELDS_TABLE_NAME, &table_name,
 			                    COL_FIELDS_NAME, &field_name,
@@ -3037,12 +3053,37 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
-			gtk_tree_store_append (priv->tstore_where, &iter, NULL);
+			if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter_parent))
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter_parent,
+					                    COL_WHERE_TABLE_NAME, &group,
+					                    -1);
+					if (g_strcmp0 (group, GROUP) != 0)
+						{
+							if (gtk_tree_model_iter_parent (GTK_TREE_MODEL (priv->tstore_where), &iter, &iter_parent))
+								{
+									with_parent = TRUE;
+									iter_parent = iter;
+								}
+						}
+					else
+						{
+							with_parent = TRUE;
+						}
+				}
+
+			gtk_tree_store_append (priv->tstore_where, &iter, with_parent ? &iter_parent : NULL);
 			gtk_tree_store_set (priv->tstore_where, &iter,
 			                    COL_WHERE_TABLE_NAME, field->table_name,
 			                    COL_WHERE_NAME, field_name,
 			                    COL_WHERE_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 			                    -1);
+
+			if (with_parent)
+				{
+					gtk_tree_view_expand_to_path (GTK_TREE_VIEW (priv->trv_where),
+					                              gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter_parent));
+				}
 
 			g_free (table_name);
 			g_free (field_name);
@@ -3060,11 +3101,63 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 }
 
 static void
+gdaex_query_editor_on_btn_where_add_group_clicked (GtkButton *button,
+                                    gpointer user_data)
+{
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	GtkTreeIter iter_parent;
+	GtkTreeIter iter;
+
+	gchar *group;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	if (gtk_tree_selection_get_selected (priv->sel_where, NULL, &iter_parent))
+		{
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter_parent,
+			                    COL_WHERE_TABLE_NAME, &group,
+			                    -1);
+			if (g_strcmp0 (group, GROUP) != 0)
+				{
+					if (gtk_tree_model_iter_parent (GTK_TREE_MODEL (priv->tstore_where), &iter, &iter_parent))
+						{
+							gtk_tree_store_append (priv->tstore_where, &iter, &iter);
+						}
+					else
+						{
+							gtk_tree_store_append (priv->tstore_where, &iter, NULL);
+						}
+				}
+			else
+				{
+					gtk_tree_store_append (priv->tstore_where, &iter, &iter_parent);
+				}
+		}
+	else
+		{
+			gtk_tree_store_append (priv->tstore_where, &iter, NULL);
+		}
+	gtk_tree_store_set (priv->tstore_where, &iter,
+	                    COL_WHERE_TABLE_NAME, GROUP,
+	                    COL_WHERE_NAME, GROUP,
+	                    COL_WHERE_VISIBLE_NAME, "( )",
+	                    -1);
+	gtk_tree_view_expand_to_path (GTK_TREE_VIEW (priv->trv_where),
+	                              gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter));
+}
+
+static void
 gdaex_query_editor_on_btn_where_remove_clicked (GtkButton *button,
                                     gpointer user_data)
 {
-	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
-	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	gdaex_query_editor_store_remove_iter (qe,
 	                                      priv->sel_where,
@@ -3075,8 +3168,11 @@ static void
 gdaex_query_editor_on_btn_where_up_clicked (GtkButton *button,
                                     gpointer user_data)
 {
-	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
-	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	gdaex_query_editor_store_move_iter_up_down (qe,
 	                                      priv->sel_where,
@@ -3088,8 +3184,11 @@ static void
 gdaex_query_editor_on_btn_where_down_clicked (GtkButton *button,
                                     gpointer user_data)
 {
-	GdaExQueryEditor *qe = (GdaExQueryEditor *)user_data;
-	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+	GdaExQueryEditor *qe;
+	GdaExQueryEditorPrivate *priv;
+
+	qe = (GdaExQueryEditor *)user_data;
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	gdaex_query_editor_store_move_iter_up_down (qe,
 	                                      priv->sel_where,
@@ -3163,6 +3262,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			                    COL_WHERE_CONDITION_TO_SQL, &to_sql,
 			                    -1);
 
+			if (g_strcmp0 (table_name, GROUP) == 0) return;
+
 			table = g_hash_table_lookup (priv->tables, table_name);
 			field = g_hash_table_lookup (table->fields, field_name);
 
@@ -3172,6 +3273,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			if (GTK_IS_HBOX (priv->hbox_where))
 				{
 					gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), NULL);
+					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->not), not);
 					gtk_container_remove (GTK_CONTAINER (priv->tbl), GTK_WIDGET (priv->txt_from));
 					gtk_container_remove (GTK_CONTAINER (priv->tbl), GTK_WIDGET (priv->txt_to));
 				}
@@ -3223,10 +3325,11 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
 					gtk_table_attach (GTK_TABLE (priv->tbl), lbl, 1, 2, 1, 2, 0, 0, 0, 0);
 
+					/* not */
 					priv->not = gtk_check_button_new ();
-					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->not), not);
 					gtk_table_attach (GTK_TABLE (priv->tbl), priv->not, 2, 3, 1, 2, GTK_FILL, 0, 0, 0);
 
+					/* where */
 					priv->cb_where_type = gtk_combo_box_new_with_model (GTK_TREE_MODEL (priv->lstore_where_type));
 
 					renderer = gtk_cell_renderer_text_new ();
@@ -3238,7 +3341,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					g_signal_connect (G_OBJECT (priv->cb_where_type), "changed",
 					                  G_CALLBACK (gdaex_query_editor_on_cb_where_type_changed), user_data);
 
-					priv->lbl_to = gtk_label_new ("and");
+					priv->lbl_to = gtk_label_new (_("and"));
 					gtk_misc_set_alignment (GTK_MISC (priv->lbl_to), 1.0, 0.5);
 					gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_to, 3, 4, 2, 3, GTK_FILL, 0, 0, 0);
 				}
