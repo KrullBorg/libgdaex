@@ -979,120 +979,78 @@ gdaex_query_editor_add_table_relation_to_gdasqlbuilder (GdaExQueryEditor *qe,
 		}
 }
 
-GdaSqlBuilder
-*gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe)
+static guint
+gdaex_query_editor_sql_where (GdaExQueryEditor *qe,
+                              GdaSqlBuilder *sqlbuilder,
+                              GtkTreeIter *iter,
+                              GtkTreeIter *iter_parent,
+                              guint id_cond_parent)
 {
 	GdaExQueryEditorPrivate *priv;
 
-	GdaSqlBuilder *sqlbuilder;
-
-	GtkTreeIter iter;
+	guint id_ret;
 
 	gchar *table_name;
 	gchar *field_name;
-	gchar *alias;
-	gchar *asc_desc;
+	gchar *field_name_with_table;
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
-	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+	guint link_type;
+	GdaSqlOperatorType link_op;
+	gboolean not;
+	guint where_type;
+	GdaSqlOperatorType where_op;
+	gchar *from_str;
+	gchar *to_str;
+	GDate *from_date;
+	GDateTime *from_datetime;
+
+	guint id_field;
+	guint id_value1;
+	guint id_value2;
+	guint id_cond_iter;
+
+	gboolean case_insensitive;
+
+	gboolean is_group;
+
+	GtkTreeIter children;
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	sqlbuilder = gda_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+	id_ret = 0;
 
-	/* SHOW */
-	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+	do
 		{
-			guint id_target1;
-			guint id_target2;
-			guint id_join1;
-			guint id_join2;
-			guint join_cond;
+			id_value2 = 0;
 
-			do
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), iter,
+			                    COL_WHERE_LINK_TYPE, &link_type,
+			                    COL_WHERE_TABLE_NAME, &table_name,
+			                    COL_WHERE_NAME, &field_name,
+			                    COL_WHERE_CONDITION_NOT, &not,
+			                    COL_WHERE_CONDITION_TYPE, &where_type,
+			                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
+			                    COL_WHERE_CONDITION_TO_SQL, &to_str,
+			                    -1);
+
+			is_group = (g_strcmp0 (table_name, GROUP) == 0);
+
+			switch (link_type)
 				{
-					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
-					                    COL_SHOW_TABLE_NAME, &table_name,
-					                    COL_SHOW_NAME, &field_name,
-					                    COL_SHOW_ALIAS, &alias,
-					                    -1);
+					case GDAEX_QE_LINK_TYPE_AND:
+						link_op = GDA_SQL_OPERATOR_TYPE_AND;
+						break;
 
-					table = g_hash_table_lookup (priv->tables, table_name);
-					field = g_hash_table_lookup (table->fields, field_name);
+					case GDAEX_QE_LINK_TYPE_OR:
+						link_op = GDA_SQL_OPERATOR_TYPE_OR;
+						break;
+				}
 
-					gdaex_query_editor_add_table_relation_to_gdasqlbuilder (qe, sqlbuilder, table_name);
-
-					if (field->decode_table2 != NULL)
-						{
-							id_target1 = gda_sql_builder_select_add_target_id (sqlbuilder,
-							                                                   gda_sql_builder_add_id (sqlbuilder, table->name),
-							                                                   NULL);
-							id_target2 = gda_sql_builder_select_add_target_id (sqlbuilder,
-							                                                   gda_sql_builder_add_id (sqlbuilder, field->decode_table2),
-							                                                   NULL);
-
-							id_join1 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->table_name, ".", field->name, NULL));
-							id_join2 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->decode_table2, ".", field->decode_field2, NULL));
-
-							join_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_EQ,
-							                                      id_join1, id_join2, 0);
-
-							gda_sql_builder_select_join_targets (sqlbuilder, id_target1, id_target2,
-							                                     field->decode_join_type == GDAEX_QE_JOIN_TYPE_LEFT ? GDA_SQL_SELECT_JOIN_LEFT : GDA_SQL_SELECT_JOIN_INNER,
-							                                     join_cond);
-							gda_sql_builder_select_add_field (sqlbuilder, field->decode_field_to_show,
-							                                  field->decode_table2,
-							                                  alias != NULL && g_strcmp0 (alias, "") != 0 ? alias : field->decode_field_alias);
-						}
-					else
-						{
-							gda_sql_builder_select_add_field (sqlbuilder, field->name, table->name,
-							                                  alias != NULL && g_strcmp0 (alias, "") != 0 ? alias : field->alias);
-							gda_sql_builder_select_add_target_id (sqlbuilder,
-							                                      gda_sql_builder_add_id (sqlbuilder, table->name),
-							                                      NULL);
-						}
-				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
-		}
-
-	/* WHERE */
-	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
-		{
-			guint link_type;
-			GdaSqlOperatorType link_op;
-			gboolean not;
-			guint where_type;
-			GdaSqlOperatorType where_op;
-			gchar *from_str;
-			gchar *to_str;
-			GDate *from_date;
-			GDateTime *from_datetime;
-
-			guint id_field;
-			guint id_value1;
-			guint id_value2;
-			guint id_cond;
-			guint id_cond_iter;
-
-			gboolean case_insensitive;
-
-			id_cond = 0;
-			do
+			if (!is_group)
 				{
-					id_value2 = 0;
-
-					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
-					                    COL_WHERE_LINK_TYPE, &link_type,
-					                    COL_WHERE_TABLE_NAME, &table_name,
-					                    COL_WHERE_NAME, &field_name,
-					                    COL_WHERE_CONDITION_NOT, &not,
-					                    COL_WHERE_CONDITION_TYPE, &where_type,
-					                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
-					                    COL_WHERE_CONDITION_TO_SQL, &to_str,
-					                    -1);
-
 					case_insensitive = (where_type == GDAEX_QE_WHERE_TYPE_ISTARTS
 					                    || where_type == GDAEX_QE_WHERE_TYPE_ICONTAINS
 					                    || where_type == GDAEX_QE_WHERE_TYPE_IENDS);
@@ -1155,22 +1113,12 @@ GdaSqlBuilder
 
 					gdaex_query_editor_add_table_relation_to_gdasqlbuilder (qe, sqlbuilder, table_name);
 
-					id_field = gda_sql_builder_add_id (sqlbuilder,
-					                                   g_strconcat (case_insensitive ? "LOWER(" : "",
-					                                                table->name, ".", field->name,
-					                                                case_insensitive ? ")" : "",
-					                                                NULL));
-
-					switch (link_type)
-						{
-							case GDAEX_QE_LINK_TYPE_AND:
-								link_op = GDA_SQL_OPERATOR_TYPE_AND;
-								break;
-
-							case GDAEX_QE_LINK_TYPE_OR:
-								link_op = GDA_SQL_OPERATOR_TYPE_OR;
-								break;
-						}
+					field_name_with_table = g_strconcat (case_insensitive ? "LOWER(" : "",
+					                                     table->name, ".", field->name,
+					                                     case_insensitive ? ")" : "",
+					                                     NULL);
+					id_field = gda_sql_builder_add_id (sqlbuilder, field_name_with_table);
+					g_free (field_name_with_table);
 
 					if (where_type == GDAEX_QE_WHERE_TYPE_IS_NULL)
 						{
@@ -1283,15 +1231,126 @@ GdaSqlBuilder
 						{
 							id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
 						}
-					if (id_cond == 0)
+					if (id_ret == 0)
 						{
-							id_cond = id_cond_iter;
+							id_ret = id_cond_iter;
 						}
 					else
 						{
-							id_cond = gda_sql_builder_add_cond (sqlbuilder, link_op, id_cond, id_cond_iter, 0);
+							id_ret = gda_sql_builder_add_cond (sqlbuilder, link_op, id_ret, id_cond_iter, 0);
 						}
-				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), &iter));
+				}
+			else
+				{
+					if (gtk_tree_model_iter_children (GTK_TREE_MODEL (priv->tstore_where), &children, iter))
+						{
+							id_cond_iter = gdaex_query_editor_sql_where (qe, sqlbuilder, &children, iter, 0);
+							if (id_cond_iter != 0)
+								{
+									if (not)
+										{
+											id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
+										}
+									if (id_ret == 0)
+										{
+											id_ret = id_cond_iter;
+										}
+									else
+										{
+											id_ret = gda_sql_builder_add_cond (sqlbuilder, link_op, id_ret, id_cond_iter, 0);
+										}
+								}
+						}
+				}
+		} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), iter));
+
+	return id_ret;
+}
+
+GdaSqlBuilder
+*gdaex_query_editor_get_sql_as_gdasqlbuilder (GdaExQueryEditor *qe)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	GdaSqlBuilder *sqlbuilder;
+
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+	gchar *alias;
+	gchar *asc_desc;
+
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	sqlbuilder = gda_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+
+	/* SHOW */
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+		{
+			guint id_target1;
+			guint id_target2;
+			guint id_join1;
+			guint id_join2;
+			guint join_cond;
+
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
+					                    COL_SHOW_TABLE_NAME, &table_name,
+					                    COL_SHOW_NAME, &field_name,
+					                    COL_SHOW_ALIAS, &alias,
+					                    -1);
+
+					table = g_hash_table_lookup (priv->tables, table_name);
+					field = g_hash_table_lookup (table->fields, field_name);
+
+					gdaex_query_editor_add_table_relation_to_gdasqlbuilder (qe, sqlbuilder, table_name);
+
+					if (field->decode_table2 != NULL)
+						{
+							id_target1 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							                                                   gda_sql_builder_add_id (sqlbuilder, table->name),
+							                                                   NULL);
+							id_target2 = gda_sql_builder_select_add_target_id (sqlbuilder,
+							                                                   gda_sql_builder_add_id (sqlbuilder, field->decode_table2),
+							                                                   NULL);
+
+							id_join1 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->table_name, ".", field->name, NULL));
+							id_join2 = gda_sql_builder_add_id (sqlbuilder, g_strconcat (field->decode_table2, ".", field->decode_field2, NULL));
+
+							join_cond = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_EQ,
+							                                      id_join1, id_join2, 0);
+
+							gda_sql_builder_select_join_targets (sqlbuilder, id_target1, id_target2,
+							                                     field->decode_join_type == GDAEX_QE_JOIN_TYPE_LEFT ? GDA_SQL_SELECT_JOIN_LEFT : GDA_SQL_SELECT_JOIN_INNER,
+							                                     join_cond);
+							gda_sql_builder_select_add_field (sqlbuilder, field->decode_field_to_show,
+							                                  field->decode_table2,
+							                                  alias != NULL && g_strcmp0 (alias, "") != 0 ? alias : field->decode_field_alias);
+						}
+					else
+						{
+							gda_sql_builder_select_add_field (sqlbuilder, field->name, table->name,
+							                                  alias != NULL && g_strcmp0 (alias, "") != 0 ? alias : field->alias);
+							gda_sql_builder_select_add_target_id (sqlbuilder,
+							                                      gda_sql_builder_add_id (sqlbuilder, table->name),
+							                                      NULL);
+						}
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
+		}
+
+	/* WHERE */
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
+		{
+			guint id_cond;
+
+			id_cond = gdaex_query_editor_sql_where (qe, sqlbuilder, &iter, NULL, 0);
 
 			if (id_cond != 0)
 				{
@@ -1497,15 +1556,13 @@ const gchar
 	return ret;
 }
 
-
-xmlNode
-*gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe)
+static void
+gdaex_query_editor_xml_where (GdaExQueryEditor *qe,
+                              GtkTreeIter *iter,
+                              GtkTreeIter *iter_parent,
+                              xmlNode *xnode_parent)
 {
 	GdaExQueryEditorPrivate *priv;
-
-	xmlNode *ret;
-
-	GtkTreeIter iter;
 
 	gchar *table_name;
 	gchar *field_name;
@@ -1513,105 +1570,65 @@ xmlNode
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
 
-	xmlNode *node;
+	GtkTreePath *path;
+	gint *indices;
 
-	ret = NULL;
+	gboolean is_group;
 
-	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+	gboolean not;
+	guint link_type;
+	guint where_type;
+	gchar *from_str;
+	gchar *to_str;
+	gchar *str_link;
+	gchar *str_op;
+
+	xmlNode *xnode;
+	GtkTreeIter children;
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
-	ret = xmlNewNode (NULL, "gdaex_query_editor_choices");
-
-	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+	do
 		{
-			gchar *alias;
-			xmlNode *node_show;
+			gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), iter,
+			                    COL_WHERE_LINK_TYPE, &link_type,
+			                    COL_WHERE_TABLE_NAME, &table_name,
+			                    COL_WHERE_NAME, &field_name,
+			                    COL_WHERE_CONDITION_NOT, &not,
+			                    COL_WHERE_CONDITION_TYPE, &where_type,
+			                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
+			                    COL_WHERE_CONDITION_TO_SQL, &to_str,
+			                    -1);
 
-			node_show = xmlNewNode (NULL, "show");
-			xmlAddChild (ret, node_show);
+			is_group = (g_strcmp0 (table_name, GROUP) == 0);
 
-			do
+			switch (link_type)
 				{
-					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
-					                    COL_SHOW_TABLE_NAME, &table_name,
-					                    COL_SHOW_NAME, &field_name,
-					                    COL_SHOW_ALIAS, &alias,
-					                    -1);
+					case GDAEX_QE_LINK_TYPE_AND:
+						str_link = g_strdup ("AND");
+						break;
 
-					table = g_hash_table_lookup (priv->tables, table_name);
-					field = g_hash_table_lookup (table->fields, field_name);
+					case GDAEX_QE_LINK_TYPE_OR:
+						str_link = g_strdup ("OR");
+						break;
 
-					node = xmlNewNode (NULL, "field");
-					xmlAddChild (node_show, node);
-					xmlNewProp (node, "table", table_name);
-					xmlNewProp (node, "field", field_name);
-					if (alias != NULL && g_strcmp0 (alias, "") != 0)
-						{
-							xmlNewProp (node, "alias", alias);
-						}
-					else
-						{
-							xmlNewProp (node, "alias", field->alias);
-						}
-				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
-		}
+					default:
+						path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), iter);
+						indices = gtk_tree_path_get_indices (path);
+						if (indices[gtk_tree_path_get_depth (path) - 1] != 0)
+							{
+								g_warning (_("Link type «%d» not valid."), link_type);
+								continue;
+							}
+						else
+							{
+								str_link = g_strdup ("");
+								break;
+							}
+				}
 
-	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
-		{
-			xmlNode *node_where;
-
-			GtkTreePath *path;
-			gint *indices;
-
-			gboolean not;
-			guint link_type;
-			guint where_type;
-			gchar *from_str;
-			gchar *to_str;
-			gchar *str_link;
-			gchar *str_op;
-
-			node_where = xmlNewNode (NULL, "where");
-			xmlAddChild (ret, node_where);
-
-			do
+			if (!is_group)
 				{
-					gtk_tree_model_get (GTK_TREE_MODEL (priv->tstore_where), &iter,
-					                    COL_WHERE_LINK_TYPE, &link_type,
-					                    COL_WHERE_TABLE_NAME, &table_name,
-					                    COL_WHERE_NAME, &field_name,
-					                    COL_WHERE_CONDITION_NOT, &not,
-					                    COL_WHERE_CONDITION_TYPE, &where_type,
-					                    COL_WHERE_CONDITION_FROM_SQL, &from_str,
-					                    COL_WHERE_CONDITION_TO_SQL, &to_str,
-					                    -1);
-
-					switch (link_type)
-						{
-							case GDAEX_QE_LINK_TYPE_AND:
-								str_link = g_strdup ("AND");
-								break;
-
-							case GDAEX_QE_LINK_TYPE_OR:
-								str_link = g_strdup ("OR");
-								break;
-
-							default:
-								path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
-								indices = gtk_tree_path_get_indices (path);
-								if (indices[0] != 0)
-									{
-										g_warning (_("Link type «%d» not valid."), link_type);
-										continue;
-									}
-								else
-									{
-										str_link = g_strdup ("");
-										break;
-									}
-						}
-
 					switch (where_type)
 						{
 							case GDAEX_QE_WHERE_TYPE_EQUAL:
@@ -1671,23 +1688,110 @@ xmlNode
 								continue;
 						}
 
-					node = xmlNewNode (NULL, "field");
+					xnode = xmlNewNode (NULL, "field");
 
-					xmlAddChild (node_where, node);
+					xmlAddChild (xnode_parent, xnode);
 
-					xmlNewProp (node, "table", table_name);
-					xmlNewProp (node, "field", field_name);
-					xmlNewProp (node, "link_type", str_link);
-					xmlNewProp (node, "not", (not ? "y" : "n"));
-					xmlNewProp (node, "where_type", str_op);
-					xmlNewProp (node, "from", from_str);
-					xmlNewProp (node, "to", to_str);
+					xmlNewProp (xnode, "table", table_name);
+					xmlNewProp (xnode, "field", field_name);
+					xmlNewProp (xnode, "link_type", str_link);
+					xmlNewProp (xnode, "not", (not ? "y" : "n"));
+					xmlNewProp (xnode, "where_type", str_op);
+					xmlNewProp (xnode, "from", from_str);
+					xmlNewProp (xnode, "to", to_str);
 
 					g_free (str_op);
-					g_free (str_link);
-				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), &iter));
+				}
+			else
+				{
+					if (gtk_tree_model_iter_children (GTK_TREE_MODEL (priv->tstore_where), &children, iter))
+						{
+							xnode = xmlNewNode (NULL, "group");
+
+							xmlAddChild (xnode_parent, xnode);
+
+							xmlNewProp (xnode, "not", (not ? "y" : "n"));
+
+							gdaex_query_editor_xml_where (qe, &children, iter, xnode);
+						}
+				}
+
+			g_free (str_link);
+		} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->tstore_where), iter));
+}
+
+xmlNode
+*gdaex_query_editor_get_sql_as_xml (GdaExQueryEditor *qe)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	xmlNode *ret;
+
+	GtkTreeIter iter;
+
+	gchar *table_name;
+	gchar *field_name;
+
+	GdaExQueryEditorTable *table;
+	GdaExQueryEditorField *field;
+
+	xmlNode *node;
+
+	ret = NULL;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), NULL);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	ret = xmlNewNode (NULL, "gdaex_query_editor_choices");
+
+	/* SHOW */
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_show), &iter))
+		{
+			gchar *alias;
+			xmlNode *node_show;
+
+			node_show = xmlNewNode (NULL, "show");
+			xmlAddChild (ret, node_show);
+
+			do
+				{
+					gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_show), &iter,
+					                    COL_SHOW_TABLE_NAME, &table_name,
+					                    COL_SHOW_NAME, &field_name,
+					                    COL_SHOW_ALIAS, &alias,
+					                    -1);
+
+					table = g_hash_table_lookup (priv->tables, table_name);
+					field = g_hash_table_lookup (table->fields, field_name);
+
+					node = xmlNewNode (NULL, "field");
+					xmlAddChild (node_show, node);
+					xmlNewProp (node, "table", table_name);
+					xmlNewProp (node, "field", field_name);
+					if (alias != NULL && g_strcmp0 (alias, "") != 0)
+						{
+							xmlNewProp (node, "alias", alias);
+						}
+					else
+						{
+							xmlNewProp (node, "alias", field->alias);
+						}
+				} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_show), &iter));
 		}
 
+	/* WHERE */
+	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->tstore_where), &iter))
+		{
+			xmlNode *node_where;
+
+			node_where = xmlNewNode (NULL, "where");
+			xmlAddChild (ret, node_where);
+
+			gdaex_query_editor_xml_where (qe, &iter, NULL, node_where);
+		}
+
+	/* ORDER */
 	if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_order), &iter))
 		{
 			gchar *asc_desc;
@@ -2716,7 +2820,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						/* if it is the first condition, "link" doesn't is visibile */
 						GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
 						gint *indices = gtk_tree_path_get_indices (path);
-						if (indices[0] != 0)
+						if (indices[gtk_tree_path_get_depth (path) - 1] != 0)
 							{
 								model = gtk_combo_box_get_model (GTK_COMBO_BOX (priv->cb_link_type));
 								if (!gtk_combo_box_get_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_val))
@@ -3159,7 +3263,7 @@ gdaex_query_editor_on_btn_where_add_group_clicked (GtkButton *button,
 	gtk_tree_store_set (priv->tstore_where, &iter,
 	                    COL_WHERE_TABLE_NAME, GROUP,
 	                    COL_WHERE_NAME, GROUP,
-	                    COL_WHERE_VISIBLE_NAME, "( )",
+	                    COL_WHERE_VISIBLE_NAME, "(...)",
 	                    -1);
 	gtk_tree_view_expand_to_path (GTK_TREE_VIEW (priv->trv_where),
 	                              gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter));
@@ -3376,7 +3480,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 				}
 
 			/* if it is the first condition, "link" isn't visibile */
-			if (indices[0] != 0)
+			if (indices[gtk_tree_path_get_depth (path) - 1] != 0)
 				{
 					if (link_type != 0
 					    && gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb))
