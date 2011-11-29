@@ -168,7 +168,6 @@ static GdaEx
 		}
 
 	g_free (moddir);
-	g_free (p);
 
 #else
 
@@ -2412,14 +2411,24 @@ gdaex_begin (GdaEx *gdaex)
 	                                        GDA_TRANSACTION_ISOLATION_SERIALIZABLE,
 	                                        &error);
 
-	if (error != NULL)
+	if (!ret || error != NULL)
 		{
 			g_warning (_("Error opening transaction: %s\n"),
 			           error->message != NULL ? error->message : _("no details"));
 		}
 	else
 		{
-			if (priv->debug > 0)
+			/* check transaction status */
+			GdaTransactionStatus *tstatus;
+
+			tstatus = gda_connection_get_transaction_status (priv->gda_conn);
+			if (tstatus == NULL
+			    || tstatus->state == GDA_TRANSACTION_STATUS_STATE_FAILED)
+				{
+					g_warning (_("No transaction opened"));
+					ret = FALSE;
+				}
+			else if (priv->debug > 0)
 				{
 					g_message (_("Transaction opened."));
 				}
@@ -2589,18 +2598,15 @@ gdaex_commit (GdaEx *gdaex)
 			error = NULL;
 			ret = gda_connection_commit_transaction (priv->gda_conn, "gdaex", &error);
 
-			if (error != NULL)
+			if (!ret || error != NULL)
 				{
 					g_warning (_("Error committing transaction: %s"),
 					           error->message != NULL ? error->message : _("no details"));
 					ret = FALSE;
 				}
-			else
+			else if (priv->debug > 0)
 				{
-					if (priv->debug > 0)
-						{
-							g_message (_("Transaction committed."));
-						}
+					g_message (_("Transaction committed."));
 				}
 		}
 
