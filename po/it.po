@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libgdaex 0.4.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-11-23 18:27+0100\n"
+"POT-Creation-Date: 2011-11-27 15:25+0100\n"
 "PO-Revision-Date: 2011-10-24 17:44+0200\n"
 "Last-Translator: Andrea Zagli <azagli@libero.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -33,14 +33,14 @@ msgid "Error creating database connection: %s"
 msgstr "Errore nella creazione della connessione al database: %s"
 
 #: ../src/gdaex.c:286 ../src/gdaex.c:689 ../src/gdaex.c:706
-#: ../src/gdaex.c:1028 ../src/gdaex.c:1068 ../src/gdaex.c:1107
-#: ../src/gdaex.c:1146 ../src/gdaex.c:1198 ../src/gdaex.c:1293
-#: ../src/gdaex.c:1353 ../src/gdaex.c:1419 ../src/gdaex.c:1469
-#: ../src/gdaex.c:2295 ../src/gdaex.c:2405 ../src/gdaex.c:2452
-#: ../src/gdaex.c:2470 ../src/gdaex.c:2523 ../src/gdaex.c:2582
-#: ../src/gdaex.c:2635 ../src/gdaex.c:2923 ../src/gdaex.c:2941
-#: ../src/queryeditor.c:350 ../src/queryeditor.c:1260
-#: ../src/queryeditor.c:1272
+#: ../src/gdaex.c:1041 ../src/gdaex.c:1081 ../src/gdaex.c:1120
+#: ../src/gdaex.c:1159 ../src/gdaex.c:1211 ../src/gdaex.c:1306
+#: ../src/gdaex.c:1366 ../src/gdaex.c:1432 ../src/gdaex.c:1482
+#: ../src/gdaex.c:2308 ../src/gdaex.c:2418 ../src/gdaex.c:2465
+#: ../src/gdaex.c:2483 ../src/gdaex.c:2536 ../src/gdaex.c:2595
+#: ../src/gdaex.c:2648 ../src/gdaex.c:2951 ../src/gdaex.c:2969
+#: ../src/queryeditor.c:371 ../src/queryeditor.c:1392
+#: ../src/queryeditor.c:1404
 msgid "no details"
 msgstr "nessun dettaglio"
 
@@ -95,19 +95,19 @@ msgstr ""
 msgid "Selection query executed: %s"
 msgstr "Query di selezione eseguita: %s"
 
-#: ../src/gdaex.c:744 ../src/gdaex.c:775 ../src/gdaex.c:805 ../src/gdaex.c:835
-#: ../src/gdaex.c:865 ../src/gdaex.c:895 ../src/gdaex.c:926 ../src/gdaex.c:957
-#: ../src/gdaex.c:988 ../src/gdaex.c:1500 ../src/gdaex.c:1532
-#: ../src/gdaex.c:1563 ../src/gdaex.c:1594 ../src/gdaex.c:1625
-#: ../src/gdaex.c:1656 ../src/gdaex.c:1688 ../src/gdaex.c:1720
-#: ../src/gdaex.c:1752
+#: ../src/gdaex.c:757 ../src/gdaex.c:788 ../src/gdaex.c:818 ../src/gdaex.c:848
+#: ../src/gdaex.c:878 ../src/gdaex.c:908 ../src/gdaex.c:939 ../src/gdaex.c:970
+#: ../src/gdaex.c:1001 ../src/gdaex.c:1513 ../src/gdaex.c:1545
+#: ../src/gdaex.c:1576 ../src/gdaex.c:1607 ../src/gdaex.c:1638
+#: ../src/gdaex.c:1669 ../src/gdaex.c:1701 ../src/gdaex.c:1733
+#: ../src/gdaex.c:1765
 #, c-format
 msgid "No column found with name «%s»."
 msgstr "Nessuna colonna trovata con il nome «%s»."
 
-#: ../src/gdaex.c:1026 ../src/gdaex.c:1066 ../src/gdaex.c:1105
-#: ../src/gdaex.c:1144 ../src/gdaex.c:1196 ../src/gdaex.c:1291
-#: ../src/gdaex.c:1351 ../src/gdaex.c:1417 ../src/gdaex.c:1467
+#: ../src/gdaex.c:1039 ../src/gdaex.c:1079 ../src/gdaex.c:1118
+#: ../src/gdaex.c:1157 ../src/gdaex.c:1209 ../src/gdaex.c:1304
+#: ../src/gdaex.c:1364 ../src/gdaex.c:1430 ../src/gdaex.c:1480
 #, c-format
 msgid ""
 "Error on retrieving field's value: «%s».\n"
@@ -116,7 +116,7 @@ msgstr ""
 "Errore nell'ottenere il valore del campo: «%s»\n"
 "%s\n"
 
-#: ../src/gdaex.c:1284 ../src/gdaex.c:1344 ../src/gdaex.c:1410
+#: ../src/gdaex.c:1297 ../src/gdaex.c:1357 ../src/gdaex.c:1423
 #, c-format
 msgid ""
 "Error on retrieving field's value: «%s».\n"
@@ -125,40 +125,40 @@ msgstr ""
 "Errore nell'ottenere il valore del campo: «%s».\n"
 "Tipo GValue sconosciuto."
 
-#: ../src/gdaex.c:1779 ../src/gdaex.c:1817 ../src/gdaex.c:1855
-#: ../src/gdaex.c:1893 ../src/gdaex.c:1931 ../src/gdaex.c:1984
-#: ../src/gdaex.c:2077 ../src/gdaex.c:2135 ../src/gdaex.c:2195
+#: ../src/gdaex.c:1792 ../src/gdaex.c:1830 ../src/gdaex.c:1868
+#: ../src/gdaex.c:1906 ../src/gdaex.c:1944 ../src/gdaex.c:1997
+#: ../src/gdaex.c:2090 ../src/gdaex.c:2148 ../src/gdaex.c:2208
 #, c-format
 msgid "Error on retrieving field's value: «%s»."
 msgstr "Errore nell'ottenere il valore del campo: «%s»."
 
-#: ../src/gdaex.c:2046 ../src/gdaex.c:2102 ../src/gdaex.c:2166
+#: ../src/gdaex.c:2059 ../src/gdaex.c:2115 ../src/gdaex.c:2179
 msgid "Error on retrieving field's value: unknown GValue type."
 msgstr "Impossibile ottenere il valore del campo: tipo GValue sconosciuto."
 
-#: ../src/gdaex.c:2293
+#: ../src/gdaex.c:2306
 #, c-format
 msgid "Error on retrieving column %d: %s"
 msgstr "Errore nell'ottenere la colonna %d: %s"
 
-#: ../src/gdaex.c:2343
+#: ../src/gdaex.c:2356
 msgid "Invalid GdaDataModel."
 msgstr "GdaDataModel non valido."
 
-#: ../src/gdaex.c:2357
+#: ../src/gdaex.c:2370
 msgid "Unable to create the GtkTreeModel."
 msgstr "Impossibile creare il GtkTreeModel."
 
-#: ../src/gdaex.c:2404
+#: ../src/gdaex.c:2417
 #, c-format
 msgid "Error opening transaction: %s\n"
 msgstr "Errore nell'apertura della transazione: %s\n"
 
-#: ../src/gdaex.c:2411
+#: ../src/gdaex.c:2424
 msgid "Transaction opened."
 msgstr "Transazione aperta."
 
-#: ../src/gdaex.c:2445
+#: ../src/gdaex.c:2458
 #, c-format
 msgid ""
 "REMAINS:\n"
@@ -171,7 +171,7 @@ msgstr ""
 "da\n"
 "%s"
 
-#: ../src/gdaex.c:2451 ../src/gdaex.c:2522
+#: ../src/gdaex.c:2464 ../src/gdaex.c:2535
 #, c-format
 msgid ""
 "Error parsing sql: %s\n"
@@ -180,7 +180,7 @@ msgstr ""
 "Errore nell'analisi dell'sql: %s\n"
 "%s"
 
-#: ../src/gdaex.c:2469
+#: ../src/gdaex.c:2482
 #, c-format
 msgid ""
 "Error executing command query: %s\n"
@@ -189,235 +189,243 @@ msgstr ""
 "Errore nell'esecuzione della query di comando: %s\n"
 "%s"
 
-#: ../src/gdaex.c:2477
+#: ../src/gdaex.c:2490
 #, c-format
 msgid "Query executed: %s"
 msgstr "Query eseguita: %s"
 
-#: ../src/gdaex.c:2571 ../src/gdaex.c:2624
+#: ../src/gdaex.c:2584 ../src/gdaex.c:2637
 msgid "No transaction opened."
 msgstr "Nessuna transazione aperta."
 
-#: ../src/gdaex.c:2581
+#: ../src/gdaex.c:2594
 #, c-format
 msgid "Error committing transaction: %s"
 msgstr "Errore nel committare la transazione: %s"
 
-#: ../src/gdaex.c:2589
+#: ../src/gdaex.c:2602
 msgid "Transaction committed."
 msgstr "Transazione committata."
 
-#: ../src/gdaex.c:2634
+#: ../src/gdaex.c:2647
 #, c-format
 msgid "Error rollbacking transaction: %s"
 msgstr "Errore nel rollbacking della transazione: %s"
 
-#: ../src/gdaex.c:2642
+#: ../src/gdaex.c:2655
 msgid "Transaction rolled back."
 msgstr "Transazione rolled back."
 
-#: ../src/gdaex.c:2922
+#: ../src/gdaex.c:2950
 #, c-format
 msgid "Error on creating regex: %s"
 msgstr "Errore nella creazione dell'espressione regolare: %s"
 
-#: ../src/gdaex.c:2940
+#: ../src/gdaex.c:2968
 #, c-format
 msgid "Error on regex replacing: %s"
 msgstr "Errore nell'espressione regolare di sostituzione: %s"
 
-#: ../src/queryeditor.c:349
+#: ../src/queryeditor.c:370
 #, c-format
 msgid "Error on gui initialization: %s."
 msgstr "Errore nell'inizializzazione dell'interfaccia grafica: %s."
 
-#: ../src/queryeditor.c:581 ../src/queryeditor.c:673 ../src/queryeditor.c:681
+#: ../src/queryeditor.c:606 ../src/queryeditor.c:768 ../src/queryeditor.c:776
 #, c-format
 msgid "Table «%s» doesn't exists."
 msgstr "La tabella «%s» non esiste."
 
-#: ../src/queryeditor.c:590 ../src/queryeditor.c:598
+#: ../src/queryeditor.c:615 ../src/queryeditor.c:623
 msgid "No field added: the field must have a name."
 msgstr "Nessun campo aggiunto: il campo deve avere un nome."
 
-#: ../src/queryeditor.c:717
+#: ../src/queryeditor.c:812
 msgid "Relation not created: no field added to the relation."
 msgstr "Relazione non creata: nesuun campo aggiunto alla relazione."
 
-#: ../src/queryeditor.c:1182 ../src/queryeditor.c:1575
+#: ../src/queryeditor.c:1222 ../src/queryeditor.c:1665
 #, c-format
 msgid "Where type «%d» not valid."
 msgstr "Tipo where «%d» non valido."
 
-#: ../src/queryeditor.c:1259
+#: ../src/queryeditor.c:1391
 #, c-format
 msgid "Unable to create GdaStatement: %s."
 msgstr "Impossibile creare l'oggetto GdaStatement: %s."
 
-#: ../src/queryeditor.c:1271
+#: ../src/queryeditor.c:1403
 #, c-format
 msgid "Unable to create sql: %s."
 msgstr "Impossibile creare l'sql: %s."
 
-#: ../src/queryeditor.c:1510
+#: ../src/queryeditor.c:1598
 #, c-format
 msgid "Link type «%d» not valid."
 msgstr "Tipo collegamento «%d» non valido."
 
-#: ../src/queryeditor.c:1670
+#: ../src/queryeditor.c:1846
 #, c-format
 msgid "Table «%s» not found."
 msgstr "Tabella «%s» non trovata."
 
-#: ../src/queryeditor.c:1678
+#: ../src/queryeditor.c:1854
 #, c-format
 msgid "Field «%s» not found in table «%s»."
 msgstr "Campo «%s» non trovato nella tabella «%s»."
 
-#: ../src/queryeditor.c:1865 ../src/queryeditor.c:2725
+#: ../src/queryeditor.c:2041 ../src/queryeditor.c:2914
 msgid "ASC"
 msgstr "ASC"
 
-#: ../src/queryeditor.c:1866 ../src/queryeditor.c:2729
+#: ../src/queryeditor.c:2042 ../src/queryeditor.c:2918
 msgid "DESC"
 msgstr "DISC"
 
-#: ../src/queryeditor.c:2117
+#: ../src/queryeditor.c:2293
 msgid "Are you sure you want to remove the selected field?"
 msgstr "Eliminare il campo selezionato?"
 
-#: ../src/queryeditor.c:2138 ../src/queryeditor.c:2234
-#: ../src/queryeditor.c:2803 ../src/queryeditor.c:2974
-#: ../src/queryeditor.c:3441
+#: ../src/queryeditor.c:2314 ../src/queryeditor.c:2410
+#: ../src/queryeditor.c:2992 ../src/queryeditor.c:3194
+#: ../src/queryeditor.c:3766
 msgid "You must select a field before."
 msgstr "Occorre prima selezione un campo."
 
-#: ../src/queryeditor.c:2296
+#: ../src/queryeditor.c:2470
 msgid "Equal"
 msgstr "uguale a"
 
-#: ../src/queryeditor.c:2300
+#: ../src/queryeditor.c:2474
 msgid "Starts with"
 msgstr "inizia per"
 
-#: ../src/queryeditor.c:2304
+#: ../src/queryeditor.c:2478
 msgid "Contains"
 msgstr "contiene"
 
-#: ../src/queryeditor.c:2308
+#: ../src/queryeditor.c:2482
 msgid "Ends with"
 msgstr "finisce con"
 
-#: ../src/queryeditor.c:2312
+#: ../src/queryeditor.c:2486
 msgid "Case-insensitive starts with"
 msgstr "inizia per (no maiuscole/minuscole)"
 
-#: ../src/queryeditor.c:2316
+#: ../src/queryeditor.c:2490
 msgid "Case-insensitive contains"
 msgstr "contiene (no maiuscole/minuscole)"
 
-#: ../src/queryeditor.c:2320
+#: ../src/queryeditor.c:2494
 msgid "Case-insensitive ends with"
 msgstr "finisce con (no maiuscole/minuscole)"
 
-#: ../src/queryeditor.c:2324
+#: ../src/queryeditor.c:2498
 msgid "Greater"
 msgstr "maggiore di"
 
-#: ../src/queryeditor.c:2328
+#: ../src/queryeditor.c:2502
 msgid "Greater or equal"
 msgstr "maggiore di o uguale a"
 
-#: ../src/queryeditor.c:2332
+#: ../src/queryeditor.c:2506
 msgid "Lesser"
 msgstr "minore di"
 
-#: ../src/queryeditor.c:2336
+#: ../src/queryeditor.c:2510
 msgid "Lesser or equal"
 msgstr "minore di o uguale a"
 
-#: ../src/queryeditor.c:2340
+#: ../src/queryeditor.c:2514
 msgid "Between"
 msgstr "compreso tra"
 
-#: ../src/queryeditor.c:2344
+#: ../src/queryeditor.c:2518
 msgid "Is NULL"
 msgstr "è NULL"
 
-#: ../src/queryeditor.c:2361
+#: ../src/queryeditor.c:2539
 msgid "And"
 msgstr "e"
 
-#: ../src/queryeditor.c:2365
+#: ../src/queryeditor.c:2543
 msgid "Or"
 msgstr "o"
 
-#: ../src/queryeditor.c:2631
+#: ../src/queryeditor.c:2809
 msgid "You must select a link's type before."
 msgstr "Occorre selezionare prima un tipo di collegamento."
 
-#: ../src/queryeditor.c:2653
+#: ../src/queryeditor.c:2833
 msgid "You must select a condition's type before."
 msgstr "Occorre selezionare prima un tipo di condizione."
 
 #. if it is the first condition, "link" isn't visibile
-#: ../src/queryeditor.c:3106 ../data/libgdaex/gui/libgdaex.ui.h:6
+#: ../src/queryeditor.c:3391 ../data/libgdaex/gui/libgdaex.ui.h:7
 msgid "Link"
 msgstr "Collegamento"
 
-#: ../src/queryeditor.c:3110 ../data/libgdaex/gui/libgdaex.ui.h:7
+#: ../src/queryeditor.c:3395 ../data/libgdaex/gui/libgdaex.ui.h:8
 msgid "Not"
 msgstr "Non"
 
-#: ../src/queryeditor.c:3113 ../data/libgdaex/gui/libgdaex.ui.h:2
+#: ../src/queryeditor.c:3398 ../data/libgdaex/gui/libgdaex.ui.h:3
 msgid "Condition"
 msgstr "Condizione"
 
-#: ../src/queryeditor.c:3116
+#: ../src/queryeditor.c:3401
 msgid "Value"
 msgstr "Valore"
 
-#: ../src/queryeditor.c:3319
+#: ../src/queryeditor.c:3445
+msgid "and"
+msgstr "e"
+
+#: ../src/queryeditor.c:3621
 #, c-format
 msgid "Field's type «%d» not valid."
 msgstr "Il tipo campo «%d» non è valido."
 
-#: ../src/queryeditor.c:3533
+#: ../src/queryeditor.c:3858
 msgid "Ascending"
 msgstr "ascendente"
 
-#: ../src/queryeditor.c:3536
+#: ../src/queryeditor.c:3861
 msgid "Descending"
 msgstr "discendente"
 
 #: ../data/libgdaex/gui/libgdaex.ui.h:1
+msgid "Add gr_oup"
+msgstr "Aggiungi gr_uppo"
+
+#: ../data/libgdaex/gui/libgdaex.ui.h:2
 msgid "Alias"
 msgstr "Alias"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:3
+#: ../data/libgdaex/gui/libgdaex.ui.h:4
 msgid "Field"
 msgstr "Campo"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:4
+#: ../data/libgdaex/gui/libgdaex.ui.h:5
 msgid "Fields"
 msgstr "Campi"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:5
+#: ../data/libgdaex/gui/libgdaex.ui.h:6
 msgid "From"
-msgstr "da"
+msgstr "Da"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:8
+#: ../data/libgdaex/gui/libgdaex.ui.h:9
 msgid "Order"
 msgstr "Ordinamento"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:9
+#: ../data/libgdaex/gui/libgdaex.ui.h:10
 msgid "Show"
 msgstr "Mostra"
 
-#: ../data/libgdaex/gui/libgdaex.ui.h:10
-msgid "To"
-msgstr "a"
-
 #: ../data/libgdaex/gui/libgdaex.ui.h:11
+msgid "To"
+msgstr "A"
+
+#: ../data/libgdaex/gui/libgdaex.ui.h:12
 msgid "Where"
 msgstr "Condizioni"
