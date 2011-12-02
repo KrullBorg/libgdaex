@@ -200,12 +200,30 @@ const gchar *gdaex_get_guifile (GdaEx *gdaex);
 
 GtkBuilder *gdaex_get_gtkbuilder (GdaEx *gdaex);
 
-void gdaex_fill_liststore_from_sql (GdaEx *gdaex, GtkListStore *lstore, const gchar *sql,
-                                     guint *cols_formatted,
-                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
-void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex, GtkListStore *lstore, GdaDataModel *dm,
-                                     guint *cols_formatted,
-                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+typedef void (*GdaExFillListStoreMissingFunc) (GtkListStore *lstore, GtkTreeIter *iter, gpointer user_data);
+
+void gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
+                                                      GtkListStore *lstore,
+                                                      const gchar *sql,
+                                                      guint *cols_formatted,
+                                                      gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                      GdaExFillListStoreMissingFunc missing_func, gpointer user_data);
+void gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
+                                                            GtkListStore *lstore,
+                                                            GdaDataModel *dm,
+                                                            guint *cols_formatted,
+                                                            gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                            GdaExFillListStoreMissingFunc missing_func, gpointer user_data);
+void gdaex_fill_liststore_from_sql (GdaEx *gdaex,
+                                    GtkListStore *lstore,
+                                    const gchar *sql,
+                                    guint *cols_formatted,
+                                    gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
+                                          GtkListStore *lstore,
+                                          GdaDataModel *dm,
+                                          guint *cols_formatted,
+                                          gchar *(*cols_format_func) (GdaDataModelIter *, guint));
 
 gchar *gdaex_format_money (gdouble number,
                      gint decimals,

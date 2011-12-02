@@ -2761,11 +2761,12 @@ GtkBuilder
 }
 
 void
-gdaex_fill_liststore_from_sql (GdaEx *gdaex,
-                               GtkListStore *lstore,
-                               const gchar *sql,
-                               guint *cols_formatted,
-                               gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
+                                                 GtkListStore *lstore,
+                                                 const gchar *sql,
+                                                 guint *cols_formatted,
+                                                 gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                 GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
 {
 	GdaDataModel *dm;
 
@@ -2779,15 +2780,16 @@ gdaex_fill_liststore_from_sql (GdaEx *gdaex,
 	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
 
 	dm = gdaex_query (gdaex, _sql);
-	gdaex_fill_liststore_from_datamodel (gdaex, lstore, dm, cols_formatted, cols_format_func);
+	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, missing_func, user_data);
 }
 
 void
-gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
-                                     GtkListStore *lstore,
-                                     GdaDataModel *dm,
-                                     guint *cols_formatted,
-                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
+                                                       GtkListStore *lstore,
+                                                       GdaDataModel *dm,
+                                                       guint *cols_formatted,
+                                                       gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                       GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
 {
 	GtkTreeIter iter;
 
@@ -2796,9 +2798,12 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	guint cols;
 	guint col;
 
-	GType *col_gtypes;
+	GdaColumn *gdacolumn;
 
+	GType *col_gtypes;
 	GType *gcol_gtypes;
+	gboolean *col_missings;
+	gboolean call_missing_func;
 
 	gint *columns;
 	GValue *values;
@@ -2829,14 +2834,26 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 	values = (GValue *)g_new0 (GValue, cols);
 	col_gtypes = (GType *)g_new0 (GType, cols);
 	gcol_gtypes = (GType *)g_new0 (GType, cols);
+	col_missings = (gboolean *)g_new0 (gboolean, cols);
+
+	call_missing_func = FALSE;
 
 	/* caching of columns types */
 	for (col = 0; col < cols; col++)
 		{
 			col_gtypes[col] = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
-			if (col_gtypes[col] == G_TYPE_STRING)
+
+			gdacolumn = gda_data_model_describe_column (dm, col);
+			if (gdacolumn == NULL)
 				{
-					gcol_gtypes[col] = gda_column_get_g_type (gda_data_model_describe_column (dm, col));
+					col_missings[col] = TRUE;
+					gcol_gtypes[col] = 0;
+					call_missing_func = TRUE;
+				}
+			else
+				{
+					col_missings[col] = FALSE;
+					gcol_gtypes[col] = gda_column_get_g_type (gdacolumn);
 				}
 		}
 
@@ -2853,67 +2870,102 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 					switch (col_gtypes[col])
 						{
 							case G_TYPE_STRING:
-								switch (gcol_gtypes[col])
+								if (col_missings[col])
 									{
-										case G_TYPE_STRING:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (gda_iter, col));
-											break;
+										g_value_set_string (&gval, "");
+									}
+								else
+									{
+										switch (gcol_gtypes[col])
+											{
+												case G_TYPE_STRING:
+													g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (gda_iter, col));
+													break;
 
-										case G_TYPE_BOOLEAN:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col) ? "X" : "");
-											break;
+												case G_TYPE_BOOLEAN:
+													g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col) ? "X" : "");
+													break;
 
-										case G_TYPE_INT:
-											ival = gdaex_data_model_iter_get_value_integer_at (gda_iter, col);
-											g_value_set_string (&gval, gdaex_format_money ((gdouble)ival, 0, FALSE));
-											break;
+												case G_TYPE_INT:
+													ival = gdaex_data_model_iter_get_value_integer_at (gda_iter, col);
+													g_value_set_string (&gval, gdaex_format_money ((gdouble)ival, 0, FALSE));
+													break;
 
-										case G_TYPE_FLOAT:
-										case G_TYPE_DOUBLE:
-											dval = gdaex_data_model_iter_get_value_double_at (gda_iter, col);
-											g_value_set_string (&gval, gdaex_format_money (dval, -1, FALSE));
-											break;
+												case G_TYPE_FLOAT:
+												case G_TYPE_DOUBLE:
+													dval = gdaex_data_model_iter_get_value_double_at (gda_iter, col);
+													g_value_set_string (&gval, gdaex_format_money (dval, -1, FALSE));
+													break;
 
-										default:
-											if (cols_format_func != NULL)
-												{
-													g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
-												}
-											else if (gcol_gtypes[col] == G_TYPE_DATE
-											         || gcol_gtypes[col] == GDA_TYPE_TIMESTAMP
-											         || gcol_gtypes[col] == G_TYPE_DATE_TIME)
-												{
-													gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (gda_iter, col);
-													/* TODO find default format from locale */
-													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtypes[col] == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
-												}
-											else
-												{
-													g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (gda_iter, col)));
-												}
-											break;
+												default:
+													if (cols_format_func != NULL)
+														{
+															g_value_set_string (&gval, (*cols_format_func) (gda_iter, col));
+														}
+													else if (gcol_gtypes[col] == G_TYPE_DATE
+													         || gcol_gtypes[col] == GDA_TYPE_TIMESTAMP
+													         || gcol_gtypes[col] == G_TYPE_DATE_TIME)
+														{
+															gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (gda_iter, col);
+															/* TODO find default format from locale */
+															g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtypes[col] == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
+														}
+													else
+														{
+															g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (gda_iter, col)));
+														}
+													break;
+											}
 									}
 
 								values[col] = gval;
 								break;
 
 							case G_TYPE_INT:
-								g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (gda_iter, col));
+								if (col_missings[col])
+									{
+										g_value_set_int (&gval, 0);
+									}
+								else
+									{
+										g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (gda_iter, col));
+									}
 								values[col] = gval;
 								break;
 
 							case G_TYPE_FLOAT:
-								g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (gda_iter, col));
+								if (col_missings[col])
+									{
+										g_value_set_float (&gval, 0.0);
+									}
+								else
+									{
+										g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (gda_iter, col));
+									}
 								values[col] = gval;
 								break;
 
 							case G_TYPE_DOUBLE:
-								g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (gda_iter, col));
+								if (col_missings[col])
+									{
+										g_value_set_double (&gval, 0.0);
+									}
+								else
+									{
+										g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (gda_iter, col));
+									}
 								values[col] = gval;
 								break;
 
 							case G_TYPE_BOOLEAN:
-								g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col));
+								if (col_missings[col])
+									{
+										g_value_set_boolean (&gval, FALSE);
+									}
+								else
+									{
+										g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (gda_iter, col));
+									}
 								values[col] = gval;
 								break;
 
@@ -2924,7 +2976,32 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
 				}
 
 			gtk_list_store_set_valuesv (lstore, &iter, columns, values, cols);
+			if (call_missing_func
+			    && missing_func != NULL)
+				{
+					missing_func (lstore, &iter, user_data);
+				}
 		}
+}
+
+void
+gdaex_fill_liststore_from_sql (GdaEx *gdaex,
+                               GtkListStore *lstore,
+                               const gchar *sql,
+                               guint *cols_formatted,
+                               gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	gdaex_fill_liststore_from_sql_with_missing_func (gdaex, lstore, sql, cols_formatted, cols_format_func, NULL, NULL);
+}
+
+void
+gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
+                                     GtkListStore *lstore,
+                                     GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, NULL, NULL);
 }
 
 gchar
