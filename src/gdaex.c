@@ -2319,6 +2319,52 @@ GHashTable
 }
 
 /**
+ * gdaex_data_model_columns_to_hashtable_from_sql:
+ * @gdaex: a #GdaEx object.
+ * @sql: an SQL statement.
+ *
+ * Returns: a #GHashTable with keys as the columns names from @sql,
+ * and values as columns numbers.
+ */
+GHashTable
+*gdaex_data_model_columns_to_hashtable_from_sql (GdaEx *gdaex, gchar *sql)
+{
+	GHashTable *ret;
+	GdaDataModel *dm;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	dm = gdaex_query (gdaex, sql);
+	ret = gdaex_data_model_columns_to_hashtable (dm);
+
+	return ret;
+}
+
+/**
+ * gdaex_data_modelrow_to_hashtable_from_sql:
+ * @gdaex: a #GdaEx object.
+ * @sql: an SQL statement.
+ * @row: row number.
+ *
+ * Returns: a #GHashTable with keys as the columns names from @sql,
+ * and values as #GValue.
+ */
+GHashTable
+*gdaex_data_model_row_to_hashtable_from_sql (GdaEx *gdaex, gchar *sql, guint row)
+{
+	GHashTable *ret;
+	GdaDataModel *dm;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+	g_return_val_if_fail (sql != NULL, NULL);
+
+	dm = gdaex_query (gdaex, sql);
+	ret = gdaex_data_model_row_to_hashtable (dm, row);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_to_gtkliststore:
  * @dm: a #GdaDataModel object.
  * @only_schema:
