@@ -214,7 +214,9 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *tbl;
 		GtkWidget *lbl_link_type;
 		GtkWidget *cb_link_type;
-		GtkWidget *lbl_field_name;
+		GtkWidget *lbl_show_field_name;
+		GtkWidget *lbl_where_field_name;
+		GtkWidget *lbl_order_field_name;
 		GtkWidget *lbl_not;
 		GtkWidget *chk_not;
 		GtkWidget *lbl_where_type;
@@ -3120,13 +3122,15 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 					lbl = gtk_label_new ("Alias");
 					gtk_table_attach (GTK_TABLE (tbl), lbl, 1, 2, 0, 1, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
-					lbl = gtk_label_new (g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
-					gtk_table_attach (GTK_TABLE (tbl), lbl, 0, 1, 1, 2, 0, 0, 0, 0);
+					priv->lbl_show_field_name = gtk_label_new ("");
+					gtk_table_attach (GTK_TABLE (tbl), priv->lbl_show_field_name, 0, 1, 1, 2, 0, 0, 0, 0);
 
 					priv->txt_alias = gtk_entry_new ();
-					gtk_entry_set_text (GTK_ENTRY (priv->txt_alias), alias == NULL ? "" : alias);
 					gtk_table_attach (GTK_TABLE (tbl), priv->txt_alias, 1, 2, 1, 2, GTK_EXPAND | GTK_FILL, 0, 0, 0);
 				}
+
+			gtk_label_set_text (GTK_LABEL (priv->lbl_show_field_name), g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
+			gtk_entry_set_text (GTK_ENTRY (priv->txt_alias), alias == NULL ? "" : alias);
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox_show, FALSE, FALSE, 0);
 
@@ -3446,8 +3450,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					                    -1);
 					gtk_table_attach (GTK_TABLE (priv->tbl), priv->cb_link_type, 0, 1, 1, 2, GTK_FILL, 0, 0, 0);
 
-					priv->lbl_field_name = gtk_label_new ("");
-					gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_field_name, 1, 2, 1, 2, 0, 0, 0, 0);
+					priv->lbl_where_field_name = gtk_label_new ("");
+					gtk_table_attach (GTK_TABLE (priv->tbl), priv->lbl_where_field_name, 1, 2, 1, 2, 0, 0, 0, 0);
 
 					/* not */
 					priv->chk_not = gtk_check_button_new ();
@@ -3472,11 +3476,11 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 
 			if (is_group)
 				{
-					gtk_label_set_label (GTK_LABEL (priv->lbl_field_name), "");
+					gtk_label_set_label (GTK_LABEL (priv->lbl_where_field_name), "");
 				}
 			else
 				{
-					gtk_label_set_label (GTK_LABEL (priv->lbl_field_name), g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
+					gtk_label_set_label (GTK_LABEL (priv->lbl_where_field_name), g_strconcat (table->name_visible, " - ", field->name_visible, NULL));
 				}
 
 			/* if it is the first condition, "link" isn't visibile */
@@ -3707,7 +3711,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							gtk_table_set_row_spacing (GTK_TABLE (priv->tbl), 1, 0);
 						}
 
-					gtk_widget_set_visible (priv->lbl_field_name, TRUE);
+					gtk_widget_set_visible (priv->lbl_where_field_name, TRUE);
 					gtk_widget_set_visible (priv->lbl_where_type, TRUE);
 					gtk_widget_set_visible (priv->cb_where_type, TRUE);
 					gtk_widget_set_visible (priv->lbl_from, TRUE);
@@ -3718,7 +3722,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 					priv->txt_from = NULL;
 					priv->txt_to = NULL;
 
-					gtk_widget_set_visible (priv->lbl_field_name, FALSE);
+					gtk_widget_set_visible (priv->lbl_where_field_name, FALSE);
 					gtk_widget_set_visible (priv->lbl_where_type, FALSE);
 					gtk_widget_set_visible (priv->cb_where_type, FALSE);
 					gtk_widget_set_visible (priv->lbl_from, FALSE);
@@ -3875,23 +3879,24 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 				{
 					priv->hbox_order = gtk_hbox_new (TRUE, 5);
 
-					lbl = gtk_label_new (field_name);
-					gtk_box_pack_start (GTK_BOX (priv->hbox_order), lbl, FALSE, FALSE, 0);
+					priv->lbl_order_field_name = gtk_label_new ("");
+					gtk_box_pack_start (GTK_BOX (priv->hbox_order), priv->lbl_order_field_name, FALSE, FALSE, 0);
 
 					priv->opt_asc = gtk_radio_button_new_with_label (NULL, _("Ascending"));
 					gtk_box_pack_start (GTK_BOX (priv->hbox_order), priv->opt_asc, FALSE, FALSE, 0);
 
 					priv->opt_desc = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (priv->opt_asc), _("Descending"));
 					gtk_box_pack_start (GTK_BOX (priv->hbox_order), priv->opt_desc, FALSE, FALSE, 0);
+				}
 
-					if (g_strcmp0 (order, "ASC") == 0)
-						{
-							gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_asc), TRUE);
-						}
-					else
-						{
-							gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_desc), TRUE);
-						}
+			gtk_label_set_text (GTK_LABEL (priv->lbl_order_field_name), field_name);
+			if (g_strcmp0 (order, "ASC") == 0)
+				{
+					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_asc), TRUE);
+				}
+			else
+				{
+					gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (priv->opt_desc), TRUE);
 				}
 
 			gtk_box_pack_start (GTK_BOX (priv->vbx_values), priv->hbox_order, FALSE, FALSE, 0);
