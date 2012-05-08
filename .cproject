@@ -26,6 +26,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.base.1978833679" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.mingw.base.1090629218" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.mingw.base">
 								<option id="gnu.c.compiler.option.include.paths.420212102" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;C:\mingw\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\mingw\include\libxml2&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\mingw\include\glib-2.0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\mingw\include\gtk-2.0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\mingw\include\libgda-4.0&quot;"/>

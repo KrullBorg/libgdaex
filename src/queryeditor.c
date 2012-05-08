@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2012 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@
 #include <string.h>
 
 #include <glib/gi18n-lib.h>
+
+#include <libxml/parser.h>
 
 #include "queryeditor.h"
 #include "queryeditorentry.h"
