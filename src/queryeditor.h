@@ -143,11 +143,20 @@ gboolean gdaex_query_editor_add_table (GdaExQueryEditor *qe,
 gboolean gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
                                              const gchar *table_name,
                                              GdaExQueryEditorField field);
+gboolean gdaex_query_editor_add_relation_slist (GdaExQueryEditor *qe,
+                                                const gchar *table1,
+                                                const gchar *table2,
+                                                GdaExQueryEditorJoinType join_type,
+                                                GSList *fields_joined);
 gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
                                           const gchar *table1,
                                           const gchar *table2,
                                           GdaExQueryEditorJoinType join_type,
                                           ...);
+
+void gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
+                                              xmlNode *root,
+                                              gboolean clean);
 
 void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 

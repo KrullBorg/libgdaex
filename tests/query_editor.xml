@@ -1,0 +1,107 @@
+<gdaex_query_editor>
+
+	<tables>
+		<table>
+			<name>clients</name>
+			<name_visible>Clients</name_visible>
+		</table>
+		<table>
+			<name>orders</name>
+			<name_visible>Orders</name_visible>
+		</table>
+	</tables>
+
+	<fields table="clients">
+		<field>
+			<name>id</name>
+			<name_visible>ID</name_visible>
+			<type>integer</type>
+			<always_showed>true</always_showed>
+			<available_where_type>equal</available_where_type>
+		</field>
+		<field>
+			<name>name</name>
+			<name_visible>Name</name_visible>
+			<description>The client's name</description>
+			<type>text</type>
+			<available_where_type>starts|contains|ends|istarts|icontains|iends</available_where_type>
+		</field>
+		<field>
+			<name>surname</name>
+			<name_visible>Surname</name_visible>
+			<description>The client's surname</description>
+			<type>text</type>
+			<available_where_type>string|is_null</available_where_type>
+		</field>
+		<field>
+			<name>age</name>
+			<name_visible>Age</name_visible>
+			<description>The client's age</description>
+			<type>integer</type>
+			<available_where_type>number</available_where_type>
+		</field>
+		<field>
+			<name>datetime</name>
+			<name_visible>DateTime</name_visible>
+			<description>???</description>
+			<type>datetime</type>
+			<available_where_type>datetime|is_null</available_where_type>
+		</field>
+		<field>
+			<name>id_cities</name>
+			<name_visible>City</name_visible>
+			<description>The client's city</description>
+			<type>integer</type>
+			<available_where_type>equal</available_where_type>
+			<decode>
+				<table_name>cities</table_name>
+				<join_type>left</join_type>
+				<field_name_to_join>id</field_name_to_join>
+				<field_name_to_show>name</field_name_to_show>
+				<alias>city_name</alias>
+			</decode>
+		</field>
+		<field>
+			<name>from_xml</name>
+			<name_visible>From Xml</name_visible>
+			<description>The client's age</description>
+			<type>integer</type>
+			<available_where_type>number</available_where_type>
+		</field>
+	</fields>
+
+	<fields table="orders">
+		<field>
+			<name>id</name>
+			<type>integer</type>
+			<for_show>false</for_show>
+			<for_where>false</for_where>
+			<for_order>false</for_order>
+		</field>
+		<field>
+			<name>id_clients</name>
+			<type>integer</type>
+			<for_show>false</for_show>
+			<for_where>false</for_where>
+			<for_order>false</for_order>
+		</field>
+		<field>
+			<name>amount</name>
+			<name_visible>Amount</name_visible>
+			<type>double</type>
+			<available_where_type>number</available_where_type>
+		</field>
+	</fields>
+
+	<relations>
+		<relation>
+			<table_left>clients</table_left>
+			<table_right>orders</table_right>
+			<join_type>left</join_type>
+			<fields_joined>
+				<field_left>id</field_left>
+				<field_right>id_clients</field_right>
+			</fields_joined>
+		</relation>
+	</relations>
+</gdaex_query_editor>

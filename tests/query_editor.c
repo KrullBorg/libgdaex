@@ -202,6 +202,16 @@ main (int argc, char *argv[])
 	GtkWidget *btn_load_xml;
 	GtkWidget *btn_ok;
 
+	gchar *xmlfile;
+
+	xmlfile = NULL;
+
+	GOptionEntry entries[] =
+		{
+			{ "xml-file", 'x', 0, G_OPTION_ARG_FILENAME, &xmlfile, "Xml file", NULL },
+			{ NULL }
+		};
+
 	gtk_init (&argc, &argv);
 
 	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
@@ -213,6 +223,7 @@ main (int argc, char *argv[])
 
 	error = NULL;
 	context = g_option_context_new ("tests");
+	g_option_context_add_main_entries (context, entries, "tests");
 	g_option_context_add_group (context, gdaex_get_option_group (gdaex));
 	g_option_context_parse (context, &argc, &argv, &error);
 	if (error != NULL)
@@ -222,137 +233,155 @@ main (int argc, char *argv[])
 
 	qe = gdaex_query_editor_new (gdaex);
 
-	gdaex_query_editor_add_table (qe, "clients", "Clients");
+	if (xmlfile != NULL)
+		{
+			xmlDoc *xdoc;
+			xmlNode *xroot;
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("id");
-	field->name_visible = g_strdup ("ID");
-	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
-	field->for_show = TRUE;
-	field->always_showed = TRUE;
-	field->for_where = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			xdoc = xmlParseFile (xmlfile);
+			if (xdoc != NULL)
+				{
+					xroot = xmlDocGetRootElement (xdoc);
+					if (xroot != NULL)
+						{
+							gdaex_query_editor_load_tables_from_xml (qe, xroot, TRUE);
+						}
+				}
+		}
+	else
+		{
+			gdaex_query_editor_add_table (qe, "clients", "Clients");
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("name");
-	field->name_visible = g_strdup ("Name");
-	field->description = g_strdup ("The client's name");
-	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_STARTS
-	                              | GDAEX_QE_WHERE_TYPE_CONTAINS
-	                              | GDAEX_QE_WHERE_TYPE_ENDS
-	                              | GDAEX_QE_WHERE_TYPE_ISTARTS
-	                              | GDAEX_QE_WHERE_TYPE_ICONTAINS
-	                              | GDAEX_QE_WHERE_TYPE_IENDS;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("id");
+			field->name_visible = g_strdup ("ID");
+			field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+			field->for_show = TRUE;
+			field->always_showed = TRUE;
+			field->for_where = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("surname");
-	field->name_visible = g_strdup ("Surname");
-	field->description = g_strdup ("The client's surname");
-	field->type = GDAEX_QE_FIELD_TYPE_TEXT;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("name");
+			field->name_visible = g_strdup ("Name");
+			field->description = g_strdup ("The client's name");
+			field->type = GDAEX_QE_FIELD_TYPE_TEXT;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_STARTS
+			                              | GDAEX_QE_WHERE_TYPE_CONTAINS
+			                              | GDAEX_QE_WHERE_TYPE_ENDS
+			                              | GDAEX_QE_WHERE_TYPE_ISTARTS
+			                              | GDAEX_QE_WHERE_TYPE_ICONTAINS
+			                              | GDAEX_QE_WHERE_TYPE_IENDS;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
+
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("surname");
+			field->name_visible = g_strdup ("Surname");
+			field->description = g_strdup ("The client's surname");
+			field->type = GDAEX_QE_FIELD_TYPE_TEXT;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_STRING
+			                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
+
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("brithday");
+			field->name_visible = g_strdup ("Birthday");
+			field->description = g_strdup ("The client's birthday");
+			field->type = GDAEX_QE_FIELD_TYPE_DATE;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
+			                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
+
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("age");
+			field->name_visible = g_strdup ("Age");
+			field->description = g_strdup ("The client's age");
+			field->alias = g_strdup ("client_age");
+			field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
+
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("datetime");
+			field->name_visible = g_strdup ("DateTime");
+			field->description = g_strdup ("???");
+			field->type = GDAEX_QE_FIELD_TYPE_DATETIME;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
 	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("brithday");
-	field->name_visible = g_strdup ("Birthday");
-	field->description = g_strdup ("The client's birthday");
-	field->type = GDAEX_QE_FIELD_TYPE_DATE;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
-	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("id_cities");
+			field->name_visible = g_strdup ("City");
+			field->description = g_strdup ("The client's city");
+			field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->decode_table2 = g_strdup ("cities");
+			field->decode_join_type = GDAEX_QE_JOIN_TYPE_LEFT;
+			/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
+			field->decode_fields2 = g_slist_append (field->decode_fields2, "id");*/
+			field->decode_field2 = g_strdup ("id");
+			field->decode_field_to_show = g_strdup ("name");
+			field->decode_field_alias = g_strdup ("city_name");
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
+			gdaex_query_editor_table_add_field (qe, "clients", *field);
+			g_free (field);
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("age");
-	field->name_visible = g_strdup ("Age");
-	field->description = g_strdup ("The client's age");
-	field->alias = g_strdup ("client_age");
-	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			gdaex_query_editor_add_table (qe, "orders", "Orders");
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("datetime");
-	field->name_visible = g_strdup ("DateTime");
-	field->description = g_strdup ("???");
-	field->type = GDAEX_QE_FIELD_TYPE_DATETIME;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_DATETIME
-	                              | GDAEX_QE_WHERE_TYPE_IS_NULL;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("id");
+			field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+			gdaex_query_editor_table_add_field (qe, "orders", *field);
+			g_free (field);
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("id_cities");
-	field->name_visible = g_strdup ("City");
-	field->description = g_strdup ("The client's city");
-	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->decode_table2 = g_strdup ("cities");
-	field->decode_join_type = GDAEX_QE_JOIN_TYPE_LEFT;
-	/*field->decode_fields1 = g_slist_append (field->decode_fields1, "id_cities");
-	field->decode_fields2 = g_slist_append (field->decode_fields2, "id");*/
-	field->decode_field2 = g_strdup ("id");
-	field->decode_field_to_show = g_strdup ("name");
-	field->decode_field_alias = g_strdup ("city_name");
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_EQUAL;
-	gdaex_query_editor_table_add_field (qe, "clients", *field);
-	g_free (field);
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("id_clients");
+			field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
+			gdaex_query_editor_table_add_field (qe, "orders", *field);
+			g_free (field);
 
-	gdaex_query_editor_add_table (qe, "orders", "Orders");
+			gdaex_query_editor_add_relation (qe,
+			                                 "clients", "orders",
+			                                 GDAEX_QE_JOIN_TYPE_LEFT,
+			                                 "id", "id_clients",
+			                                 NULL);
 
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("id");
-	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
-	gdaex_query_editor_table_add_field (qe, "orders", *field);
-	g_free (field);
-
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("id_clients");
-	field->type = GDAEX_QE_FIELD_TYPE_INTEGER;
-	gdaex_query_editor_table_add_field (qe, "orders", *field);
-	g_free (field);
-
-	gdaex_query_editor_add_relation (qe,
-	                                 "clients", "orders",
-	                                 GDAEX_QE_JOIN_TYPE_LEFT,
-	                                 "id", "id_clients",
-	                                 NULL);
-
-	field = g_new0 (GdaExQueryEditorField, 1);
-	field->name = g_strdup ("amount");
-	field->name_visible = g_strdup ("Amount");
-	field->type = GDAEX_QE_FIELD_TYPE_DOUBLE;
-	field->for_show = TRUE;
-	field->for_where = TRUE;
-	field->for_order = TRUE;
-	field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
-	gdaex_query_editor_table_add_field (qe, "orders", *field);
-	g_free (field);
+			field = g_new0 (GdaExQueryEditorField, 1);
+			field->name = g_strdup ("amount");
+			field->name_visible = g_strdup ("Amount");
+			field->type = GDAEX_QE_FIELD_TYPE_DOUBLE;
+			field->for_show = TRUE;
+			field->for_where = TRUE;
+			field->for_order = TRUE;
+			field->available_where_type = GDAEX_QE_WHERE_TYPE_NUMBER;
+			gdaex_query_editor_table_add_field (qe, "orders", *field);
+			g_free (field);
+		}
 
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 610, 400);

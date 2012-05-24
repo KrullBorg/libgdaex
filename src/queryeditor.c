@@ -26,6 +26,7 @@
 #include <glib/gi18n-lib.h>
 
 #include <libxml/parser.h>
+#include <libxml/xpath.h>
 
 #include "queryeditor.h"
 #include "queryeditorentry.h"
@@ -76,6 +77,8 @@ static void gdaex_query_editor_get_property (GObject *object,
                                guint property_id,
                                GValue *value,
                                GParamSpec *pspec);
+
+static void gdaex_query_editor_clean (GdaExQueryEditor *gdaex_query_editor);
 
 static gboolean _gdaex_query_editor_add_table (GdaExQueryEditor *qe,
                               const gchar *table_name,
@@ -294,10 +297,7 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 {
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
 
-	priv->tables = g_hash_table_new (g_str_hash, g_str_equal);
-
-	priv->hpaned_main = NULL;
-	priv->relations = NULL;
+	gdaex_query_editor_clean (gdaex_query_editor);
 
 	priv->lstore_link_type = gtk_list_store_new (2,
 	                                             G_TYPE_UINT,
@@ -601,6 +601,7 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 	GdaExQueryEditorField *_field;
 
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+	g_return_val_if_fail (table_name != NULL, FALSE);
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
@@ -732,16 +733,15 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
  * gdaex_query_editor_add_relation:
  * @table1: relation's left part.
  * @table2: relation's right part.
- * @...: couples of fields name, one from @table1 and one from @table2.; 
- *       must be terminated with a #NULL value.
+ * @fields_joined: couples of fields name, one from @table1 and one from @table2.
  *
  */
 gboolean
-gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
-                                 const gchar *table1,
-                                 const gchar *table2,
-                                 GdaExQueryEditorJoinType join_type,
-                                 ...)
+gdaex_query_editor_add_relation_slist (GdaExQueryEditor *qe,
+                                       const gchar *table1,
+                                       const gchar *table2,
+                                       GdaExQueryEditorJoinType join_type,
+                                       GSList *fields_joined)
 {
 	GdaExQueryEditorPrivate *priv;
 
@@ -751,13 +751,10 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 
 	GdaExQueryEditorRelation *relation;
 
-	va_list fields;
-	gchar *field_name1;
-	gchar *field_name2;
-
 	gboolean create_relation;
 
 	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+	g_return_val_if_fail (fields_joined != NULL, FALSE);
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
@@ -782,19 +779,24 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 		}
 	relation->table2 = table;
 
-	va_start (fields, join_type);
-
-	while ((field_name1 = va_arg (fields, gchar *)) != NULL
-	       && (field_name2 = va_arg (fields, gchar *)) != NULL)
+	while (fields_joined != NULL)
 		{
-			field1 = g_hash_table_lookup (relation->table1->fields, field_name1);
+			field1 = g_hash_table_lookup (relation->table1->fields, (gchar *)fields_joined->data);
 			if (field1 == NULL)
 				{
 					continue;
 				}
 
-			field2 = g_hash_table_lookup (relation->table2->fields, field_name2);
-			if (field2 == NULL)
+			fields_joined = g_slist_next (fields_joined);
+			if (fields_joined != NULL)
+				{
+					field2 = g_hash_table_lookup (relation->table2->fields, (gchar *)fields_joined->data);
+					if (field2 == NULL)
+						{
+							continue;
+						}
+				}
+			else
 				{
 					continue;
 				}
@@ -802,9 +804,9 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 			relation->fields1 = g_slist_append (relation->fields1, field1);
 			relation->fields2 = g_slist_append (relation->fields2, field2);
 			create_relation = TRUE;
-		}
 
-	va_end (fields);
+			fields_joined = g_slist_next (fields_joined);
+		}
 
 	if (create_relation)
 		{
@@ -819,6 +821,575 @@ gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 		}
 
 	return TRUE;
+}
+
+/**
+ * gdaex_query_editor_add_relation:
+ * @table1: relation's left part.
+ * @table2: relation's right part.
+ * @...: couples of fields name, one from @table1 and one from @table2;
+ *       must be terminated with a #NULL value.
+ *
+ */
+gboolean
+gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
+                                 const gchar *table1,
+                                 const gchar *table2,
+                                 GdaExQueryEditorJoinType join_type,
+                                 ...)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	va_list fields;
+	gchar *field_name1;
+	gchar *field_name2;
+
+	GSList *fields_joined;
+
+	g_return_val_if_fail (GDAEX_IS_QUERY_EDITOR (qe), FALSE);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	fields_joined = NULL;
+	va_start (fields, join_type);
+
+	while (TRUE)
+		{
+			field_name1 = va_arg (fields, gchar *);
+			if (field_name1 == NULL)
+				{
+					break;
+				}
+			field_name2 = va_arg (fields, gchar *);
+			if (field_name2 == NULL)
+				{
+					break;
+				}
+
+			fields_joined = g_slist_append (fields_joined, field_name1);
+			fields_joined = g_slist_append (fields_joined, field_name2);
+		}
+
+	va_end (fields);
+
+	return gdaex_query_editor_add_relation_slist (qe, table1, table2, join_type, fields_joined);
+}
+
+static GdaExQueryEditorFieldType
+gdaex_query_editor_str_to_field_type (gchar *str)
+{
+	GdaExQueryEditorFieldType ret;
+
+	g_return_val_if_fail (str != NULL, 0);
+
+	ret = 0;
+
+	if (g_strcmp0 (str, "text") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_TEXT;
+		}
+	else if (g_strcmp0 (str, "integer") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_INTEGER;
+		}
+	else if (g_strcmp0 (str, "double") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_DOUBLE;
+		}
+	else if (g_strcmp0 (str, "date") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_DATE;
+		}
+	else if (g_strcmp0 (str, "datetime") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_DATETIME;
+		}
+	else if (g_strcmp0 (str, "time") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_TIME;
+		}
+
+	return ret;
+}
+
+static gboolean
+gdaex_query_editor_str_to_boolean (gchar *str)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (str != NULL, FALSE);
+
+	ret = FALSE;
+
+	if (g_strcmp0 (str, "f") == 0
+	    || g_strcmp0 (str, "false") == 0
+	    || g_strcmp0 (str, "no") == 0
+	    || g_strcmp0 (str, "0") == 0)
+		{
+			ret = FALSE;
+		}
+	else if (g_strcmp0 (str, "t") == 0
+	    || g_strcmp0 (str, "true") == 0
+	    || g_strcmp0 (str, "yes") == 0
+	    || g_strcmp0 (str, "1") == 0)
+		{
+			ret = TRUE;
+		}
+
+	return ret;
+}
+
+static guint
+gdaex_query_editor_str_to_where_type (gchar *str)
+{
+	guint ret;
+
+	gchar **types;
+
+	guint i;
+	guint l;
+
+	g_return_val_if_fail (str != NULL, 0);
+
+	ret = 0;
+
+	types = g_strsplit (str, "|", 0);
+
+	l = g_strv_length (types);
+	for (i = 0; i < l; i++)
+		{
+			if (g_strcmp0 (types[i], "equal") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_EQUAL;
+				}
+			else if (g_strcmp0 (types[i], "starts") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_STARTS;
+				}
+			else if (g_strcmp0 (types[i], "contains") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_CONTAINS;
+				}
+			else if (g_strcmp0 (types[i], "ends") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_ENDS;
+				}
+			else if (g_strcmp0 (types[i], "istarts") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_ISTARTS;
+				}
+			else if (g_strcmp0 (types[i], "icontains") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_ICONTAINS;
+				}
+			else if (g_strcmp0 (types[i], "iends") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_IENDS;
+				}
+			else if (g_strcmp0 (types[i], "great") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_GREAT;
+				}
+			else if (g_strcmp0 (types[i], "great_equal") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_GREAT_EQUAL;
+				}
+			else if (g_strcmp0 (types[i], "less") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_LESS;
+				}
+			else if (g_strcmp0 (types[i], "less_equal") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_LESS_EQUAL;
+				}
+			else if (g_strcmp0 (types[i], "between") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_BETWEEN;
+				}
+			else if (g_strcmp0 (types[i], "is_null") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_IS_NULL;
+				}
+			else if (g_strcmp0 (types[i], "string") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_STRING;
+				}
+			else if (g_strcmp0 (types[i], "number") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_NUMBER;
+				}
+			else if (g_strcmp0 (types[i], "datetime") == 0)
+				{
+					ret |= GDAEX_QE_WHERE_TYPE_DATETIME;
+				}
+		}
+
+	g_strfreev (types);
+
+	return ret;
+}
+
+static GdaExQueryEditorJoinType
+gdaex_query_editor_str_to_join_type (gchar *str)
+{
+	GdaExQueryEditorJoinType ret;
+
+	g_return_val_if_fail (str != NULL, 0);
+
+	ret = 0;
+
+	if (g_strcmp0 (str, "inner") == 0)
+		{
+			ret = GDAEX_QE_JOIN_TYPE_INNER;
+		}
+	else if (g_strcmp0 (str, "left") == 0)
+		{
+			ret = GDAEX_QE_JOIN_TYPE_LEFT;
+		}
+
+	return ret;
+}
+
+void
+gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
+                                         xmlNode *root,
+                                         gboolean clean)
+{
+	xmlDoc *xdoc;
+	xmlXPathContextPtr xpcontext;
+	xmlXPathObjectPtr xpresult;
+	xmlNodeSetPtr xnodeset;
+
+	xmlNode *xnode;
+	xmlNode *xtable;
+	xmlNode *xfield;
+	xmlNode *xrelation;
+	xmlNode *xdecode;
+	xmlNode *xfields_joined;
+	xmlNode *cur;
+
+	guint i;
+
+	gchar *table_name;
+	gchar *name;
+	gchar *name_visible;
+
+	GdaExQueryEditorField *field;
+
+	gchar *table_left;
+	gchar *table_right;
+	GdaExQueryEditorJoinType join_type;
+	GSList *fields_joined;
+
+	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
+	g_return_if_fail (root != NULL);
+	g_return_if_fail (xmlStrcmp (root->name, "gdaex_query_editor") == 0);
+
+	if (clean)
+		{
+			gdaex_query_editor_clean (qe);
+			gdaex_query_editor_clean_choices (qe);
+		}
+
+	table_name = NULL;
+	name = NULL;
+	name_visible = NULL;
+	join_type = 0;
+	fields_joined = NULL;
+
+	xdoc = xmlNewDoc ("");
+	xmlDocSetRootElement (xdoc, root);
+
+	/* search tables node */
+	xpcontext = xmlXPathNewContext (xdoc);
+	xpcontext->node = xmlDocGetRootElement (xdoc);
+	xpresult = xmlXPathEvalExpression ((const xmlChar *)"child::tables", xpcontext);
+	if (xpresult != NULL && !xmlXPathNodeSetIsEmpty (xpresult->nodesetval))
+		{
+			xnodeset = xpresult->nodesetval;
+			for (i = 0; i < xnodeset->nodeNr; i++)
+				{
+					xtable = xnodeset->nodeTab[i]->children;
+					while (xtable != NULL)
+						{
+							if (xmlStrcmp (xtable->name, "table") == 0)
+								{
+									if (table_name != NULL)
+										{
+											g_free (table_name);
+											table_name = NULL;
+										}
+									if (name_visible != NULL)
+										{
+											g_free (name_visible);
+											name_visible = NULL;
+										}
+
+									cur = xtable->children;
+									while (cur != NULL)
+										{
+											if (xmlStrcmp (cur->name, "name") == 0)
+												{
+													table_name = xmlNodeGetContent (cur);
+													if (table_name != NULL)
+														{
+															table_name = g_strstrip (g_strdup (table_name));
+														}
+												}
+											else if (xmlStrcmp (cur->name, "name_visible") == 0)
+												{
+													name_visible = xmlNodeGetContent (cur);
+													if (name_visible != NULL)
+														{
+															name_visible = g_strstrip (g_strdup (name_visible));
+														}
+												}
+
+											if (table_name != NULL)
+												{
+													gdaex_query_editor_add_table (qe, table_name, name_visible);
+												}
+
+											cur = cur->next;
+										}
+								}
+
+							xtable = xtable->next;
+						}
+				}
+		}
+	else
+		{
+			g_warning (_("No table's definitions on xml file."));
+		}
+
+	/* search fields node */
+	if (table_name != NULL)
+		{
+			g_free (table_name);
+			table_name = NULL;
+		}
+
+	xpcontext = xmlXPathNewContext (xdoc);
+	xpcontext->node = xmlDocGetRootElement (xdoc);
+	xpresult = xmlXPathEvalExpression ((const xmlChar *)"child::fields", xpcontext);
+	if (xpresult != NULL && !xmlXPathNodeSetIsEmpty (xpresult->nodesetval))
+		{
+			xnodeset = xpresult->nodesetval;
+			for (i = 0; i < xnodeset->nodeNr; i++)
+				{
+					table_name = xmlGetProp (xnodeset->nodeTab[i], "table");
+
+					xfield = xnodeset->nodeTab[i]->children;
+					while (xfield != NULL)
+						{
+							if (xmlStrcmp (xfield->name, "field") == 0)
+								{
+									field = g_new0 (GdaExQueryEditorField, 1);
+									field->for_show = TRUE;
+									field->for_where = TRUE;
+									field->for_order = TRUE;
+
+									cur = xfield->children;
+									while (cur != NULL)
+										{
+											if (xmlStrcmp (cur->name, "name") == 0)
+												{
+													field->name = xmlNodeGetContent (cur);
+													if (field->name != NULL)
+														{
+															field->name = g_strstrip (g_strdup (field->name));
+														}
+												}
+											else if (xmlStrcmp (cur->name, "name_visible") == 0)
+												{
+													field->name_visible = xmlNodeGetContent (cur);
+													if (field->name_visible != NULL)
+														{
+															field->name_visible = g_strstrip (g_strdup (field->name_visible));
+														}
+												}
+											else if (xmlStrcmp (cur->name, "description") == 0)
+												{
+													field->description = xmlNodeGetContent (cur);
+												}
+											else if (xmlStrcmp (cur->name, "alias") == 0)
+												{
+													field->alias = xmlNodeGetContent (cur);
+												}
+											else if (xmlStrcmp (cur->name, "type") == 0)
+												{
+													field->type = gdaex_query_editor_str_to_field_type (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "for_show") == 0)
+												{
+													field->for_show = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "always_showed") == 0)
+												{
+													field->always_showed = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "for_where") == 0)
+												{
+													field->for_where = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "available_where_type") == 0)
+												{
+													field->available_where_type = gdaex_query_editor_str_to_where_type (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "for_order") == 0)
+												{
+													field->for_order = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "decode") == 0)
+												{
+													xdecode = cur->children;
+													while (xdecode != NULL)
+														{
+															if (xmlStrcmp (xdecode->name, "table_name"))
+																{
+																	field->decode_table2 = xmlNodeGetContent (xdecode);
+																}
+															else if (xmlStrcmp (xdecode->name, "join_type"))
+																{
+																	field->decode_join_type = gdaex_query_editor_str_to_join_type (xmlNodeGetContent (xdecode));
+																}
+															else if (xmlStrcmp (xdecode->name, "field_name_to_join"))
+																{
+																	field->decode_field2 = xmlNodeGetContent (xdecode);
+																}
+															else if (xmlStrcmp (xdecode->name, "field_name_to_show"))
+																{
+																	field->decode_field_to_show = xmlNodeGetContent (xdecode);
+																}
+															else if (xmlStrcmp (xdecode->name, "alias"))
+																{
+																	field->decode_field_alias = xmlNodeGetContent (xdecode);
+																}
+
+															xdecode = xdecode->next;
+														}
+												}
+
+											cur = cur->next;
+										}
+
+									gdaex_query_editor_table_add_field (qe, table_name, *field);
+									g_free (field);
+								}
+
+							xfield = xfield->next;
+						}
+
+					if (table_name != NULL)
+						{
+							g_free (table_name);
+							table_name = NULL;
+						}
+				}
+		}
+	else
+		{
+			g_warning (_("No field's definitions on xml file."));
+		}
+
+	/* search relations node */
+	xpcontext = xmlXPathNewContext (xdoc);
+	xpcontext->node = xmlDocGetRootElement (xdoc);
+	xpresult = xmlXPathEvalExpression ((const xmlChar *)"child::relations", xpcontext);
+	if (xpresult != NULL && !xmlXPathNodeSetIsEmpty (xpresult->nodesetval))
+		{
+			xnodeset = xpresult->nodesetval;
+			for (i = 0; i < xnodeset->nodeNr; i++)
+				{
+					xrelation = xnodeset->nodeTab[i]->children;
+					while (xrelation != NULL)
+						{
+							if (xmlStrcmp (xrelation->name, "relation") == 0)
+								{
+									cur = xrelation->children;
+									while (cur != NULL)
+										{
+											if (xmlStrcmp (cur->name, "table_left") == 0)
+												{
+													table_left = xmlNodeGetContent (cur);
+													if (table_left != NULL)
+														{
+															table_left = g_strstrip (g_strdup (table_left));
+														}
+												}
+											else if (xmlStrcmp (cur->name, "table_right") == 0)
+												{
+													table_right = xmlNodeGetContent (cur);
+													if (table_right != NULL)
+														{
+															table_right = g_strstrip (g_strdup (table_right));
+														}
+												}
+											else if (xmlStrcmp (cur->name, "join_type") == 0)
+												{
+													join_type = gdaex_query_editor_str_to_join_type (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "fields_joined") == 0)
+												{
+													xfields_joined = cur->children;
+													while (xfields_joined != NULL)
+														{
+															if (xmlStrcmp (xfields_joined->name, "field_left") == 0)
+																{
+																	name = xmlNodeGetContent (xfields_joined);
+																	if (name != NULL)
+																		{
+																			name = g_strstrip (g_strdup (name));
+																			fields_joined = g_slist_append (fields_joined, name);
+																		}
+																}
+															else if (xmlStrcmp (xfields_joined->name, "field_right") == 0)
+																{
+																	name = xmlNodeGetContent (xfields_joined);
+																	if (name != NULL)
+																		{
+																			name = g_strstrip (g_strdup (name));
+																			fields_joined = g_slist_append (fields_joined, name);
+																		}
+																}
+
+															xfields_joined = xfields_joined->next;
+														}
+												}
+
+											cur = cur->next;
+										}
+
+									if (table_left != NULL
+									    && table_right != NULL
+									    && join_type > 0
+									    && fields_joined != NULL)
+										{
+											gdaex_query_editor_add_relation_slist (qe, table_left, table_right, join_type, fields_joined);
+										}
+									if (table_left != NULL)
+										{
+											g_free (table_left);
+											table_left = NULL;
+										}
+									if (table_right != NULL)
+										{
+											g_free (table_right);
+											table_right = NULL;
+										}
+									if (fields_joined != NULL)
+										{
+											g_slist_free (fields_joined);
+											fields_joined = NULL;
+										}
+									join_type = 0;
+								}
+
+							xrelation = xrelation->next;
+						}
+				}
+		}
 }
 
 void
@@ -2124,6 +2695,30 @@ gdaex_query_editor_get_property (GObject *object,
 				G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
 				break;
 		}
+}
+
+static void
+gdaex_query_editor_clean (GdaExQueryEditor *gdaex_query_editor)
+{
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	if (priv->tables != NULL)
+		{
+			g_hash_table_destroy (priv->tables);
+		}
+	priv->tables = g_hash_table_new (g_str_hash, g_str_equal);
+
+	if (GTK_IS_PANED (priv->hpaned_main))
+		{
+			gtk_widget_destroy (priv->hpaned_main);
+		}
+	priv->hpaned_main = NULL;
+
+	if (priv->relations != NULL)
+		{
+			g_slist_free (priv->relations);
+		}
+	priv->relations = NULL;
 }
 
 static gboolean
