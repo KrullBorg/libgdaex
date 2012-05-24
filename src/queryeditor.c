@@ -1246,23 +1246,23 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 													xdecode = cur->children;
 													while (xdecode != NULL)
 														{
-															if (xmlStrcmp (xdecode->name, "table_name"))
+															if (xmlStrcmp (xdecode->name, "table_name") == 0)
 																{
 																	field->decode_table2 = xmlNodeGetContent (xdecode);
 																}
-															else if (xmlStrcmp (xdecode->name, "join_type"))
+															else if (xmlStrcmp (xdecode->name, "join_type") == 0)
 																{
 																	field->decode_join_type = gdaex_query_editor_str_to_join_type (xmlNodeGetContent (xdecode));
 																}
-															else if (xmlStrcmp (xdecode->name, "field_name_to_join"))
+															else if (xmlStrcmp (xdecode->name, "field_name_to_join") == 0)
 																{
 																	field->decode_field2 = xmlNodeGetContent (xdecode);
 																}
-															else if (xmlStrcmp (xdecode->name, "field_name_to_show"))
+															else if (xmlStrcmp (xdecode->name, "field_name_to_show") == 0)
 																{
 																	field->decode_field_to_show = xmlNodeGetContent (xdecode);
 																}
-															else if (xmlStrcmp (xdecode->name, "alias"))
+															else if (xmlStrcmp (xdecode->name, "alias") == 0)
 																{
 																	field->decode_field_alias = xmlNodeGetContent (xdecode);
 																}
