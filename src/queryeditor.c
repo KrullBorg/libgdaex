@@ -1400,13 +1400,15 @@ gdaex_query_editor_load_tables_from_file (GdaExQueryEditor *qe,
 	xmlDoc *xdoc;
 	xmlNode *xroot;
 
+	g_return_if_fail (filename != NULL);
+
 	xdoc = xmlParseFile (filename);
 	if (xdoc != NULL)
 		{
 			xroot = xmlDocGetRootElement (xdoc);
 			if (xroot != NULL)
 				{
-					gdaex_query_editor_load_tables_from_xml (qe, xroot, TRUE);
+					gdaex_query_editor_load_tables_from_xml (qe, xroot, clean);
 				}
 		}
 }
