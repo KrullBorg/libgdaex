@@ -157,6 +157,9 @@ gboolean gdaex_query_editor_add_relation (GdaExQueryEditor *qe,
 void gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
                                               xmlNode *root,
                                               gboolean clean);
+void gdaex_query_editor_load_tables_from_file (GdaExQueryEditor *qe,
+                                               const gchar *filename,
+                                               gboolean clean);
 
 void gdaex_query_editor_clean_choices (GdaExQueryEditor *qe);
 

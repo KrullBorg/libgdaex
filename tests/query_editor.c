@@ -235,18 +235,7 @@ main (int argc, char *argv[])
 
 	if (xmlfile != NULL)
 		{
-			xmlDoc *xdoc;
-			xmlNode *xroot;
-
-			xdoc = xmlParseFile (xmlfile);
-			if (xdoc != NULL)
-				{
-					xroot = xmlDocGetRootElement (xdoc);
-					if (xroot != NULL)
-						{
-							gdaex_query_editor_load_tables_from_xml (qe, xroot, TRUE);
-						}
-				}
+			gdaex_query_editor_load_tables_from_file (qe, xmlfile, TRUE);
 		}
 	else
 		{

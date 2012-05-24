@@ -1393,6 +1393,25 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 }
 
 void
+gdaex_query_editor_load_tables_from_file (GdaExQueryEditor *qe,
+                                          const gchar *filename,
+                                          gboolean clean)
+{
+	xmlDoc *xdoc;
+	xmlNode *xroot;
+
+	xdoc = xmlParseFile (filename);
+	if (xdoc != NULL)
+		{
+			xroot = xmlDocGetRootElement (xdoc);
+			if (xroot != NULL)
+				{
+					gdaex_query_editor_load_tables_from_xml (qe, xroot, TRUE);
+				}
+		}
+}
+
+void
 gdaex_query_editor_clean_choices (GdaExQueryEditor *qe)
 {
 	GdaExQueryEditorPrivate *priv;
