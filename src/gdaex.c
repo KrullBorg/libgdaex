@@ -1336,16 +1336,16 @@ GDate
 					if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 						{
 							gdatimestamp = gdaex_data_model_get_value_gdatimestamp_at (data_model, row, col);
-							ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
+							ret = g_date_new_dmy ((GDateYear)gdatimestamp->day,
 							                      (GDateMonth)gdatimestamp->month,
-							                      (GDateDay)gdatimestamp->day);
+							                      (GDateDay)gdatimestamp->year);
 						}
 					else if (gda_value_isa (v, G_TYPE_DATE_TIME))
 						{
 							gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
-							ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
+							ret = g_date_new_dmy ((GDateYear)g_date_time_get_day_of_month ((GDateTime *)gdatetime),
 							                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
-							                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
+							                      (GDateDay)g_date_time_get_year ((GDateTime *)gdatetime));
 						}
 					else if (gda_value_isa (v, G_TYPE_DATE))
 						{
@@ -2094,16 +2094,16 @@ GDate
 			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 				{
 					gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
-					ret = g_date_new_dmy ((GDateYear)gdatimestamp->year,
+					ret = g_date_new_dmy ((GDateYear)gdatimestamp->day,
 					                      (GDateMonth)gdatimestamp->month,
-					                      (GDateDay)gdatimestamp->day);
+					                      (GDateDay)gdatimestamp->year);
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
 				{
 					gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
-					ret = g_date_new_dmy ((GDateYear)g_date_time_get_year ((GDateTime *)gdatetime),
+					ret = g_date_new_dmy ((GDateYear)g_date_time_get_day_of_month ((GDateTime *)gdatetime),
 					                      (GDateMonth)g_date_time_get_month ((GDateTime *)gdatetime),
-					                      (GDateDay)g_date_time_get_day_of_month ((GDateTime *)gdatetime));
+					                      (GDateDay)g_date_time_get_year ((GDateTime *)gdatetime));
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
@@ -2132,10 +2132,8 @@ GDateTime
 	const GdaTimestamp *gdatimestamp;
 	const GDate *gdate;
 	const GValue *v;
-	GError *error;
 
 	ret = NULL;
-	error = NULL;
 
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
@@ -2152,22 +2150,28 @@ GDateTime
 			if (gda_value_isa (v, GDA_TYPE_TIMESTAMP))
 				{
 					gdatimestamp = gdaex_data_model_iter_get_value_gdatimestamp_at (iter, col);
-					ret = g_date_time_new_local ((gint)gdatimestamp->year,
-					                             (gint)gdatimestamp->month,
-					                             (gint)gdatimestamp->day,
-					                             (gint)gdatimestamp->hour,
-					                             (gint)gdatimestamp->minute,
-					                             (gdouble)gdatimestamp->second);
+					if (gdatimestamp != NULL)
+						{
+							ret = g_date_time_new_local ((gint)gdatimestamp->year,
+							                             (gint)gdatimestamp->month,
+							                             (gint)gdatimestamp->day,
+							                             (gint)gdatimestamp->hour,
+							                             (gint)gdatimestamp->minute,
+							                             (gdouble)gdatimestamp->second);
+						}
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
 					gdate = gdaex_data_model_iter_get_value_gdate_at (iter, col);
-					ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
-					                             (gint)g_date_get_month (gdate),
-					                             (gint)g_date_get_day (gdate),
-					                             0,
-					                             0,
-					                             0.0);
+					if (gdate != NULL && g_date_valid (gdate))
+						{
+							ret = g_date_time_new_local (g_date_get_year (gdate),
+							                             g_date_get_month (gdate),
+							                             g_date_get_day (gdate),
+							                             0,
+							                             0,
+							                             0.0);
+						}
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
 				{
