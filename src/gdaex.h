@@ -228,6 +228,20 @@ void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
                                           guint *cols_formatted,
                                           gchar *(*cols_format_func) (GdaDataModelIter *, guint));
 
+typedef enum
+{
+	GDAEX_SQL_SELECT,
+	GDAEX_SQL_INSERT,
+	GDAEX_SQL_UPDATE,
+	GDAEX_SQL_DELETE
+} GdaExSqlType;
+
+const gchar *gdaex_get_sql_from_hashtable (GdaEx *gdaex,
+                                           GdaExSqlType sqltype,
+                                           const gchar *table_name,
+                                           GHashTable *keys,
+                                           GHashTable *fields);
+
 gchar *gdaex_format_money (gdouble number,
                      gint decimals,
                      gboolean with_currency_symbol);

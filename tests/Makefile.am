@@ -6,6 +6,7 @@ AM_CPPFLAGS = $(GDAEX_CFLAGS) \
               -DTESTSDIR="\"@abs_builddir@\""
 
 noinst_PROGRAMS = fill_liststore \
+                  getsql \
                   grid \
                   query_editor \
                   select \

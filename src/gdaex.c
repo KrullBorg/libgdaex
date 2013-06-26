@@ -33,6 +33,7 @@
 #include <gio/gio.h>
 
 #include <libgda/sql-parser/gda-sql-parser.h>
+#include <libgda/sql-parser/gda-sql-statement.h>
 
 #include "gdaex.h"
 
@@ -726,7 +727,7 @@ gboolean
 gdaex_data_model_is_empty (GdaDataModel *data_model)
 {
 	return (!GDA_IS_DATA_MODEL (data_model)
-	        || gda_data_model_get_n_rows (data_model) == 0);
+	        || gda_data_model_get_n_rows (data_model) < 1);
 }
 
 /**
@@ -1780,6 +1781,8 @@ gchar
 {
 	gchar *ret;
 	const GValue *v;
+
+	ret = NULL;
 
 	v = gda_data_model_iter_get_value_at (iter, col);
 	if (v == NULL)
@@ -3052,6 +3055,159 @@ gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
                                      gchar *(*cols_format_func) (GdaDataModelIter *, guint))
 {
 	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, NULL, NULL);
+}
+
+const gchar
+*gdaex_get_sql_from_hashtable (GdaEx *gdaex,
+                               GdaExSqlType sqltype,
+                               const gchar *table_name,
+                               GHashTable *keys,
+                               GHashTable *fields)
+{
+	gchar *ret;
+	gchar *_table_name;
+
+	GError *error;
+	GdaSqlBuilder *b;
+	GdaStatement *stmt;
+
+	GdaExPrivate *priv;
+
+	GHashTableIter ht_iter_fields;
+	GHashTableIter ht_iter_keys;
+
+	gpointer key_fields;
+	gpointer value_fields;
+	gpointer key_keys;
+	gpointer value_keys;
+
+	GdaSqlBuilderId id_field;
+	GdaSqlBuilderId id_value;
+	GdaSqlBuilderId id_cond;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), "");
+	g_return_val_if_fail (table_name != NULL, "");
+
+	_table_name = g_strstrip (g_strdup (table_name));
+	g_return_val_if_fail (g_strcmp0 (table_name, "") != 0, "");
+
+	priv = GDAEX_GET_PRIVATE (gdaex);
+
+	b = NULL;
+
+	ret = "";
+
+	switch (sqltype)
+		{
+			case GDAEX_SQL_SELECT:
+				b = gda_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+
+				gda_sql_builder_select_add_target_id (b,
+				                                      gda_sql_builder_add_id (b, _table_name),
+				                                      NULL);
+
+				if (fields == NULL || g_hash_table_size (fields) < 0)
+					{
+						gda_sql_builder_select_add_field (b, "*", NULL, NULL);
+					}
+				else
+					{
+						g_hash_table_iter_init (&ht_iter_fields, fields);
+						while (g_hash_table_iter_next (&ht_iter_fields, &key_fields, &value_fields))
+							{
+								gda_sql_builder_select_add_field (b, (const gchar *)key_fields, NULL, NULL);
+							}
+					}
+				break;
+
+			case GDAEX_SQL_INSERT:
+				b = gda_sql_builder_new (GDA_SQL_STATEMENT_INSERT);
+				gda_sql_builder_set_table (b, _table_name);
+
+				if (fields != NULL && g_hash_table_size (fields) > 0)
+					{
+						g_hash_table_iter_init (&ht_iter_fields, fields);
+						while (g_hash_table_iter_next (&ht_iter_fields, &key_fields, &value_fields))
+							{
+								gda_sql_builder_add_field_value_as_gvalue (b, (const gchar *)key_fields, (const GValue *)value_fields);
+							}
+					}
+				break;
+
+			case GDAEX_SQL_UPDATE:
+				b = gda_sql_builder_new (GDA_SQL_STATEMENT_UPDATE);
+				gda_sql_builder_set_table (b, _table_name);
+
+				if (fields == NULL || g_hash_table_size (fields) < 0)
+					{
+						g_warning (_("HashTable fields cannot be empty."));
+					}
+				else
+					{
+						g_hash_table_iter_init (&ht_iter_fields, fields);
+						while (g_hash_table_iter_next (&ht_iter_fields, &key_fields, &value_fields))
+							{
+								gda_sql_builder_add_field_value_as_gvalue (b, (const gchar *)key_fields, (const GValue *)value_fields);
+							}
+
+						g_hash_table_iter_init (&ht_iter_keys, keys);
+						while (g_hash_table_iter_next (&ht_iter_keys, &key_keys, &value_keys))
+							{
+								id_field = gda_sql_builder_add_id (b, (const gchar *)key_keys);
+								id_value = gda_sql_builder_add_expr_value (b, NULL, (const GValue *)value_keys);
+								id_cond = gda_sql_builder_add_cond (b, GDA_SQL_OPERATOR_TYPE_EQ, id_field, id_value, 0);
+								gda_sql_builder_set_where (b, id_cond);
+							}
+					}
+				break;
+
+			case GDAEX_SQL_DELETE:
+				b = gda_sql_builder_new (GDA_SQL_STATEMENT_DELETE);
+				gda_sql_builder_set_table (b, _table_name);
+
+				if (keys != NULL && g_hash_table_size (fields) > 0)
+					{
+						g_hash_table_iter_init (&ht_iter_keys, keys);
+						while (g_hash_table_iter_next (&ht_iter_keys, &key_keys, &value_keys))
+							{
+								id_field = gda_sql_builder_add_id (b, (const gchar *)key_keys);
+								id_value = gda_sql_builder_add_expr_value (b, NULL, (const GValue *)value_keys);
+								id_cond = gda_sql_builder_add_cond (b, GDA_SQL_OPERATOR_TYPE_EQ, id_field, id_value, 0);
+								gda_sql_builder_set_where (b, id_cond);
+							}
+					}
+				break;
+		}
+
+	error = NULL;
+	stmt = gda_sql_builder_get_statement (b, &error);
+	if (error != NULL || stmt == NULL)
+		{
+			g_warning (_("Unable to get a GdaStatement from GdaSqlBuilder: %s"),
+			           error->message != NULL ? error->message : _("no details"));
+		}
+
+	error = NULL;
+	ret = gda_statement_to_sql_extended (stmt,
+	                                     priv->gda_conn,
+	                                     NULL,
+	                                     0,
+	                                     NULL,
+	                                     &error);
+	if (error != NULL)
+		{
+			g_warning (_("Unable to get an SQL statement from GdaStatement: %s"),
+			           error->message != NULL ? error->message : _("no details"));
+		}
+
+	if (b != NULL)
+		{
+			g_object_unref (b);
+		}
+
+	g_free (_table_name);
+
+	return ret;
 }
 
 gchar
