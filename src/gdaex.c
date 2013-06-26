@@ -3118,6 +3118,18 @@ const gchar
 								gda_sql_builder_select_add_field (b, (const gchar *)key_fields, NULL, NULL);
 							}
 					}
+
+				if (keys != NULL && g_hash_table_size (fields) > 0)
+					{
+						g_hash_table_iter_init (&ht_iter_keys, keys);
+						while (g_hash_table_iter_next (&ht_iter_keys, &key_keys, &value_keys))
+							{
+								id_field = gda_sql_builder_add_id (b, (const gchar *)key_keys);
+								id_value = gda_sql_builder_add_expr_value (b, NULL, (const GValue *)value_keys);
+								id_cond = gda_sql_builder_add_cond (b, GDA_SQL_OPERATOR_TYPE_EQ, id_field, id_value, 0);
+								gda_sql_builder_set_where (b, id_cond);
+							}
+					}
 				break;
 
 			case GDAEX_SQL_INSERT:
