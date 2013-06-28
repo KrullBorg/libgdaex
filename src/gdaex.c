@@ -3193,23 +3193,25 @@ const gchar
 
 	error = NULL;
 	stmt = gda_sql_builder_get_statement (b, &error);
-	if (error != NULL || stmt == NULL)
+	if (stmt == NULL || error != NULL)
 		{
 			g_warning (_("Unable to get a GdaStatement from GdaSqlBuilder: %s"),
-			           error->message != NULL ? error->message : _("no details"));
+			           error != NULL && error->message != NULL ? error->message : _("no details"));
 		}
-
-	error = NULL;
-	ret = gda_statement_to_sql_extended (stmt,
-	                                     priv->gda_conn,
-	                                     NULL,
-	                                     0,
-	                                     NULL,
-	                                     &error);
-	if (error != NULL)
+	else
 		{
-			g_warning (_("Unable to get an SQL statement from GdaStatement: %s"),
-			           error->message != NULL ? error->message : _("no details"));
+			error = NULL;
+			ret = gda_statement_to_sql_extended (stmt,
+			                                     priv->gda_conn,
+			                                     NULL,
+			                                     0,
+			                                     NULL,
+			                                     &error);
+			if (ret == NULL || error != NULL)
+				{
+					g_warning (_("Unable to get an SQL statement from GdaStatement: %s"),
+					           error != NULL && error->message != NULL ? error->message : _("no details"));
+				}
 		}
 
 	if (b != NULL)
