@@ -379,15 +379,15 @@ main (int argc, char *argv[])
 	g_signal_connect (G_OBJECT (w), "delete-event",
 	                  gtk_main_quit, NULL);
 
-	vbox = gtk_vbox_new (FALSE, 5);
+	vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
 	gtk_container_add (GTK_CONTAINER (w), vbox);
 
 	widget_qe = gdaex_query_editor_get_widget (qe);
 	gtk_box_pack_start (GTK_BOX (vbox), widget_qe, TRUE, TRUE, 5);
 
-	hbtnbox = gtk_hbutton_box_new ();
+	hbtnbox = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
 	gtk_button_box_set_layout (GTK_BUTTON_BOX (hbtnbox), GTK_BUTTONBOX_END);
-	gtk_button_box_set_spacing (GTK_BUTTON_BOX (hbtnbox), 5);
+	gtk_box_set_spacing (GTK_BOX (hbtnbox), 5);
 	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 5);
 
 	btn_clean = gtk_button_new_from_stock ("gtk-clear");

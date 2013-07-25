@@ -25,8 +25,6 @@ main (int argc, char **argv)
 	GError *error;
 	GOptionContext *context;
 
-	g_type_init ();
-
 	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
 
 	error = NULL;
