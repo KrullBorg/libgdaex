@@ -52,6 +52,14 @@ static gboolean gdaex_grid_on_key_release_event (GtkWidget *widget,
                             gpointer user_data);
 #endif
 
+static gboolean gdaex_grid_on_button_press_event (GtkWidget *widget,
+                                                  GdkEventButton *event,
+                                                  gpointer user_data);
+static gboolean gdaex_grid_on_popup_menu (GtkWidget *widget,
+                                          gpointer user_data);
+static void gdaex_grid_on_menu_item_toggled (GtkCheckMenuItem *checkmenuitem,
+                                             gpointer user_data);
+
 static GtkTreeModel *gdaex_grid_get_model (GdaExGrid *grid);
 static GtkTreeView *gdaex_grid_get_view (GdaExGrid *grid);
 
@@ -66,6 +74,7 @@ struct _GdaExGridPrivate
 
 		GtkTreeModel *model;
 		GtkWidget *view;
+		GtkWidget *menu;
 	};
 
 G_DEFINE_TYPE (GdaExGrid, gdaex_grid, G_TYPE_OBJECT)
@@ -89,6 +98,7 @@ gdaex_grid_init (GdaExGrid *gdaex_grid)
 	priv->columns = g_ptr_array_new ();
 	priv->title = NULL;
 	priv->view = NULL;
+	priv->menu = NULL;
 }
 
 GdaExGrid
@@ -438,6 +448,8 @@ static GtkTreeView
 
 	guint col;
 
+	GtkWidget *mitem;
+
 	g_return_val_if_fail (GDAEX_IS_GRID (grid), NULL);
 
 	priv = GDAEX_GRID_GET_PRIVATE (grid);
@@ -447,44 +459,75 @@ static GtkTreeView
 
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (view), TRUE);
 
+	if (priv->menu != NULL)
+		{
+			g_free (priv->menu);
+		}
+	if (priv->columns->len > 0)
+		{
+			priv->menu = gtk_menu_new ();
+		}
+	else
+		{
+			priv->menu = NULL;
+		}
+
 	for (col = 0; col < priv->columns->len; col++)
 		{
 			gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
-			if (gdaex_grid_column_get_visible (gcolumn))
+			vcolumn = gdaex_grid_column_get_column (gcolumn);
+			if (vcolumn)
 				{
-					vcolumn = gdaex_grid_column_get_column (gcolumn);
-					if (vcolumn)
+					cells = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (vcolumn));
+					cells = g_list_first (cells);
+
+					if (gdaex_grid_column_get_gtype (gcolumn) == G_TYPE_BOOLEAN)
 						{
-							cells = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (vcolumn));
-							cells = g_list_first (cells);
-
-							if (gdaex_grid_column_get_gtype (gcolumn) == G_TYPE_BOOLEAN)
-								{
-									gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "active", col);
-								}
-							else
-								{
-									gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
-								}
-
-							if (gdaex_grid_column_get_reorderable (gcolumn))
-								{
-									gtk_tree_view_column_set_sort_column_id (vcolumn, col);
-								}
-
-							gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
+							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "active", col);
 						}
+					else
+						{
+							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
+						}
+
+					if (gdaex_grid_column_get_reorderable (gcolumn))
+						{
+							gtk_tree_view_column_set_sort_column_id (vcolumn, col);
+						}
+
+					gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
+
+					/* popup menu */
+					mitem = gtk_check_menu_item_new_with_label (gdaex_grid_column_get_title (gcolumn));
+					gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (mitem), gdaex_grid_column_get_visible (gcolumn));
+
+					g_object_set_data (G_OBJECT (mitem), "GdaExGridColumn", gcolumn);
+
+					g_signal_connect (G_OBJECT (mitem), "toggled",
+					                  G_CALLBACK (gdaex_grid_on_menu_item_toggled), (gpointer)grid);
+
+					gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), mitem);
+					gtk_widget_show (mitem);
 				}
 		}
 
 	priv->view = view;
+	if (priv->menu != NULL)
+		{
+			gtk_menu_attach_to_widget (GTK_MENU (priv->menu), priv->view, NULL);
+
+			g_signal_connect (G_OBJECT (priv->view), "button-press-event",
+			                  G_CALLBACK (gdaex_grid_on_button_press_event), (gpointer)grid);
+			g_signal_connect (G_OBJECT (priv->view), "popup-menu",
+			                  G_CALLBACK (gdaex_grid_on_popup_menu), (gpointer)grid);
+		}
 
 #ifdef REPTOOL_FOUND
 	g_signal_connect (view,
 	                  "key-release-event", G_CALLBACK (gdaex_grid_on_key_release_event), (gpointer)grid);
 #endif
 
-	return GTK_TREE_VIEW (view);
+	return GTK_TREE_VIEW (priv->view);
 }
 
 #ifdef REPTOOL_FOUND
@@ -546,3 +589,49 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 	return FALSE;
 }
 #endif
+
+static gboolean
+gdaex_grid_on_button_press_event (GtkWidget *widget,
+                                  GdkEventButton *event,
+                                  gpointer user_data)
+{
+	GdaExGridPrivate *priv;
+
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3)
+		{
+			priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+			gtk_menu_popup (GTK_MENU (priv->menu), NULL, NULL, NULL, NULL,
+			                event->button, event->time);
+			return TRUE;
+		}
+
+	return FALSE;
+}
+
+static gboolean
+gdaex_grid_on_popup_menu (GtkWidget *widget,
+                          gpointer user_data)
+{
+	GdaExGridPrivate *priv;
+
+	priv = GDAEX_GRID_GET_PRIVATE (user_data);
+	gtk_menu_popup (GTK_MENU (priv->menu), NULL, NULL, NULL, NULL,
+	                0, gtk_get_current_event_time ());
+
+	return TRUE;
+}
+
+static void
+gdaex_grid_on_menu_item_toggled (GtkCheckMenuItem *checkmenuitem,
+                                 gpointer user_data)
+{
+	GdaExGridPrivate *priv;
+
+	priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+	GdaExGridColumn *gcolumn = g_object_get_data (G_OBJECT (checkmenuitem), "GdaExGridColumn");
+
+	gdaex_grid_column_set_visible (gcolumn,
+	                               gtk_check_menu_item_get_active (checkmenuitem));
+}

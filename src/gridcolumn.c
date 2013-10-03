@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
- *  This file is part of libgdaex_grid_column.
+ *  This file is part of libgdaex.
  *  
  *  libgdaex_grid_column is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -84,6 +84,7 @@ gdaex_grid_column_init (GdaExGridColumn *gdaex_grid_column)
 	priv->sortable = FALSE;
 	priv->reorderable = FALSE;
 	priv->decimals = -1;
+	priv->vcolumn = NULL;
 }
 
 GdaExGridColumn
@@ -136,6 +137,11 @@ gdaex_grid_column_set_title (GdaExGridColumn *column, const gchar *title)
 
 	g_free (priv->title);
 	priv->title = g_strdup (title);
+
+	if (priv->vcolumn != NULL)
+		{
+			gtk_tree_view_column_set_title (priv->vcolumn, priv->title);
+		}
 }
 
 const gchar
@@ -197,6 +203,11 @@ gdaex_grid_column_set_visible (GdaExGridColumn *column, gboolean visible)
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	priv->visible = visible;
+
+	if (priv->vcolumn != NULL)
+		{
+			gtk_tree_view_column_set_visible (priv->vcolumn, priv->visible);
+		}
 }
 
 gboolean
@@ -217,6 +228,11 @@ gdaex_grid_column_set_resizable (GdaExGridColumn *column, gboolean resizable)
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	priv->resizable = resizable;
+
+	if (priv->vcolumn != NULL)
+		{
+			gtk_tree_view_column_set_resizable (priv->vcolumn, priv->resizable);
+		}
 }
 
 gboolean
@@ -237,6 +253,11 @@ gdaex_grid_column_set_sortable (GdaExGridColumn *column, gboolean sortable)
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	priv->sortable = sortable;
+
+	if (priv->vcolumn != NULL)
+		{
+			gtk_tree_view_column_set_clickable (priv->vcolumn, priv->sortable);
+		}
 }
 
 gboolean
@@ -257,6 +278,11 @@ gdaex_grid_column_set_reorderable (GdaExGridColumn *column, gboolean reorderable
 	GdaExGridColumnPrivate *priv = GDAEX_GRID_COLUMN_GET_PRIVATE (column);
 
 	priv->reorderable = reorderable;
+
+	if (priv->vcolumn != NULL)
+		{
+			gtk_tree_view_column_set_reorderable (priv->vcolumn, priv->reorderable);
+		}
 }
 
 gboolean
@@ -345,6 +371,8 @@ GtkTreeViewColumn
 	gtk_tree_view_column_set_resizable (priv->vcolumn, priv->resizable);
 	gtk_tree_view_column_set_clickable (priv->vcolumn, priv->sortable);
 	gtk_tree_view_column_set_reorderable (priv->vcolumn, priv->reorderable);
+
+	gtk_tree_view_column_set_visible (priv->vcolumn, priv->visible);
 
 	return priv->vcolumn;
 }
