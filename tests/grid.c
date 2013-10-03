@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,10 @@ main (int argc, char **argv)
 
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 550, 350);
+	g_signal_connect (w, "delete-event",
+	                  G_CALLBACK (gtk_false), NULL);
+	g_signal_connect (w, "destroy",
+	                  G_CALLBACK (gtk_main_quit), NULL);
 
 	scrolledw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_container_add (GTK_CONTAINER (w), scrolledw);
@@ -52,16 +56,16 @@ main (int argc, char **argv)
 	gcol = gdaex_grid_column_new ("Name", "name", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, -1);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Surname", "surname", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, -1);
+	gcol = gdaex_grid_column_new_defaults ("Surname", "surname", G_TYPE_STRING);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Age", "age", G_TYPE_INT, TRUE, TRUE, TRUE, TRUE, -1);
+	gcol = gdaex_grid_column_new_defaults ("Age", "age", G_TYPE_INT);
 	gdaex_grid_add_column (grid, gcol);
 
 	gcol = gdaex_grid_column_new ("Birthday", "birthday", G_TYPE_DATE, TRUE, TRUE, TRUE, TRUE, -1);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Incoming", "incoming", G_TYPE_DOUBLE, TRUE, TRUE, TRUE, TRUE, 2);
+	gcol = gdaex_grid_column_new_defaults ("Incoming", "incoming", G_TYPE_DOUBLE);
 	gdaex_grid_add_column (grid, gcol);
 
 	gcol = gdaex_grid_column_new ("Married", "married", G_TYPE_BOOLEAN, TRUE, TRUE, TRUE, TRUE, -1);

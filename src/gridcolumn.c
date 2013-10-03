@@ -1,7 +1,7 @@
 /*
  *  gridcolumn.c
  *
- *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex_grid_column.
  *  
@@ -110,6 +110,21 @@ GdaExGridColumn
 	gdaex_grid_column_set_decimals (gdaex_grid_column, decimals);
 
 	return gdaex_grid_column;
+}
+
+GdaExGridColumn
+*gdaex_grid_column_new_defaults (const gchar *title,
+                                 const gchar *field_name,
+                                 GType type)
+{
+	return gdaex_grid_column_new (title,
+	                              field_name,
+	                              type,
+	                              TRUE,
+	                              TRUE,
+	                              TRUE,
+	                              TRUE,
+	                              type == G_TYPE_FLOAT || type == G_TYPE_DOUBLE ? 2 : 0);
 }
 
 void

@@ -1,7 +1,7 @@
 /*
  *  gridcolumn.h
  *
- *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -64,6 +64,10 @@ GdaExGridColumn *gdaex_grid_column_new (const gchar *title,
                                         gboolean sortable,
                                         gboolean reorderable,
                                         gint decimals);
+
+GdaExGridColumn *gdaex_grid_column_new_defaults (const gchar *title,
+                                                 const gchar *field_name,
+                                                 GType type);
 
 void gdaex_grid_column_set_title (GdaExGridColumn *column, const gchar *title);
 const gchar *gdaex_grid_column_get_title (GdaExGridColumn *column);
