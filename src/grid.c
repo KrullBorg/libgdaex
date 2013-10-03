@@ -27,9 +27,16 @@
 
 #include <gtk/gtk.h>
 
-#ifdef REPTOOL_FOUND
+#if defined (REPTOOL_FOUND) || defined (SOLIPA_FOUND)
 	#include <gdk/gdkkeysyms.h>
+#endif
+
+#ifdef REPTOOL_FOUND
 	#include <libreptool/libreptool.h>
+#endif
+
+#ifdef SOLIPA_FOUND
+	#include <libsolipa/utils.h>
 #endif
 
 #include "grid.h"
@@ -46,7 +53,7 @@ static void gdaex_grid_get_property (GObject *object,
                                GValue *value,
                                GParamSpec *pspec);
 
-#ifdef REPTOOL_FOUND
+#if defined (REPTOOL_FOUND) || defined (SOLIPA_FOUND)
 static gboolean gdaex_grid_on_key_release_event (GtkWidget *widget,
                             GdkEventKey *event,
                             gpointer user_data);
@@ -75,6 +82,10 @@ struct _GdaExGridPrivate
 		GtkTreeModel *model;
 		GtkWidget *view;
 		GtkWidget *menu;
+
+#ifdef SOLIPA_FOUND
+		Solipa *solipa;
+#endif
 	};
 
 G_DEFINE_TYPE (GdaExGrid, gdaex_grid, G_TYPE_OBJECT)
@@ -360,6 +371,20 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 	return TRUE;
 }
 
+#ifdef SOLIPA_FOUND
+void
+gdaex_grid_set_solipa (GdaExGrid *grid, Solipa *solipa)
+{
+	GdaExGridPrivate *priv;
+
+	g_return_if_fail (GDAEX_IS_GRID (grid));
+
+	priv = GDAEX_GRID_GET_PRIVATE (grid);
+
+	priv->solipa = solipa;
+}
+#endif
+
 /* PRIVATE */
 static void
 gdaex_grid_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
@@ -530,7 +555,7 @@ static GtkTreeView
 	return GTK_TREE_VIEW (priv->view);
 }
 
-#ifdef REPTOOL_FOUND
+#if defined (REPTOOL_FOUND) || defined (SOLIPA_FOUND)
 static gboolean
 gdaex_grid_on_key_release_event (GtkWidget *widget,
                             GdkEventKey *event,
@@ -545,6 +570,7 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 
 	switch (event->keyval)
 		{
+#ifdef REPTOOL_FOUND
 			case GDK_F12:
 				{
 					if (event->state & GDK_CONTROL_MASK)
@@ -584,6 +610,50 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 						}
 					break;
 				}
+#endif
+
+#ifdef SOLIPA_FOUND
+			case GDK_F11:
+				{
+					if (event->state & GDK_CONTROL_MASK)
+						{
+							gint col;
+							GdaExGridColumn *gcolumn;
+							GString *gstr;
+
+							priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+							if (!IS_SOLIPA (priv->solipa))
+								{
+									g_warning ("No Solipa object found");
+									break;
+								}
+
+							if (priv->columns->len)
+								{
+									gstr = g_string_new ("");
+									for (col = 0; col < priv->columns->len; col++)
+										{
+											gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
+											g_string_append_printf (gstr, "|%s", gdaex_grid_column_get_title (gcolumn));
+										}
+
+									gchar **columns_title = g_strsplit (gstr->str + 1, "|", -1);
+
+									solipa_gtktreemodel_to_csv_gui (priv->solipa, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))), priv->model,
+									                                columns_title, g_strv_length (columns_title));
+
+									g_strfreev (columns_title);
+
+									return TRUE;
+								}
+						}
+					break;
+				}
+#endif
+
+			default:
+				break;
 		}
 
 	return FALSE;

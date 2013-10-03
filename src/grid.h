@@ -27,6 +27,10 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#ifdef SOLIPA_FOUND
+	#include <libsolipa/libsolipa.h>
+#endif
+
 #include "gdaex.h"
 #include "gridcolumn.h"
 
@@ -71,6 +75,10 @@ GtkWidget *gdaex_grid_get_widget (GdaExGrid *grid);
 
 gboolean gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error);
 gboolean gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error);
+
+#ifdef SOLIPA_FOUND
+void gdaex_grid_set_solipa (GdaExGrid *grid, Solipa *solipa);
+#endif
 
 
 G_END_DECLS

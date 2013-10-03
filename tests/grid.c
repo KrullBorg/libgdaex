@@ -66,6 +66,10 @@ main (int argc, char **argv)
 	grid = gdaex_grid_new ();
 	gdaex_grid_set_title (grid, "The grid title");
 
+#ifdef SOLIPA_FOUND
+	gdaex_grid_set_solipa (grid, solipa_new ());
+#endif
+
 	gcol = gdaex_grid_column_new ("ID", "id", G_TYPE_INT, TRUE, FALSE, FALSE, FALSE, -1);
 	gdaex_grid_add_column (grid, gcol);
 
