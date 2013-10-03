@@ -1,7 +1,7 @@
 /*
  *  grid.c
  *
- *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -406,6 +406,11 @@ static GtkTreeView
 							else
 								{
 									gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
+								}
+
+							if (gdaex_grid_column_get_reorderable (gcolumn))
+								{
+									gtk_tree_view_column_set_sort_column_id (vcolumn, col);
 								}
 
 							gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
