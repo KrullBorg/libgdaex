@@ -27,6 +27,11 @@
 
 #include <gtk/gtk.h>
 
+#ifdef REPTOOL_FOUND
+	#include <gdk/gdkkeysyms.h>
+	#include <libreptool/libreptool.h>
+#endif
+
 #include "grid.h"
 
 static void gdaex_grid_class_init (GdaExGridClass *klass);
@@ -40,6 +45,12 @@ static void gdaex_grid_get_property (GObject *object,
                                guint property_id,
                                GValue *value,
                                GParamSpec *pspec);
+
+#ifdef REPTOOL_FOUND
+static gboolean gdaex_grid_on_key_release_event (GtkWidget *widget,
+                            GdkEventKey *event,
+                            gpointer user_data);
+#endif
 
 static GtkTreeModel *gdaex_grid_get_model (GdaExGrid *grid);
 static GtkTreeView *gdaex_grid_get_view (GdaExGrid *grid);
@@ -418,6 +429,52 @@ static GtkTreeView
 				}
 		}
 
+#ifdef REPTOOL_FOUND
+	g_signal_connect (view,
+	                  "key-release-event", G_CALLBACK (gdaex_grid_on_key_release_event), (gpointer)view);
+#endif
+
 	return GTK_TREE_VIEW (view);
 }
 
+#ifdef REPTOOL_FOUND
+static gboolean
+gdaex_grid_on_key_release_event (GtkWidget *widget,
+                            GdkEventKey *event,
+                            gpointer user_data)
+{
+	RptReport *rptr;
+	RptPrint *rptp;
+
+	switch (event->keyval)
+		{
+			case GDK_F12:
+				{
+					if (event->state & GDK_CONTROL_MASK)
+						{
+							rptr = rpt_report_new_from_gtktreeview (GTK_TREE_VIEW (user_data), NULL);
+
+							if (rptr != NULL)
+								{
+									xmlDoc *report = rpt_report_get_xml (rptr);
+									rpt_report_set_output_type (rptr, RPT_OUTPUT_GTK);
+
+									xmlDoc *rptprint = rpt_report_get_xml_rptprint (rptr);
+
+									rptp = rpt_print_new_from_xml (rptprint);
+									if (rptp != NULL)
+										{
+											rpt_print_set_output_type (rptp, RPT_OUTPUT_GTK);
+											rpt_print_print (rptp, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (user_data))));
+										}
+								}
+
+							return TRUE;
+						}
+					break;
+				}
+		}
+
+	return FALSE;
+}
+#endif
