@@ -49,6 +49,7 @@ main (int argc, char **argv)
 	gtk_container_add (GTK_CONTAINER (w), scrolledw);
 
 	grid = gdaex_grid_new ();
+	gdaex_grid_set_title (grid, "The grid title");
 
 	gcol = gdaex_grid_column_new ("ID", "id", G_TYPE_INT, TRUE, FALSE, FALSE, FALSE, -1);
 	gdaex_grid_add_column (grid, gcol);

@@ -62,7 +62,10 @@ struct _GdaExGridPrivate
 	{
 		GPtrArray *columns; /* GdaExGridColumn */
 
+		gchar *title;
+
 		GtkTreeModel *model;
+		GtkWidget *view;
 	};
 
 G_DEFINE_TYPE (GdaExGrid, gdaex_grid, G_TYPE_OBJECT)
@@ -84,6 +87,8 @@ gdaex_grid_init (GdaExGrid *gdaex_grid)
 	GdaExGridPrivate *priv = GDAEX_GRID_GET_PRIVATE (gdaex_grid);
 
 	priv->columns = g_ptr_array_new ();
+	priv->title = NULL;
+	priv->view = NULL;
 }
 
 GdaExGrid
@@ -94,6 +99,49 @@ GdaExGrid
 	GdaExGridPrivate *priv = GDAEX_GRID_GET_PRIVATE (gdaex_grid);
 
 	return gdaex_grid;
+}
+
+void
+gdaex_grid_set_title (GdaExGrid *grid, const gchar *title)
+{
+	GdaExGridPrivate *priv;
+
+	g_return_if_fail (GDAEX_IS_GRID (grid));
+
+	priv = GDAEX_GRID_GET_PRIVATE (grid);
+
+	if (priv->title != NULL)
+		{
+			g_free (priv->title);
+		}
+
+	if (title != NULL)
+		{
+			priv->title = g_strdup (title);
+		}
+	else
+		{
+			priv->title = NULL;
+		}
+}
+
+const gchar
+*gdaex_grid_get_title (GdaExGrid *grid)
+{
+	GdaExGridPrivate *priv;
+
+	g_return_val_if_fail (GDAEX_IS_GRID (grid), NULL);
+
+	priv = GDAEX_GRID_GET_PRIVATE (grid);
+
+	if (priv->title != NULL)
+		{
+			return g_strdup (priv->title);
+		}
+	else
+		{
+			return NULL;
+		}
 }
 
 void
@@ -429,9 +477,11 @@ static GtkTreeView
 				}
 		}
 
+	priv->view = view;
+
 #ifdef REPTOOL_FOUND
 	g_signal_connect (view,
-	                  "key-release-event", G_CALLBACK (gdaex_grid_on_key_release_event), (gpointer)view);
+	                  "key-release-event", G_CALLBACK (gdaex_grid_on_key_release_event), (gpointer)grid);
 #endif
 
 	return GTK_TREE_VIEW (view);
@@ -443,8 +493,12 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
                             GdkEventKey *event,
                             gpointer user_data)
 {
+	GdaExGridPrivate *priv;
+
 	RptReport *rptr;
 	RptPrint *rptp;
+
+	gchar *_title;
 
 	switch (event->keyval)
 		{
@@ -452,7 +506,17 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 				{
 					if (event->state & GDK_CONTROL_MASK)
 						{
-							rptr = rpt_report_new_from_gtktreeview (GTK_TREE_VIEW (user_data), NULL);
+							priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+							if (priv->title != NULL)
+								{
+									_title = g_strdup_printf ("\"%s\"", priv->title);
+								}
+							else
+								{
+									_title = NULL;
+								}
+							rptr = rpt_report_new_from_gtktreeview (GTK_TREE_VIEW (priv->view), _title);
 
 							if (rptr != NULL)
 								{
@@ -465,10 +529,14 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 									if (rptp != NULL)
 										{
 											rpt_print_set_output_type (rptp, RPT_OUTPUT_GTK);
-											rpt_print_print (rptp, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (user_data))));
+											rpt_print_print (rptp, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))));
 										}
 								}
 
+							if (_title != NULL)
+								{
+									g_free (_title);
+								}
 							return TRUE;
 						}
 					break;

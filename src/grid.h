@@ -59,6 +59,9 @@ GType gdaex_grid_get_type (void) G_GNUC_CONST;
 
 GdaExGrid *gdaex_grid_new (void);
 
+void gdaex_grid_set_title (GdaExGrid *grid, const gchar *title);
+const gchar *gdaex_grid_get_title (GdaExGrid *grid);
+
 void gdaex_grid_add_column (GdaExGrid *grid, GdaExGridColumn *column);
 void gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns);
 
