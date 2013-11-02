@@ -25,6 +25,8 @@
 	#include <config.h>
 #endif
 
+#include <glib/gi18n-lib.h>
+
 #include <gtk/gtk.h>
 
 #if defined (REPTOOL_FOUND) || defined (SOLIPA_FOUND)
@@ -57,6 +59,16 @@ static void gdaex_grid_get_property (GObject *object,
 static gboolean gdaex_grid_on_key_release_event (GtkWidget *widget,
                             GdkEventKey *event,
                             gpointer user_data);
+#endif
+
+#ifdef REPTOOL_FOUND
+static void gdaex_grid_on_print_menu_activate (GtkMenuItem *menuitem,
+                                   gpointer user_data);
+#endif
+
+#ifdef SOLIPA_FOUND
+static void gdaex_grid_on_export_menu_activate (GtkMenuItem *menuitem,
+                                   gpointer user_data);
 #endif
 
 static gboolean gdaex_grid_on_button_press_event (GtkWidget *widget,
@@ -230,6 +242,8 @@ gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GErro
 
 	gchar *_sql;
 
+	gboolean ret;
+
 	g_return_val_if_fail (GDAEX_IS_GRID (grid), FALSE);
 	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
 	g_return_val_if_fail (sql != NULL, FALSE);
@@ -239,7 +253,11 @@ gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GErro
 	g_return_val_if_fail (g_strcmp0 (_sql, "") != 0, FALSE);
 
 	dm = gdaex_query (gdaex, _sql);
-	return gdaex_grid_fill_from_datamodel (grid, dm, error);
+	g_free (_sql);
+	ret = gdaex_grid_fill_from_datamodel (grid, dm, error);
+	g_object_unref (dm);
+
+	return ret;
 }
 
 gboolean
@@ -474,6 +492,7 @@ static GtkTreeView
 	guint col;
 
 	GtkWidget *mitem;
+	GtkWidget *submitem;
 
 	g_return_val_if_fail (GDAEX_IS_GRID (grid), NULL);
 
@@ -496,6 +515,14 @@ static GtkTreeView
 		{
 			priv->menu = NULL;
 		}
+
+	mitem = gtk_menu_item_new_with_mnemonic (_("_Columns"));
+	gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), mitem);
+	gtk_widget_show (mitem);
+
+	submitem = gtk_menu_new ();
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (mitem), submitem);
+	gtk_widget_show (submitem);
 
 	for (col = 0; col < priv->columns->len; col++)
 		{
@@ -531,7 +558,7 @@ static GtkTreeView
 					g_signal_connect (G_OBJECT (mitem), "toggled",
 					                  G_CALLBACK (gdaex_grid_on_menu_item_toggled), (gpointer)grid);
 
-					gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), mitem);
+					gtk_menu_shell_append (GTK_MENU_SHELL (submitem), mitem);
 					gtk_widget_show (mitem);
 				}
 		}
@@ -545,7 +572,25 @@ static GtkTreeView
 			                  G_CALLBACK (gdaex_grid_on_button_press_event), (gpointer)grid);
 			g_signal_connect (G_OBJECT (priv->view), "popup-menu",
 			                  G_CALLBACK (gdaex_grid_on_popup_menu), (gpointer)grid);
-		}
+
+#ifdef REPTOOL_FOUND
+			mitem = gtk_menu_item_new_with_mnemonic (_("_Print..."));
+			gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), mitem);
+			gtk_widget_show (mitem);
+
+			g_signal_connect (mitem,
+			                  "activate", G_CALLBACK (gdaex_grid_on_print_menu_activate), (gpointer)grid);
+#endif
+
+#ifdef SOLIPA_FOUND
+			mitem = gtk_menu_item_new_with_mnemonic (_("_Export..."));
+			gtk_menu_shell_append (GTK_MENU_SHELL (priv->menu), mitem);
+			gtk_widget_show (mitem);
+
+			g_signal_connect (mitem,
+			                  "activate", G_CALLBACK (gdaex_grid_on_export_menu_activate), (gpointer)grid);
+#endif
+	}
 
 #ifdef REPTOOL_FOUND
 	g_signal_connect (view,
@@ -561,13 +606,6 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
                             GdkEventKey *event,
                             gpointer user_data)
 {
-	GdaExGridPrivate *priv;
-
-	RptReport *rptr;
-	RptPrint *rptp;
-
-	gchar *_title;
-
 	switch (event->keyval)
 		{
 #ifdef REPTOOL_FOUND
@@ -575,37 +613,7 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 				{
 					if (event->state & GDK_CONTROL_MASK)
 						{
-							priv = GDAEX_GRID_GET_PRIVATE (user_data);
-
-							if (priv->title != NULL)
-								{
-									_title = g_strdup_printf ("\"%s\"", priv->title);
-								}
-							else
-								{
-									_title = NULL;
-								}
-							rptr = rpt_report_new_from_gtktreeview (GTK_TREE_VIEW (priv->view), _title);
-
-							if (rptr != NULL)
-								{
-									xmlDoc *report = rpt_report_get_xml (rptr);
-									rpt_report_set_output_type (rptr, RPT_OUTPUT_GTK);
-
-									xmlDoc *rptprint = rpt_report_get_xml_rptprint (rptr);
-
-									rptp = rpt_print_new_from_xml (rptprint);
-									if (rptp != NULL)
-										{
-											rpt_print_set_output_type (rptp, RPT_OUTPUT_GTK);
-											rpt_print_print (rptp, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))));
-										}
-								}
-
-							if (_title != NULL)
-								{
-									g_free (_title);
-								}
+							gdaex_grid_on_print_menu_activate (NULL, user_data);
 							return TRUE;
 						}
 					break;
@@ -617,36 +625,8 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 				{
 					if (event->state & GDK_CONTROL_MASK)
 						{
-							gint col;
-							GdaExGridColumn *gcolumn;
-							GString *gstr;
-
-							priv = GDAEX_GRID_GET_PRIVATE (user_data);
-
-							if (!IS_SOLIPA (priv->solipa))
-								{
-									g_warning ("No Solipa object found");
-									break;
-								}
-
-							if (priv->columns->len)
-								{
-									gstr = g_string_new ("");
-									for (col = 0; col < priv->columns->len; col++)
-										{
-											gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
-											g_string_append_printf (gstr, "|%s", gdaex_grid_column_get_title (gcolumn));
-										}
-
-									gchar **columns_title = g_strsplit (gstr->str + 1, "|", -1);
-
-									solipa_gtktreemodel_to_csv_gui (priv->solipa, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))), priv->model,
-									                                columns_title, g_strv_length (columns_title));
-
-									g_strfreev (columns_title);
-
-									return TRUE;
-								}
+							gdaex_grid_on_export_menu_activate (NULL, user_data);
+							return TRUE;
 						}
 					break;
 				}
@@ -657,6 +637,92 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 		}
 
 	return FALSE;
+}
+#endif
+
+#ifdef REPTOOL_FOUND
+static void
+gdaex_grid_on_print_menu_activate (GtkMenuItem *menuitem,
+                                   gpointer user_data)
+{
+	GdaExGridPrivate *priv;
+
+	RptReport *rptr;
+	RptPrint *rptp;
+
+	gchar *_title;
+
+	priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+	if (priv->title != NULL)
+		{
+			_title = g_strdup_printf ("\"%s\"", priv->title);
+		}
+	else
+		{
+			_title = NULL;
+		}
+	rptr = rpt_report_new_from_gtktreeview (GTK_TREE_VIEW (priv->view), _title);
+
+	if (rptr != NULL)
+		{
+			xmlDoc *report = rpt_report_get_xml (rptr);
+			rpt_report_set_output_type (rptr, RPT_OUTPUT_GTK);
+
+			xmlDoc *rptprint = rpt_report_get_xml_rptprint (rptr);
+
+			rptp = rpt_print_new_from_xml (rptprint);
+			if (rptp != NULL)
+				{
+					rpt_print_set_output_type (rptp, RPT_OUTPUT_GTK);
+					rpt_print_print (rptp, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))));
+				}
+		}
+
+	if (_title != NULL)
+		{
+			g_free (_title);
+		}
+}
+#endif
+
+#ifdef SOLIPA_FOUND
+static void
+gdaex_grid_on_export_menu_activate (GtkMenuItem *menuitem,
+                                    gpointer user_data)
+{
+	GdaExGridPrivate *priv;
+
+	gint col;
+	GdaExGridColumn *gcolumn;
+	GString *gstr;
+
+	priv = GDAEX_GRID_GET_PRIVATE (user_data);
+
+	if (!IS_SOLIPA (priv->solipa))
+		{
+			g_warning ("No Solipa object found");
+			return;
+		}
+
+	if (priv->columns->len)
+		{
+			gstr = g_string_new ("");
+			for (col = 0; col < priv->columns->len; col++)
+				{
+					gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
+					g_string_append_printf (gstr, "|%s", gdaex_grid_column_get_title (gcolumn));
+				}
+
+			gchar **columns_title = g_strsplit (gstr->str + 1, "|", -1);
+
+			solipa_gtktreemodel_to_csv_gui (priv->solipa, GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (priv->view))), priv->model,
+			                                columns_title, g_strv_length (columns_title));
+
+			g_strfreev (columns_title);
+
+			return;
+		}
 }
 #endif
 

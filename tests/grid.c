@@ -97,7 +97,7 @@ main (int argc, char **argv)
 	gdaex_grid_fill_from_sql (grid, gdaex, "SELECT * FROM clients", NULL);
 
 	hbtnbox = gtk_hbutton_box_new ();
-	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 0);
 
 	btn = gtk_button_new_with_label ("Hide/Show Birthday");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn, TRUE, TRUE, 0);
