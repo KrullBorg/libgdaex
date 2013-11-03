@@ -268,13 +268,19 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 	GdaDataModelIter *dm_iter;
 	GtkTreeIter iter;
 
+	const gchar *field_name;
+
 	guint cols;
+	guint cols_sorted;
 	guint col;
 
 	GType col_gtype;
 
-	GdaColumn *gcol;
-	GType gcol_gtype;
+	GdaExGridColumn *gdaex_col;
+	GType gdaex_col_gtype;
+
+	GdaColumn *gda_col;
+	GType gda_col_gtype;
 
 	gint *columns;
 	GValue *values;
@@ -299,87 +305,129 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 	gtk_list_store_clear (GTK_LIST_STORE (priv->model));
 
 	cols = gtk_tree_model_get_n_columns (priv->model);
-
-	columns = g_malloc0 (cols * sizeof (gint));
-	values = g_malloc0 (cols * sizeof (GValue));
+	columns = g_new0 (gint, cols);
+	values = g_new0 (GValue, cols);
 
 	while (gda_data_model_iter_move_next (dm_iter))
 		{
 			gtk_list_store_append (GTK_LIST_STORE (priv->model), &iter);
 
-			for (col = 0; col < cols; col++)
+			cols_sorted = priv->columns->len;
+			for (col = 0; col < priv->columns->len; col++)
 				{
 					columns[col] = col;
 
 					col_gtype = gtk_tree_model_get_column_type (priv->model, col);
+
+					gdaex_col = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
+					field_name = gdaex_grid_column_get_field_name (gdaex_col);
 
 					GValue gval = {0};
 					g_value_init (&gval, col_gtype);
 					switch (col_gtype)
 						{
 							case G_TYPE_STRING:
-								gcol = gda_data_model_describe_column (dm, col);
-								gcol_gtype = gda_column_get_g_type (gcol);
+								gda_col = gda_data_model_describe_column (dm, col);
+								gda_col_gtype = gda_column_get_g_type (gda_col);
 
-								switch (gcol_gtype)
+								switch (gda_col_gtype)
 									{
 										case G_TYPE_STRING:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_value_stringify_at (dm_iter, col));
+											g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name));
 											break;
 
 										case G_TYPE_BOOLEAN:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_value_boolean_at (dm_iter, col) ? "X" : "");
+											g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name) ? "X" : "");
 											break;
 
 										case G_TYPE_INT:
 										case G_TYPE_FLOAT:
 										case G_TYPE_DOUBLE:
-											dval = gdaex_data_model_iter_get_value_double_at (dm_iter, col);
+											dval = gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name);
 											g_value_set_string (&gval, gdaex_format_money (dval, gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)), FALSE));
 											break;
 
 										default:
-											if (gcol_gtype == G_TYPE_DATE
-											    || gcol_gtype == G_TYPE_DATE_TIME
-											    || gcol_gtype == GDA_TYPE_TIMESTAMP)
+											if (gda_col_gtype == G_TYPE_DATE
+											    || gda_col_gtype == G_TYPE_DATE_TIME
+											    || gda_col_gtype == GDA_TYPE_TIMESTAMP)
 												{
-													gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (dm_iter, col);
+													gdatetime = gdaex_data_model_iter_get_field_value_gdatetime_at (dm_iter, field_name);
 													/* TODO find default format from locale */
-													g_value_set_string (&gval, g_date_time_format (gdatetime, gcol_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
+													g_value_set_string (&gval, g_date_time_format (gdatetime, gda_col_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
+													g_date_time_unref (gdatetime);
 												}
 											else
 												{
-													g_value_set_string (&gval, gda_value_stringify (gda_data_model_iter_get_value_at (dm_iter, col)));
+													g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name));
 												}
 											break;
 									}
 
-								values[col] = gval;
 								break;
 
 							case G_TYPE_INT:
-								g_value_set_int (&gval, gdaex_data_model_iter_get_value_integer_at (dm_iter, col));
-								values[col] = gval;
+								g_value_set_int (&gval, gdaex_data_model_iter_get_field_value_integer_at (dm_iter, field_name));
 								break;
 
 							case G_TYPE_FLOAT:
-								g_value_set_float (&gval, gdaex_data_model_iter_get_value_float_at (dm_iter, col));
-								values[col] = gval;
+								g_value_set_float (&gval, gdaex_data_model_iter_get_field_value_float_at (dm_iter, field_name));
 								break;
 
 							case G_TYPE_DOUBLE:
-								g_value_set_double (&gval, gdaex_data_model_iter_get_value_double_at (dm_iter, col));
-								values[col] = gval;
+								g_value_set_double (&gval, gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name));
 								break;
 
 							case G_TYPE_BOOLEAN:
-								g_value_set_boolean (&gval, gdaex_data_model_iter_get_value_boolean_at (dm_iter, col));
-								values[col] = gval;
+								g_value_set_boolean (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name));
 								break;
 
 							default:
-								values[col] = *gda_value_new_from_string (gdaex_data_model_iter_get_value_stringify_at (dm_iter, col), col_gtype);
+								gval = *gda_value_new_from_string (gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name), col_gtype);
 								break;
+						}
+					values[col] = gval;
+
+					gdaex_col_gtype = gdaex_grid_column_get_gtype (gdaex_col);
+
+					if ((gdaex_col_gtype == G_TYPE_DATE
+					     || gdaex_col_gtype == G_TYPE_DATE_TIME
+					     || gdaex_col_gtype == GDA_TYPE_TIMESTAMP
+					     || ((gdaex_col_gtype == G_TYPE_INT
+					          || gdaex_col_gtype == G_TYPE_FLOAT
+					          || gdaex_col_gtype == G_TYPE_DOUBLE)
+					         && gdaex_grid_column_get_decimals (gdaex_col) > -1))
+					    && gdaex_grid_column_get_reorderable (gdaex_col))
+						{
+							columns[cols_sorted] = cols_sorted;
+
+							GValue gval = {0};
+							if (gdaex_col_gtype == G_TYPE_DATE
+							    || gdaex_col_gtype == G_TYPE_DATE_TIME
+							    || gdaex_col_gtype == GDA_TYPE_TIMESTAMP)
+								{
+									g_value_init (&gval, G_TYPE_STRING);
+									gdatetime = gdaex_data_model_iter_get_field_value_gdatetime_at (dm_iter, field_name);
+									g_value_set_string (&gval, gdatetime != NULL ? g_date_time_format (gdatetime, gdaex_col_gtype == G_TYPE_DATE ? "%Y%m%d" : "%Y%m%d%H%M%S") : "");
+									g_date_time_unref (gdatetime);
+								}
+							else if (gdaex_col_gtype == G_TYPE_INT)
+								{
+									g_value_init (&gval, G_TYPE_INT);
+									g_value_set_int (&gval, gdaex_data_model_iter_get_field_value_integer_at (dm_iter, field_name));
+								}
+							else if (gdaex_col_gtype == G_TYPE_FLOAT)
+								{
+									g_value_init (&gval, G_TYPE_FLOAT);
+									g_value_set_float (&gval, gdaex_data_model_iter_get_field_value_float_at (dm_iter, field_name));
+								}
+							else if (gdaex_col_gtype == G_TYPE_DOUBLE)
+								{
+									g_value_init (&gval, G_TYPE_DOUBLE);
+									g_value_set_double (&gval, gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name));
+								}
+							values[cols_sorted] = gval;
+							cols_sorted++;
 						}
 				}
 
@@ -438,7 +486,11 @@ static GtkTreeModel
 	/* TODO for now it returns always a GtkListStore */
 	GdaExGridPrivate *priv;
 
+	guint cols;
 	guint col;
+
+	GdaExGridColumn *gcolumn;
+
 	GType *gtype;
 	GType col_gtype;
 
@@ -446,20 +498,39 @@ static GtkTreeModel
 
 	priv = GDAEX_GRID_GET_PRIVATE (grid);
 
-	gtype = g_new0 (GType, priv->columns->len);
+	cols = priv->columns->len;
+	gtype = g_new0 (GType, cols);
 
 	for (col = 0; col < priv->columns->len; col++)
 		{
-			col_gtype = gdaex_grid_column_get_gtype ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col));
+			gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
+
+			col_gtype = gdaex_grid_column_get_gtype (gcolumn);
 			if (col_gtype == G_TYPE_DATE
 			    || col_gtype == G_TYPE_DATE_TIME
 			    || col_gtype == GDA_TYPE_TIMESTAMP
 			    || ((col_gtype == G_TYPE_INT
 			         || col_gtype == G_TYPE_FLOAT
 			         || col_gtype == G_TYPE_DOUBLE)
-			        && gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)) > -1))
+			        && gdaex_grid_column_get_decimals (gcolumn) > -1))
 				{
 					gtype[col] = G_TYPE_STRING;
+
+					if (gdaex_grid_column_get_reorderable (gcolumn))
+						{
+							/* add one column for sorting */
+							gtype = g_renew (GType, gtype, ++cols);
+							if (col_gtype == G_TYPE_DATE
+							    || col_gtype == G_TYPE_DATE_TIME
+							    || col_gtype == GDA_TYPE_TIMESTAMP)
+								{
+									gtype[cols - 1] = G_TYPE_STRING;
+								}
+							else
+								{
+									gtype[cols - 1] = col_gtype;
+								}
+						}
 				}
 			else
 				{
@@ -471,7 +542,7 @@ static GtkTreeModel
 		{
 			g_object_unref (priv->model);
 		}
-	priv->model = GTK_TREE_MODEL (gtk_list_store_newv (priv->columns->len, gtype));
+	priv->model = GTK_TREE_MODEL (gtk_list_store_newv (cols, gtype));
 
 	return priv->model;
 }
@@ -489,7 +560,10 @@ static GtkTreeView
 
 	GList *cells;
 
+	GType col_gtype;
+
 	guint col;
+	guint cols_sorted;
 
 	GtkWidget *mitem;
 	GtkWidget *submitem;
@@ -524,6 +598,7 @@ static GtkTreeView
 	gtk_menu_item_set_submenu (GTK_MENU_ITEM (mitem), submitem);
 	gtk_widget_show (submitem);
 
+	cols_sorted = 0;
 	for (col = 0; col < priv->columns->len; col++)
 		{
 			gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
@@ -533,7 +608,8 @@ static GtkTreeView
 					cells = gtk_cell_layout_get_cells (GTK_CELL_LAYOUT (vcolumn));
 					cells = g_list_first (cells);
 
-					if (gdaex_grid_column_get_gtype (gcolumn) == G_TYPE_BOOLEAN)
+					col_gtype = gdaex_grid_column_get_gtype (gcolumn);
+					if (col_gtype == G_TYPE_BOOLEAN)
 						{
 							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "active", col);
 						}
@@ -544,7 +620,20 @@ static GtkTreeView
 
 					if (gdaex_grid_column_get_reorderable (gcolumn))
 						{
-							gtk_tree_view_column_set_sort_column_id (vcolumn, col);
+							if (col_gtype == G_TYPE_DATE
+							    || col_gtype == G_TYPE_DATE_TIME
+							    || col_gtype == GDA_TYPE_TIMESTAMP
+							    || ((col_gtype == G_TYPE_INT
+							         || col_gtype == G_TYPE_FLOAT
+							         || col_gtype == G_TYPE_DOUBLE)
+							         && gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)) > -1))
+								{
+									gtk_tree_view_column_set_sort_column_id (vcolumn, priv->columns->len + cols_sorted++);
+								}
+							else
+								{
+									gtk_tree_view_column_set_sort_column_id (vcolumn, col);
+								}
 						}
 
 					gtk_tree_view_append_column (GTK_TREE_VIEW (view), vcolumn);
@@ -711,7 +800,14 @@ gdaex_grid_on_export_menu_activate (GtkMenuItem *menuitem,
 			for (col = 0; col < priv->columns->len; col++)
 				{
 					gcolumn = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
-					g_string_append_printf (gstr, "|%s", gdaex_grid_column_get_title (gcolumn));
+					if (gdaex_grid_column_get_visible (gcolumn))
+						{
+							g_string_append_printf (gstr, "|%s", gdaex_grid_column_get_title (gcolumn));
+						}
+					else
+						{
+							g_string_append (gstr, "|{SKIP}");
+						}
 				}
 
 			gchar **columns_title = g_strsplit (gstr->str + 1, "|", -1);
