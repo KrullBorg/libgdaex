@@ -37,10 +37,6 @@
 	#include <libreptool/libreptool.h>
 #endif
 
-#ifdef SOLIPA_FOUND
-	#include <libsolipa/utils.h>
-#endif
-
 #include "grid.h"
 
 static void gdaex_grid_class_init (GdaExGridClass *klass);
