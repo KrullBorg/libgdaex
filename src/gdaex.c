@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -3220,6 +3220,39 @@ const gchar
 		}
 
 	g_free (_table_name);
+
+	return ret;
+}
+
+guint
+gdaex_get_new_id (GdaEx *gdaex,
+                  const gchar *table_name,
+                  const gchar *id_field_name,
+                  const gchar *where)
+{
+	guint ret;
+
+	gchar *sql;
+	GdaDataModel *dm;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), 0);
+
+	ret = 1;
+	sql = g_strdup_printf ("SELECT COALESCE (MAX (%s), 0) + 1 FROM %s%s%s",
+	                       id_field_name,
+	                       table_name,
+	                       where != NULL ? " WHERE " : "",
+	                       where != NULL ? where : "");
+	dm = gdaex_query (gdaex, sql);
+	g_free (sql);
+	if (dm != NULL && gda_data_model_get_n_rows (dm) > 0)
+		{
+			ret = gdaex_data_model_get_value_integer_at (dm, 0, 0);
+		}
+	if (dm != NULL)
+		{
+			g_object_unref (dm);
+		}
 
 	return ret;
 }
