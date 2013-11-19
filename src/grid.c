@@ -393,7 +393,7 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 					          || gdaex_col_gtype == G_TYPE_FLOAT
 					          || gdaex_col_gtype == G_TYPE_DOUBLE)
 					         && gdaex_grid_column_get_decimals (gdaex_col) > -1))
-					    && gdaex_grid_column_get_reorderable (gdaex_col))
+					    && gdaex_grid_column_get_sortable (gdaex_col))
 						{
 							columns[cols_sorted] = cols_sorted;
 
@@ -512,7 +512,7 @@ static GtkTreeModel
 				{
 					gtype[col] = G_TYPE_STRING;
 
-					if (gdaex_grid_column_get_reorderable (gcolumn))
+					if (gdaex_grid_column_get_sortable (gcolumn))
 						{
 							/* add one column for sorting */
 							gtype = g_renew (GType, gtype, ++cols);
@@ -614,7 +614,7 @@ static GtkTreeView
 							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
 						}
 
-					if (gdaex_grid_column_get_reorderable (gcolumn))
+					if (gdaex_grid_column_get_sortable (gcolumn))
 						{
 							if (col_gtype == G_TYPE_DATE
 							    || col_gtype == G_TYPE_DATE_TIME
