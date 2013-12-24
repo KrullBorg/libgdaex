@@ -1,21 +1,20 @@
-
 [Anjuta]
 Maximized=1
-Geometry=1366x745+0+1
-
-[Project Manager]
-Shortcut=libgdaex//libgdaex//src//libgdaex.la%%%libgdaex//libgdaex//tests//fill_liststore%%%libgdaex//libgdaex//tests//grid%%%libgdaex//libgdaex//tests//query_editor%%%libgdaex//libgdaex//tests//select%%%libgdaex//libgdaex//tests//test_prefix
-Expand=libgdaex.la%%%libgdaex
+Geometry=1680x998+0+27
 
 [File Loader]
-Files=file:///home/andreaz/files/c/libgdaex/src/queryeditor.c#1259
+Files=../../src/grid.c#809%%%../../tests/grid.c#88
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
 
+[Project Manager]
+Shortcut=libgdaex//tests//fill_liststore%%%libgdaex//tests//getsql%%%libgdaex//tests//grid%%%libgdaex//tests//query_editor%%%libgdaex//tests//select%%%libgdaex//tests//test_prefix
+Expand=libgdaex%%%libgdaex//src%%%libgdaex//src//libgdaex.la
+
 [Execution]
 Run in terminal=2
-Working directories=file:///home/andreaz/files/c/libgdaex
+Working directories=../../../libgdaex
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized

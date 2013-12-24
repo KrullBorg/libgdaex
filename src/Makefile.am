@@ -8,6 +8,24 @@ AM_CPPFLAGS = -I$(top_srcdir) \
 
 LIBS = $(GDAEX_LIBS)
 
+if LIBREPTOOL_FOUND
+AM_CPPFLAGS += \
+               $(REPTOOL_CFLAGS) \
+               -DREPTOOL_FOUND=1
+
+LIBS += \
+        $(REPTOOL_LIBS)
+endif
+
+if LIBSOLIPA_FOUND
+AM_CPPFLAGS += \
+               $(SOLIPA_CFLAGS) \
+               -DSOLIPA_FOUND=1
+
+LIBS += \
+        $(SOLIPA_LIBS)
+endif
+
 lib_LTLIBRARIES = libgdaex.la
 
 libgdaex_la_SOURCES = gdaex.c \

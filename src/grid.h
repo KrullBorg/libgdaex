@@ -1,7 +1,7 @@
 /*
  *  grid.h
  *
- *  Copyright (C) 2010-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -26,6 +26,10 @@
 
 #include <glib.h>
 #include <glib-object.h>
+
+#ifdef SOLIPA_FOUND
+	#include <libsolipa/libsolipa.h>
+#endif
 
 #include "gdaex.h"
 #include "gridcolumn.h"
@@ -59,6 +63,9 @@ GType gdaex_grid_get_type (void) G_GNUC_CONST;
 
 GdaExGrid *gdaex_grid_new (void);
 
+void gdaex_grid_set_title (GdaExGrid *grid, const gchar *title);
+const gchar *gdaex_grid_get_title (GdaExGrid *grid);
+
 void gdaex_grid_add_column (GdaExGrid *grid, GdaExGridColumn *column);
 void gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns);
 
@@ -68,6 +75,10 @@ GtkWidget *gdaex_grid_get_widget (GdaExGrid *grid);
 
 gboolean gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error);
 gboolean gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error);
+
+#ifdef SOLIPA_FOUND
+void gdaex_grid_set_solipa (GdaExGrid *grid, Solipa *solipa);
+#endif
 
 
 G_END_DECLS

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,13 +18,25 @@
 
 #include <libgdaex.h>
 
+GdaExGridColumn *gcol_birthday;
+
+static void
+on_btn_birthday_clicked (GtkButton *button,
+                         gpointer user_data)
+{
+	gdaex_grid_column_set_visible (gcol_birthday, !gdaex_grid_column_get_visible (gcol_birthday));
+}
+
 int
 main (int argc, char **argv)
 {
 	GdaEx *gdaex;
 
 	GtkWidget *w;
+	GtkWidget *vbox;
 	GtkWidget *scrolledw;
+	GtkWidget *hbtnbox;
+	GtkWidget *btn;
 
 	GdaExGrid *grid;
 	GdaExGridColumn *gcol;
@@ -40,11 +52,23 @@ main (int argc, char **argv)
 
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 550, 350);
+	g_signal_connect (w, "delete-event",
+	                  G_CALLBACK (gtk_false), NULL);
+	g_signal_connect (w, "destroy",
+	                  G_CALLBACK (gtk_main_quit), NULL);
+
+	vbox = gtk_vbox_new (FALSE, 0);
+	gtk_container_add (GTK_CONTAINER (w), vbox);
 
 	scrolledw = gtk_scrolled_window_new (NULL, NULL);
-	gtk_container_add (GTK_CONTAINER (w), scrolledw);
+	gtk_box_pack_start (GTK_BOX (vbox), scrolledw, TRUE, TRUE, 0);
 
 	grid = gdaex_grid_new ();
+	gdaex_grid_set_title (grid, "The grid title");
+
+#ifdef SOLIPA_FOUND
+	gdaex_grid_set_solipa (grid, solipa_new ());
+#endif
 
 	gcol = gdaex_grid_column_new ("ID", "id", G_TYPE_INT, TRUE, FALSE, FALSE, FALSE, -1);
 	gdaex_grid_add_column (grid, gcol);
@@ -52,16 +76,16 @@ main (int argc, char **argv)
 	gcol = gdaex_grid_column_new ("Name", "name", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, -1);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Surname", "surname", G_TYPE_STRING, TRUE, TRUE, TRUE, TRUE, -1);
+	gcol = gdaex_grid_column_new_defaults ("Surname", "surname", G_TYPE_STRING);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Age", "age", G_TYPE_INT, TRUE, TRUE, TRUE, TRUE, -1);
+	gcol = gdaex_grid_column_new_defaults ("Age", "age", G_TYPE_INT);
 	gdaex_grid_add_column (grid, gcol);
 
-	gcol = gdaex_grid_column_new ("Birthday", "birthday", G_TYPE_DATE, TRUE, TRUE, TRUE, TRUE, -1);
-	gdaex_grid_add_column (grid, gcol);
+	gcol_birthday = gdaex_grid_column_new ("Birthday", "birthday", G_TYPE_DATE, FALSE, TRUE, TRUE, TRUE, -1);
+	gdaex_grid_add_column (grid, gcol_birthday);
 
-	gcol = gdaex_grid_column_new ("Incoming", "incoming", G_TYPE_DOUBLE, TRUE, TRUE, TRUE, TRUE, 2);
+	gcol = gdaex_grid_column_new_defaults ("Incoming", "incoming", G_TYPE_DOUBLE);
 	gdaex_grid_add_column (grid, gcol);
 
 	gcol = gdaex_grid_column_new ("Married", "married", G_TYPE_BOOLEAN, TRUE, TRUE, TRUE, TRUE, -1);
@@ -71,6 +95,15 @@ main (int argc, char **argv)
 	gtk_container_add (GTK_CONTAINER (scrolledw), wgrid);
 
 	gdaex_grid_fill_from_sql (grid, gdaex, "SELECT * FROM clients", NULL);
+
+	hbtnbox = gtk_hbutton_box_new ();
+	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 0);
+
+	btn = gtk_button_new_with_label ("Hide/Show Birthday");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn, TRUE, TRUE, 0);
+
+	g_signal_connect (G_OBJECT (btn), "clicked",
+	                  G_CALLBACK (on_btn_birthday_clicked), NULL);
 
 	gtk_widget_show_all (w);
 

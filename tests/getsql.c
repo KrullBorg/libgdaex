@@ -29,6 +29,7 @@ main (int argc, char **argv)
 
 	GValue *gval;
 	GDate *gdate;
+	GDateTime *gdatetime;
 
 	gtk_init (&argc, &argv);
 
@@ -100,6 +101,12 @@ main (int argc, char **argv)
 	gdate = g_date_new_dmy (12, 5, 1966);
 	g_value_set_boxed (gval, gdate);
 	g_hash_table_insert (ht_fields, "birthday", gval);
+
+	gval = g_new0 (GValue, 1);
+	g_value_init (gval, G_TYPE_DATE_TIME);
+	gdatetime = g_date_time_new_now_local ();
+	g_value_set_boxed (gval, gdatetime);
+	g_hash_table_insert (ht_fields, "oggi", gval);
 
 	gval = g_new0 (GValue, 1);
 	g_value_init (gval, G_TYPE_STRING);

@@ -1,6 +1,1030 @@
+commit a1e0a280b9859d9aeadf84b5ce0e78bab5238834
+Author: Andrea Zagli <azagli@libero.it>
+Date:   2011-12-25
+
+    Added functions GdaEx::data_model_columns_to_hashtable_from_sql
+
+    and GdaEx::data_model_row_to_hashtable_from_sql (closes #278)."
+
+M	.anjuta/session/anjuta.session
+M	.anjuta/session/dock-layout.xml
+M	.anjuta_sym_db.db
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit 79a9046ccb962ffb520d0087b6a7c3d77ca86000
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-12-02
+
+    Added functions GdaEx::fill_liststore_from_sql_with_missing_func
+    and GdaEx::fill_liststore_from_datamodel_with_missing_func.
+
+A	.cproject
+A	.project
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit 9108c4333eb86361a342c89a57af5ad512ce6ce4
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-11-29
+
+    Missing directory data on autotools file.
+
+M	Makefile.am
+
+commit 8d265881d75d3f44efbe3e2e3a77251c1b3907ac
+Merge: 7ab8c9d 13fd054
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-11-29
+
+    Merge branch 'master' of ssh://saetta.homelinux.org/var/git/libgdaex
+
+commit 7ab8c9d1d0cb4f726a49a32b8e96e61edd58434b
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-11-29
+
+    Bugfix for freeing memory.
+
+    Added more control and verbosity on transaction opening.
+
+M	src/gdaex.c
+
+commit 13fd0541366722993558b59db570375f287b9368
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-28
+
+    Implemented groups (parenthesis) in GdaExQueryEditor.
+
+    There's a bug when the group is negated.
+
+M	.anjuta/session/anjuta.session
+M	.anjuta/session/dock-layout.xml
+M	.anjuta_sym_db.db
+M	po/it.po
+M	src/queryeditor.c
+
+commit 404615d86be281bc4ab751afd76102d53808b653
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-27
+
+    Adjustments and bugfixes to make GdaExQueryEditor groups work.
+
+M	.anjuta_sym_db.db
+M	src/queryeditor.c
+
+commit a1f703b748fa1712d25c665447bc71a9900f2b7b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-27
+
+    In GdaExQueryEditor started groups (parenthesis).
+
+M	.anjuta/session/anjuta.session
+M	.anjuta/session/dock-layout.xml
+M	.anjuta_sym_db.db
+M	data/libgdaex/gui/libgdaex.ui
+M	po/it.po
+M	src/queryeditor.c
+
+commit c600a4a0849031a7d7ff3c189942d68fe832cd09
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-26
+
+    An optimization to GdaEx::fill_liststore_from_datamodel (closes #221).
+
+M	src/gdaex.c
+
+commit c192d651f88b2bec26a658728ff8cc0b74214be9
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-26
+
+    Added the function GdaEx::data_model_is_empty (closes #230).
+
+M	.anjuta_sym_db.db
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit 6095be805b8f54ef440af4e0312a3557212410a7
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-26
+
+    Bugfix on GdaEx::fill_liststore_from_* for int columns (fixes #223).
+
+    Added test for GdaEx::fill_liststore_from_*.
+
+M	.anjuta_sym_db.db
+M	.gitignore
+M	src/gdaex.c
+M	tests/Makefile.am
+A	tests/fill_liststore.c
+
+commit 02bd733f6bf26492ca5db632892680f229f1c47f
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-26
+
+    In GdaExQueryEditor used GtkDateEntry if it is present/usable.
+
+M	.anjuta/session/anjuta.session
+M	.anjuta/session/dock-layout.xml
+M	.anjuta_sym_db.db
+M	configure.ac
+M	src/queryeditor.c
+
+commit 640de197cb3ae2f1e1e77eb3eb6e52627b90cdf2
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-11-23
+
+    In GdaExQueryEditor now every field's type is a
+    GdaExQueryEditorIWidget.
+
+    Removed GtkDateEntry dependency.
+
+M	.anjuta_sym_db.db
+M	configure.ac
+M	po/it.po
+M	src/Makefile.am
+M	src/queryeditor.c
+A	src/queryeditorentry.c
+A	src/queryeditorentry.h
+
+commit b06203d28898bfa78ce4c13530708f2183107ec9
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-24
+
+    Gettexized GdaExQueryEditor.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	po/POTFILES.in
+M	po/it.po
+M	src/gdaex.c
+M	src/queryeditor.c
+
+commit 29e8e6f8a4f9ebb27849d2f881064e9e231d527c
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-24
+
+    Ended GdaExQueryEditorIWidget implementation.
+
+    Many adjustments and bugfixes to work with it.
+
+M	src/queryeditor.c
+
+commit aa16dd03495c96afb231b1ddb316075a356173b7
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-23
+
+    Started implementation of GdaExQueryEditorIWidget.
+
+M	src/Makefile.am
+M	src/libgdaex.h
+M	src/queryeditor.c
+M	src/queryeditor.h
+A	src/queryeditor_widget_interface.c
+A	src/queryeditor_widget_interface.h
+
+commit d3bd20bae867991874aa8fb28ab78a6d70e3287f
+Merge: 9a43942 2d50d51
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-23
+
+    Merge 'master'.
+
+commit 9a43942ea5faac1c8319dadfbdcf82e94a39b375
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    On GdaExQueryEditor, use of relations on where and order by.
+
+M	src/queryeditor.c
+
+commit 94893f3e22a43d4c4da39e0e852fb112e63e85ec
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    On GdaExQueryEditor implemented relations.
+
+M	src/queryeditor.c
+M	tests/query_editor.c
+
+commit 7ab4d2eeef5bb83cd3dee03265bb8878f97f89e8
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    Added functions GdaExQueryEditor::get_sql_select, get_sql_from,
+    get_sql_where and get_sql_order.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit faea5e8eca4001b7e40d8a68989a028b0c60d3a5
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    On GdaExQueryEditor added join_type to relation.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 5fde281f688eba88f8e92ed6cecdb88863340f4d
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    Adjustments and bugfixes on GdaExQueryEditor.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit c06c137edee40c3c5eb958f6d724678b313adb63
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    Added and managed decode_join_type on GdaExQueryEditorField.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit e3ad870028d2d713cf7f8805c8b7a179a8296076
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    Added function GdaExQueryEditor::get_sql_gdasqlbuilder.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit 7bf8188da3ecebbda75d462f51a91bb7b6d82e0d
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    In QueryEditor added functions to set/get visibility of show, where
+    and order editing.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit 2d50d519b5872a6bc2777c7d5789152e7160772e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-22
+
+    Gettextized (closes #138).
+
+A	.anjuta/default.profile
+A	.anjuta/session/anjuta.session
+A	.anjuta/session/dock-layout.xml
+A	.anjuta_sym_db.db
+M	.gitignore
+M	Makefile.am
+M	config.h.in
+M	configure.ac
+A	libgdaex.anjuta
+M	libgdaex.pc.in
+A	po/LINGUAS
+A	po/POTFILES.in
+A	po/it.po
+M	src/Makefile.am
+M	src/gdaex.c
+M	tests/Makefile.am
+A	tests/select.c
+
+commit 3be53c46677f05fcdeb7791a171ad041237902d2
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-15
+
+    Added function GdaEx::row_to_hashtable (closes #6).
+
+    Must be tested.
+
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit b7a89b53ecf9cd26518d743785c590f9afd97a33
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-10-15
+
+    Decresead verbosity (closes #137).
+
+M	src/gdaex.c
+
+commit ad2d8a28a804d9cc16d434e09e74f1a6d58ef062
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-09-01
+
+    Added function GdaEx::data_model_to_gtkliststore.
+
+    closes #43
+
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit e9d1e2b67232c70bd74047d203706032279afd2b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-08-30
+
+    Added function GdaEx::data_model_columns_to_hashtable.
+
+M	src/gdaex.c
+M	src/gdaex.h
+
+commit b5a0b17021e16533be51dcda6e48d61cefe23f78
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-07-31
+
+    Some adjustments and bugfixes.
+
+M	config.h.in
+M	configure.ac
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 2db04b4c003dbb2a79c8874c05d9363e30f4cec6
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-07-30
+
+    Managed date/time fields with GtkDateEntry.
+
+M	configure.ac
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 536f3b3a498d52dbacb5606413a254b1acf8ae51
+Merge: 7e5c28a 616e49e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-07-25
+
+    Merge master.
+
+commit 616e49e2c364bbf0a6b58486be83ed586e3fe09e
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-07-13
+
+    Setted version to 0.3.1.
+
+M	configure.ac
+
+commit 014493917ec977ac2caf680a03c336077b8aa79b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-07-09
+
+    Missing implementation of function
+    gdaex_data_model_get_field_value_gdatetime_at.
+
+D	docs/reference/libgdaex-decl-list.txt
+D	docs/reference/libgdaex-decl.txt
+M	src/gdaex.c
+
+commit 226a650957c1e7306d6931b3394dce473855ebcb
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-06-07
+
+    Bugfixes.
+
+M	src/Makefile.am
+M	src/gdaex.c
+
+commit 4cf118ce2d6c6ddcc18e6650c415f4a26c23565a
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-05
+
+    Added default formatting of dates and numbers in
+    GdaEx::fill_liststore_from_datamodel.
+
+    Moved function GdaExGrid::format_money to GdaEx::format_money.
+
+M	src/gdaex.c
+M	src/gdaex.h
+M	src/grid.c
+
+commit 2985d526ebcac1af1efa00629e32a144c2b9ab22
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-05
+
+    Added number and date formatting.
+
+    Bugfixes.
+
+M	src/gdaex.c
+M	src/grid.c
+M	src/gridcolumn.c
+M	src/gridcolumn.h
+
+commit 3f5f218776514e4380ab183819cd1370379c1f23
+Merge: c8f5ce6 50ed3eb
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Merge master.
+
+commit 50ed3eb9b3436192f934d31b293ce816ac7918c1
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Added functions to deal with GDateTime type.
+
+    Bugfixes.
+
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit c8f5ce65660c4787018a8a56e677593e12a78618
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Implemented boolean column.
+
+M	src/grid.c
+M	src/gridcolumn.c
+M	tests/grid.c
+M	tests/grid.db
+
+commit a62692652d10f6e78eeddd4f41a29e90ac8aebae
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Adjustments.
+
+M	src/grid.c
+M	src/gridcolumn.c
+M	tests/grid.c
+M	tests/grid.db
+
+commit 04cd168dccd35380142693bfbcf3414161429c14
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Started developing of function GdaExGrid::fill_from_datamodel.
+
+    Added function GdaExGrid::fill_from_sql.
+
+M	src/grid.c
+M	src/grid.h
+M	src/gridcolumn.c
+M	tests/grid.c
+
+commit 79c4784506781dbf8a6216682541f96bf96e6e56
+Merge: d7a1aa8 bd46ca2
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Merge master.
+
+commit d7a1aa8bb2eab3849d5bfd4fb2c882f1c2e84b84
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Adjustments.
+
+M	src/grid.c
+M	src/gridcolumn.c
+M	src/gridcolumn.h
+M	tests/Makefile.am
+M	tests/grid.c
+A	tests/grid.db
+
+commit a1a449a659fb1ae79c2bc6d8512a14aaee5cbde7
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Added function GdaExGrid::get_widget.
+
+    Bugfixes.
+
+M	.gitignore
+M	src/grid.c
+M	src/grid.h
+M	src/gridcolumn.c
+M	src/gridcolumn.h
+M	tests/Makefile.am
+A	tests/grid.c
+
+commit bd46ca2bf8d9237ca28eee65fd846cee64aa814f
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-06-04
+
+    Added functions GdaEx::fill_liststore_from_sql and
+    GdaEx::fill_liststore_from_datamodel (to test).
+
+M	configure.ac
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit 6fad054a4b4a99ee360fb02ffb2f8cc8ec9d3418
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-21
+
+    Silent compilation and all warnings enabled.
+
+M	configure.ac
+
+commit 4577d2a53a8e10353fcffe6eed8b71e1371f6f29
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-21
+
+    Added functions to deal with GdaDataModelIter.
+
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit 7e5c28a49b6183123666ba7560edfc0fe4deb798
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-11
+
+    Adjustments.
+
+M	src/queryeditor.c
+
+commit f94b299cf50104169173fa2f241260925b93996b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-11
+
+    Added where type IS_NULL.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 9964803cbd11c95b672e35cc9dd6f19b3a26440b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-11
+
+    Added link type (and or or) between where conditions.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+
+commit a366262caccd5e003c972f66cf7711ba85751aa4
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-11
+
+    Enabled drag&drop in show and order tabs.
+
+M	data/libgdaex/gui/libgdaex.ui
+
+commit 99faccddbdfbd501cf505bf6b1bb20a006134aa4
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-11
+
+    User friendly-ize LIKE where type.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 3e18fd430ec9c223599e9721d4a6523758280256
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Bugfix.
+
+M	src/queryeditor.c
+
+commit 167d5ab9d0ac15fc54fa3ddc945746363a324777
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Implemented ILIKE where type.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 93b415062de9aab5bec5fcea69559ad4457c3b0a
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Implemented BETWEEN where type.
+
+M	src/queryeditor.c
+
+commit 163549d323b2f0099f0e1875ef3396e41d780543
+Merge: be74ecb c75fbac
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Merge branch 'master' into query-editor
+
+commit be74ecb22b7f3d3a2a7323b05d2ea790b77046da
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Adjustments and bugfixes.
+
+M	src/queryeditor.c
+
+commit 829150ad3d7894f1fe72f8ffbae75da08fdf40d9
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Enabled alias editing for show fields.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	tests/query_editor.c
+
+commit c9b22938bc12ac6d8a4c8f056755b15d8c2730f2
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-05-08
+
+    Some adjustments.
+
+M	src/queryeditor.c
+
+commit c75fbac0ba35f8c8d583fedf47c0b8d6ba489820
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-03-28
+
+    Memory leaks.
+
+M	src/gdaex.c
+
+commit 0fb7ea721b286ba55281012878a9d5e700303510
+Merge: b6246bd ca6e67c
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-12
+
+    Merge master.
+
+commit ca6e67c8e803046d3100d8bcb942228945953b18
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-12
+
+    Added function GdaEx::batch_execute.
+
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit b6246bdec8ec369f0829976b2935f1fb55c50259
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-07
+
+    Double click to add a field.
+
+M	src/queryeditor.c
+
+commit 62c7e595918994462875806067866bef03acd9b9
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-07
+
+    Fished function GdaExQueryEditor::load_choices_from_xml.
+    Removed ability to insert in show a field more than once.
+
+M	src/queryeditor.c
+M	tests/query_editor.c
+
+commit 55a9918968bfead8af5ea73152c5a97644d11994
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-07
+
+    Added save to xml and load from xml buttons to query editor test.
+    Bugfixes on buttons remove.
+
+M	src/queryeditor.c
+M	tests/query_editor.c
+
+commit 404d91be680eb13f4b13ff6ce85ee8c1ac63d1ba
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Added function GdaExQueryEditor::load_choices_from_xml (to be
+    complete).
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit 9882af4c39bf7901fb182cc12f151a88eab8f447
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Changed GUI.
+    Added function GdaExQueryEditor::clean_choices.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit c9cd8d5b1ac8d0a04b65d59ac9694d1cf98eae8a
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Added function GdaExQueryEditor::get_sql_as_xml.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 9e383d0015c2e5b917973aa851e881d1ff0c31af
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Implemented where part (to finish for some types).
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit fc8d507ad2dfa5c8b7314e8f23260add4a9f6c4f
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Begin ability to choose where conditions.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 5d80eba40fcbaf836769dcaa3f1542d741d2f7cc
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Added properties for_show, always_showed and for_where to
+    GdaExQueryEditorField.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit 2e27dd1e2adce5672bc9b9d1a552ee0d8899b70b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-05
+
+    Moved checking whether a field can be added to a single function.
+
+M	src/queryeditor.c
+
+commit 7238137efacc27f60ab780437b8ad5b1ae5a9c75
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-02
+
+    Begin of implementation of decoded fields.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit b1a6b0f2e393e24c3e0ae29c8f059591da084d4a
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-02
+
+    Check if try to add the same field more than once on where part.
+
+M	src/queryeditor.c
+
+commit a30081c1b866627ba036d207c5c69af457743b75
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-02
+
+    Implemented functions GdaExQueryEditor::on_btn_where*.
+
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit b13f4ab92cf223bb1bf7ffc2d18cfe5cb8155c3f
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-03-02
+
+    Added ability to choose order type (ASC, DESC).
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+
+commit 64ec9919f09da029ca808eb77c4708caa3105b3d
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-27
+
+    Added private functions GdaExQueryEditor::lstore_remove_iter and
+    GdaExQueryEditor::lstore_move_iter_up_down.
+    Implemented private GdaExQueryEditor::order_* functions.
+    Sql building for order part.
+
+M	src/queryeditor.c
+
+commit 5e92c62963fce93e0a6d91bfec5c914cb9bcddc7
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-27
+
+    Started sql building (only show).
+
+M	src/queryeditor.c
+M	tests/query_editor.c
+
+commit 40ea3d41b254f48d3ceb309fcf95a97a8e7152ef
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-27
+
+    Implemented private GdaExQueryEditor::show_* functions.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit e0443c4909cd2a33c67d570de19d85ec25fdfd5e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-27
+
+    Start filling tables/fields store.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/query_editor.c
+
+commit c7ae441b7e9f2d4c102c2c39cc249721ac71f9ad
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-27
+
+    Added test for query editor.
+    Added gui loading.
+    Implemented functions GdaExQueryEditor::add_table and
+    GdaExQueryEditor::table_add_field.
+
+M	.gitignore
+M	data/libgdaex/gui/libgdaex.ui
+M	src/Makefile.am
+M	src/gdaex.c
+M	src/gdaex.h
+M	src/queryeditor.c
+M	src/queryeditor.h
+M	tests/Makefile.am
+A	tests/query_editor.c
+
+commit f75b47a8647948238aa09cb164f381bbca6e7c6e
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2011-02-22
+
+    Implementation draft.
+
+M	data/libgdaex/gui/libgdaex.ui
+M	src/queryeditor.c
+M	src/queryeditor.h
+
+commit 10372725c04ac866d50273f991ddfb03bef0e16e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-19
+
+    Changing to autotools to create include dir.
+
+M	Makefile.am
+M	configure.ac
+M	src/Makefile.am
+M	src/gdaex.c
+C097	src/libgdaex.h	src/gdaex.h
+M	src/libgdaex.h
+M	src/queryeditor.h
+
+commit 61e8650607073a36de4cba51950ecac5d4db218b
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2011-02-19
+
+    Started development of query editor.
+
+A	data/Makefile.am
+A	data/libgdaex/Makefile.am
+A	data/libgdaex/gui/Makefile.am
+A	data/libgdaex/gui/libgdaex.ui
+A	src/queryeditor.c
+A	src/queryeditor.h
+
+commit e973527f81026c1b86dda88e7f248b009d6f51ee
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-12-27
+
+    Added GdaExGridColumn::get_gtype and GdaExGridColumn::set_gtype.
+    Bugfix.
+
+M	src/grid.c
+M	src/gridcolumn.c
+M	src/gridcolumn.h
+
+commit 410ee7c6159147cc7bfda3d189cb604b68c89930
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-12-27
+
+    Bugfixes.
+
+M	src/grid.c
+M	src/gridcolumn.c
+
+commit 6989092c6bb5b474be102db84937d7c2c740915f
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-12-27
+
+    Implemented GdaExGrid::add_column, GdaExGrid::add_columns and
+    GdaExGrid::clear.
+
+M	src/grid.c
+
+commit 17f15c61b41500e3bb1d1d364f1f10f2a7b0f0ce
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-12-27
+
+    Get/set functions on GdaExGridColumn.
+
+M	src/grid.c
+M	src/grid.h
+M	src/gridcolumn.c
+M	src/gridcolumn.h
+
+commit 842eca3f0a2b6f26afd82ff54cff2849b3309dcf
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-12-27
+
+    Starting Grid development.
+
+M	configure.ac
+M	src/Makefile.am
+M	src/gdaex.c
+C098	src/libgdaex.h	src/gdaex.h
+A	src/grid.c
+A	src/grid.h
+A	src/gridcolumn.c
+A	src/gridcolumn.h
+M	src/libgdaex.h
+
+commit c13e4922cf251628227a14f2f13f3fd886e7c1c7
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-08-30
+
+    Added command line options for debug.
+
+M	configure.ac
+M	src/gdaex.c
+M	src/libgdaex.h
+M	tests/test_prefix.c
+
+commit 6479559060aa49be0f0f6fad317efbb2f192a472
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2010-08-26
+
+    Adjustments and test.
+
+M	.gitignore
+M	src/gdaex.c
+
+commit f65fd0247940ef112436310d6af53358be9b6c22
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-08-25
+
+    Ended implementation of tables name prefix.
+    Tagged as 0.2.1.
+
+M	.gitignore
+M	Makefile.am
+M	configure.ac
+M	src/gdaex.c
+A	tests/Makefile.am
+A	tests/test_prefix.c
+A	tests/test_prefix.db
+
+commit 78c761bee27b5924a32ef5125feb09680cd50da0
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2010-08-25
+
+    Added functions to get/set tables name prefix property.
+    Preparatory changes to the use of the property.
+
+M	src/gdaex.c
+M	src/libgdaex.h
+
+commit 9e4832ade6c9903cd641b238302cfae9c628d04b
+Author: Andrea Zagli <a.zagli@comune.scandicci.fi.it>
+Date:	2010-08-25
+
+    Replaced custom autogen.sh with the gnome-common autogen.sh.
+
+M	autogen.sh
+D	docs/reference/libgdaex-undeclared.txt
+D	docs/reference/libgdaex-undocumented.txt
+D	docs/reference/libgdaex-unused.txt
+D	docs/reference/libgdaex.args
+D	docs/reference/libgdaex.hierarchy
+D	docs/reference/libgdaex.interfaces
+D	docs/reference/libgdaex.prerequisites
+D	docs/reference/libgdaex.signals
+
+commit 87e69fe1295be27b76bc45925941a7b2e517e62e
+Author: Andrea Zagli <azagli@libero.it>
+Date:	2010-07-22
+
+    Changed version to 0.2.1.
+    Setted G_LOG_DOMAIN.
+
+M	ChangeLog
+M	configure.ac
+M	docs/reference/libgdaex-undocumented.txt
+M	src/Makefile.am
+
 commit 2866dddfc2d418fb9f2ab019dd2e32b33688112e
 Author: Andrea Zagli <azagli@libero.it>
-Date:   2010-06-05
+Date:	2010-06-05
 
     Added signals "before-execute" and "after-execute".
     Added private member gda_parse to GdaEx.

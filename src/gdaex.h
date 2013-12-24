@@ -1,7 +1,7 @@
 /*
  *  gdaex.h
  *
- *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2013 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -241,6 +241,11 @@ const gchar *gdaex_get_sql_from_hashtable (GdaEx *gdaex,
                                            const gchar *table_name,
                                            GHashTable *keys,
                                            GHashTable *fields);
+
+guint gdaex_get_new_id (GdaEx *gdaex,
+                        const gchar *table_name,
+                        const gchar *id_field_name,
+                        const gchar *where);
 
 gchar *gdaex_format_money (gdouble number,
                      gint decimals,
