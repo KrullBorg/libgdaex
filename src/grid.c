@@ -30,7 +30,7 @@
 #include <gtk/gtk.h>
 
 #if defined (REPTOOL_FOUND) || defined (SOLIPA_FOUND)
-	#include <gdk/gdkkeysyms.h>
+	#include <gdk/gdk.h>
 #endif
 
 #ifdef REPTOOL_FOUND
@@ -694,7 +694,7 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 	switch (event->keyval)
 		{
 #ifdef REPTOOL_FOUND
-			case GDK_F12:
+			case GDK_KEY_F12:
 				{
 					if (event->state & GDK_CONTROL_MASK)
 						{
@@ -706,7 +706,7 @@ gdaex_grid_on_key_release_event (GtkWidget *widget,
 #endif
 
 #ifdef SOLIPA_FOUND
-			case GDK_F11:
+			case GDK_KEY_F11:
 				{
 					if (event->state & GDK_CONTROL_MASK)
 						{
