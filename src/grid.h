@@ -1,7 +1,7 @@
 /*
  *  grid.h
  *
- *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -72,6 +72,18 @@ void gdaex_grid_add_columns (GdaExGrid *grid, GSList *columns);
 void gdaex_grid_clear (GdaExGrid *grid);
 
 GtkWidget *gdaex_grid_get_widget (GdaExGrid *grid);
+
+typedef void (*GdaExGridFillListStoreMissingFunc) (GtkListStore *lstore, GtkTreeIter *iter, gpointer user_data);
+
+gboolean gdaex_grid_fill_from_sql_with_missing_func (GdaExGrid *grid,
+                                                     GdaEx *gdaex,
+                                                     const gchar *sql,
+                                                     GdaExGridFillListStoreMissingFunc missing_func, gpointer user_data,
+                                                     GError **error);
+gboolean gdaex_grid_fill_from_datamodel_with_missing_func (GdaExGrid *grid,
+                                                           GdaDataModel *dm,
+                                                           GdaExGridFillListStoreMissingFunc missing_func, gpointer user_data,
+                                                           GError **error);
 
 gboolean gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error);
 gboolean gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error);

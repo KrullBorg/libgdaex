@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,14 @@
 #include <libgdaex.h>
 
 GdaExGridColumn *gcol_birthday;
+
+static void
+missing_func (GtkListStore *lstore, GtkTreeIter *iter, gpointer user_data)
+{
+	gtk_list_store_set (lstore, iter,
+	                    7, "missing",
+	                    -1);
+}
 
 static void
 on_btn_birthday_clicked (GtkButton *button,
@@ -91,10 +99,13 @@ main (int argc, char **argv)
 	gcol = gdaex_grid_column_new ("Married", "married", G_TYPE_BOOLEAN, TRUE, TRUE, TRUE, TRUE, -1);
 	gdaex_grid_add_column (grid, gcol);
 
+	gcol = gdaex_grid_column_new_defaults ("Missing", "missing", G_TYPE_STRING);
+	gdaex_grid_add_column (grid, gcol);
+
 	wgrid = gdaex_grid_get_widget (grid);
 	gtk_container_add (GTK_CONTAINER (scrolledw), wgrid);
 
-	gdaex_grid_fill_from_sql (grid, gdaex, "SELECT * FROM clients", NULL);
+	gdaex_grid_fill_from_sql_with_missing_func (grid, gdaex, "SELECT * FROM clients", missing_func, NULL, NULL);
 
 	hbtnbox = gtk_hbutton_box_new ();
 	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 0);

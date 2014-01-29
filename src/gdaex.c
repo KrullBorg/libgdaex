@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2013 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -2833,7 +2833,9 @@ gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
 	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
 
 	dm = gdaex_query (gdaex, _sql);
+	g_free (_sql);
 	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, missing_func, user_data);
+	g_object_unref (dm);
 }
 
 void
