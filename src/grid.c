@@ -651,6 +651,7 @@ static GtkTreeView
 						{
 							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
 						}
+					g_object_set_data (G_OBJECT (vcolumn), "rpt_text_col_idx", g_strdup_printf ("%d", col));
 
 					if (gdaex_grid_column_get_sortable (gcolumn))
 						{
