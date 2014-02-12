@@ -762,6 +762,29 @@ gchar
 }
 
 /**
+ * gdaex_data_model_get_field_value_stringify_escaped_at:
+ * @data_model: a #GdaDataModel object.
+ * @row:
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gchar (stringify) escaped for sql
+ */
+gchar
+*gdaex_data_model_get_field_value_stringify_escaped_at (GdaDataModel *data_model,
+                                               gint row,
+                                               const gchar *field_name)
+{
+	gchar *value;
+	gchar *ret;
+
+	value = gdaex_data_model_get_field_value_stringify_at (data_model, row, field_name);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_get_field_value_integer_at:
  * @data_model: a #GdaDataModel object.
  * @row:
@@ -1041,6 +1064,27 @@ gchar
 			           error->message != NULL ? error->message : _("no details"));
 			ret = NULL;
 		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_get_value_stringify_escaped_at:
+ * @data_model: a #GdaDataModel object.
+ * @row: row number.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_get_value_stringify_escaped_at (GdaDataModel *data_model, gint row, gint col)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_get_value_stringify_at (data_model, row, col);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
 
 	return ret;
 }
@@ -1518,6 +1562,27 @@ gchar
 }
 
 /**
+ * gdaex_data_model_iter_get_field_value_stringify_escaped_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_iter_get_field_value_stringify_escaped_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_iter_get_field_value_stringify_at (iter, field_name);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_iter_get_field_value_integer_at:
  * @iter: a #GdaDataModelIter object.
  * @field_name: the field's name.
@@ -1805,6 +1870,26 @@ gchar
 					ret = g_strdup ("");
 				}
 		}
+
+	return ret;
+}
+
+/**
+ * gdaex_data_model_iter_get_value_stringify_escaped_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_iter_get_value_stringify_escaped_at (GdaDataModelIter *iter, gint col)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_iter_get_value_stringify_at (iter, col);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
 
 	return ret;
 }
