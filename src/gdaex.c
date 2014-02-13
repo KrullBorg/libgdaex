@@ -1115,7 +1115,10 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 				}
 			else
 				{
-					ret = strtol (gda_value_stringify (v), NULL, 10);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = strtol (str, NULL, 10);
+					g_free (str);
 				}
 		}
 	else
@@ -1154,7 +1157,10 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 	else
@@ -1193,7 +1199,10 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 	else
@@ -1450,7 +1459,7 @@ GDateTime
 						}
 					else if (gda_value_isa (v, G_TYPE_DATE))
 						{
-							gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+							gdate = (GDate *)g_value_get_boxed (v);
 							ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
 							                             (gint)g_date_get_month (gdate),
 							                             (gint)g_date_get_day (gdate),
@@ -1925,7 +1934,10 @@ gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = strtol (gda_value_stringify (v), NULL, 10);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = strtol (str, NULL, 10);
+					g_free (str);
 				}
 		}
 
@@ -1963,7 +1975,10 @@ gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 
@@ -2001,7 +2016,10 @@ gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 
@@ -2250,15 +2268,15 @@ GDateTime
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
-					gdate = gdaex_data_model_iter_get_value_gdate_at (iter, col);
+					gdate = (GDate *)g_value_get_boxed (v);
 					if (gdate != NULL && g_date_valid (gdate))
 						{
-							ret = g_date_time_new_local (g_date_get_year (gdate),
-							                             g_date_get_month (gdate),
-							                             g_date_get_day (gdate),
-							                             0,
-							                             0,
-							                             0.0);
+							ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
+							                             (gint)g_date_get_month (gdate),
+							                             (gint)g_date_get_day (gdate),
+							                             (gint)0,
+							                             (gint)0,
+							                             (gdouble)0.0);
 						}
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
