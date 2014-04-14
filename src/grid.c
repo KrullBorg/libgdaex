@@ -1,7 +1,7 @@
 /*
  *  grid.c
  *
- *  Copyright (C) 2010-2013 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -232,7 +232,11 @@ GtkWidget
 }
 
 gboolean
-gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error)
+gdaex_grid_fill_from_sql_with_missing_func (GdaExGrid *grid,
+                                            GdaEx *gdaex,
+                                            const gchar *sql,
+                                            GdaExGridFillListStoreMissingFunc missing_func, gpointer user_data,
+                                            GError **error)
 {
 	GdaDataModel *dm;
 
@@ -250,14 +254,17 @@ gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GErro
 
 	dm = gdaex_query (gdaex, _sql);
 	g_free (_sql);
-	ret = gdaex_grid_fill_from_datamodel (grid, dm, error);
+	ret = gdaex_grid_fill_from_datamodel_with_missing_func (grid, dm, missing_func, user_data, error);
 	g_object_unref (dm);
 
 	return ret;
 }
 
 gboolean
-gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error)
+gdaex_grid_fill_from_datamodel_with_missing_func (GdaExGrid *grid,
+                                                  GdaDataModel *dm,
+                                                  GdaExGridFillListStoreMissingFunc missing_func, gpointer user_data,
+                                                  GError **error)
 {
 	GdaExGridPrivate *priv;
 
@@ -284,6 +291,8 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 	GDateTime *gdatetime;
 	gdouble dval;
 
+	gboolean call_missing_func;
+
 	g_return_val_if_fail (GDAEX_IS_GRID (grid), FALSE);
 	g_return_val_if_fail (GDA_IS_DATA_MODEL (dm), FALSE);
 
@@ -304,6 +313,8 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 	columns = g_new0 (gint, cols);
 	values = g_new0 (GValue, cols);
 
+	call_missing_func = FALSE;
+
 	while (gda_data_model_iter_move_next (dm_iter))
 		{
 			gtk_list_store_append (GTK_LIST_STORE (priv->model), &iter);
@@ -311,6 +322,8 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 			cols_sorted = priv->columns->len;
 			for (col = 0; col < priv->columns->len; col++)
 				{
+					GValue gval = {0};
+
 					columns[col] = col;
 
 					col_gtype = gtk_tree_model_get_column_type (priv->model, col);
@@ -318,69 +331,77 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 					gdaex_col = (GdaExGridColumn *)g_ptr_array_index (priv->columns, col);
 					field_name = gdaex_grid_column_get_field_name (gdaex_col);
 
-					GValue gval = {0};
 					g_value_init (&gval, col_gtype);
-					switch (col_gtype)
+
+					/* checking if field exists */
+					if (gda_data_model_get_column_index (dm, field_name) == -1)
 						{
-							case G_TYPE_STRING:
-								gda_col = gda_data_model_describe_column (dm, col);
-								gda_col_gtype = gda_column_get_g_type (gda_col);
+							call_missing_func = TRUE;
+						}
+					else
+						{
+							switch (col_gtype)
+								{
+									case G_TYPE_STRING:
+										gda_col = gda_data_model_describe_column (dm, col);
+										gda_col_gtype = gda_column_get_g_type (gda_col);
 
-								switch (gda_col_gtype)
-									{
-										case G_TYPE_STRING:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name));
-											break;
-
-										case G_TYPE_BOOLEAN:
-											g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name) ? "X" : "");
-											break;
-
-										case G_TYPE_INT:
-										case G_TYPE_FLOAT:
-										case G_TYPE_DOUBLE:
-											dval = gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name);
-											g_value_set_string (&gval, gdaex_format_money (dval, gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)), FALSE));
-											break;
-
-										default:
-											if (gda_col_gtype == G_TYPE_DATE
-											    || gda_col_gtype == G_TYPE_DATE_TIME
-											    || gda_col_gtype == GDA_TYPE_TIMESTAMP)
-												{
-													gdatetime = gdaex_data_model_iter_get_field_value_gdatetime_at (dm_iter, field_name);
-													/* TODO find default format from locale */
-													g_value_set_string (&gval, g_date_time_format (gdatetime, gda_col_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
-													g_date_time_unref (gdatetime);
-												}
-											else
-												{
+										switch (gda_col_gtype)
+											{
+												case G_TYPE_STRING:
 													g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name));
-												}
-											break;
-									}
+													break;
 
-								break;
+												case G_TYPE_BOOLEAN:
+													g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name) ? "X" : "");
+													break;
 
-							case G_TYPE_INT:
-								g_value_set_int (&gval, gdaex_data_model_iter_get_field_value_integer_at (dm_iter, field_name));
-								break;
+												case G_TYPE_INT:
+												case G_TYPE_FLOAT:
+												case G_TYPE_DOUBLE:
+													dval = gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name);
+													g_value_set_string (&gval, gdaex_format_money (dval, gdaex_grid_column_get_decimals ((GdaExGridColumn *)g_ptr_array_index (priv->columns, col)), FALSE));
+													break;
 
-							case G_TYPE_FLOAT:
-								g_value_set_float (&gval, gdaex_data_model_iter_get_field_value_float_at (dm_iter, field_name));
-								break;
+												default:
+													if (gda_col_gtype == G_TYPE_DATE
+														|| gda_col_gtype == G_TYPE_DATE_TIME
+														|| gda_col_gtype == GDA_TYPE_TIMESTAMP)
+														{
+															gdatetime = gdaex_data_model_iter_get_field_value_gdatetime_at (dm_iter, field_name);
+															/* TODO find default format from locale */
+															g_value_set_string (&gval, g_date_time_format (gdatetime, gda_col_gtype == G_TYPE_DATE ? "%d/%m/%Y" : "%d/%m/%Y %H.%M.%S"));
+															g_date_time_unref (gdatetime);
+														}
+													else
+														{
+															g_value_set_string (&gval, gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name));
+														}
+													break;
+											}
 
-							case G_TYPE_DOUBLE:
-								g_value_set_double (&gval, gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name));
-								break;
+										break;
 
-							case G_TYPE_BOOLEAN:
-								g_value_set_boolean (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name));
-								break;
+									case G_TYPE_INT:
+										g_value_set_int (&gval, gdaex_data_model_iter_get_field_value_integer_at (dm_iter, field_name));
+										break;
 
-							default:
-								gval = *gda_value_new_from_string (gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name), col_gtype);
-								break;
+									case G_TYPE_FLOAT:
+										g_value_set_float (&gval, gdaex_data_model_iter_get_field_value_float_at (dm_iter, field_name));
+										break;
+
+									case G_TYPE_DOUBLE:
+										g_value_set_double (&gval, gdaex_data_model_iter_get_field_value_double_at (dm_iter, field_name));
+										break;
+
+									case G_TYPE_BOOLEAN:
+										g_value_set_boolean (&gval, gdaex_data_model_iter_get_field_value_boolean_at (dm_iter, field_name));
+										break;
+
+									default:
+										gval = *gda_value_new_from_string (gdaex_data_model_iter_get_field_value_stringify_at (dm_iter, field_name), col_gtype);
+										break;
+								}
 						}
 					values[col] = gval;
 
@@ -428,9 +449,26 @@ gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **erro
 				}
 
 			gtk_list_store_set_valuesv (GTK_LIST_STORE (priv->model), &iter, columns, values, cols);
+			if (call_missing_func
+			    && missing_func != NULL)
+				{
+					missing_func (GTK_LIST_STORE (priv->model), &iter, user_data);
+				}
 		}
 
 	return TRUE;
+}
+
+gboolean
+gdaex_grid_fill_from_sql (GdaExGrid *grid, GdaEx *gdaex, const gchar *sql, GError **error)
+{
+	return gdaex_grid_fill_from_sql_with_missing_func (grid, gdaex, sql, NULL, NULL, error);
+}
+
+gboolean
+gdaex_grid_fill_from_datamodel (GdaExGrid *grid, GdaDataModel *dm, GError **error)
+{
+	return gdaex_grid_fill_from_datamodel_with_missing_func (grid, dm, NULL, NULL, error);
 }
 
 #ifdef SOLIPA_FOUND
@@ -613,6 +651,7 @@ static GtkTreeView
 						{
 							gtk_tree_view_column_add_attribute (vcolumn, (GtkCellRenderer *)cells->data, "text", col);
 						}
+					g_object_set_data (G_OBJECT (vcolumn), "rpt_text_col_idx", g_strdup_printf ("%d", col));
 
 					if (gdaex_grid_column_get_sortable (gcolumn))
 						{

@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2013 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -762,6 +762,29 @@ gchar
 }
 
 /**
+ * gdaex_data_model_get_field_value_stringify_escaped_at:
+ * @data_model: a #GdaDataModel object.
+ * @row:
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gchar (stringify) escaped for sql
+ */
+gchar
+*gdaex_data_model_get_field_value_stringify_escaped_at (GdaDataModel *data_model,
+                                               gint row,
+                                               const gchar *field_name)
+{
+	gchar *value;
+	gchar *ret;
+
+	value = gdaex_data_model_get_field_value_stringify_at (data_model, row, field_name);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_get_field_value_integer_at:
  * @data_model: a #GdaDataModel object.
  * @row:
@@ -1046,6 +1069,27 @@ gchar
 }
 
 /**
+ * gdaex_data_model_get_value_stringify_escaped_at:
+ * @data_model: a #GdaDataModel object.
+ * @row: row number.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_get_value_stringify_escaped_at (GdaDataModel *data_model, gint row, gint col)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_get_value_stringify_at (data_model, row, col);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_get_value_integer_at:
  * @data_model: a #GdaDataModel object.
  * @row: row number.
@@ -1071,7 +1115,10 @@ gdaex_data_model_get_value_integer_at (GdaDataModel *data_model, gint row, gint 
 				}
 			else
 				{
-					ret = strtol (gda_value_stringify (v), NULL, 10);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = strtol (str, NULL, 10);
+					g_free (str);
 				}
 		}
 	else
@@ -1110,7 +1157,10 @@ gdaex_data_model_get_value_float_at (GdaDataModel *data_model, gint row, gint co
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 	else
@@ -1149,7 +1199,10 @@ gdaex_data_model_get_value_double_at (GdaDataModel *data_model, gint row, gint c
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 	else
@@ -1406,7 +1459,7 @@ GDateTime
 						}
 					else if (gda_value_isa (v, G_TYPE_DATE))
 						{
-							gdate = gdaex_data_model_get_value_gdate_at (data_model, row, col);
+							gdate = (GDate *)g_value_get_boxed (v);
 							ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
 							                             (gint)g_date_get_month (gdate),
 							                             (gint)g_date_get_day (gdate),
@@ -1515,6 +1568,27 @@ gchar
 		}
 
 	return value;
+}
+
+/**
+ * gdaex_data_model_iter_get_field_value_stringify_escaped_at:
+ * @iter: a #GdaDataModelIter object.
+ * @field_name: the field's name.
+ *
+ * Returns: the @field_name's #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_iter_get_field_value_stringify_escaped_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_iter_get_field_value_stringify_at (iter, field_name);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
 }
 
 /**
@@ -1810,6 +1884,26 @@ gchar
 }
 
 /**
+ * gdaex_data_model_iter_get_value_stringify_escaped_at:
+ * @iter: a #GdaDataModelIter object.
+ * @col: col number.
+ *
+ * Returns: the #GValue as #gchar (stringify) escaped for sql.
+ */
+gchar
+*gdaex_data_model_iter_get_value_stringify_escaped_at (GdaDataModelIter *iter, gint col)
+{
+	gchar *ret;
+	gchar *value;
+
+	value = gdaex_data_model_iter_get_value_stringify_at (iter, col);
+	ret = gdaex_strescape (value, NULL);
+	g_free (value);
+
+	return ret;
+}
+
+/**
  * gdaex_data_model_iter_get_value_integer_at:
  * @iter: a #GdaDataModelIter object.
  * @col: col number.
@@ -1840,7 +1934,10 @@ gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = strtol (gda_value_stringify (v), NULL, 10);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = strtol (str, NULL, 10);
+					g_free (str);
 				}
 		}
 
@@ -1878,7 +1975,10 @@ gdaex_data_model_iter_get_value_float_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 
@@ -1916,7 +2016,10 @@ gdaex_data_model_iter_get_value_double_at (GdaDataModelIter *iter, gint col)
 				}
 			else
 				{
-					ret = g_strtod (gda_value_stringify (v), NULL);
+					gchar *str;
+					str = gda_value_stringify (v);
+					ret = g_strtod (str, NULL);
+					g_free (str);
 				}
 		}
 
@@ -2165,15 +2268,15 @@ GDateTime
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE))
 				{
-					gdate = gdaex_data_model_iter_get_value_gdate_at (iter, col);
+					gdate = (GDate *)g_value_get_boxed (v);
 					if (gdate != NULL && g_date_valid (gdate))
 						{
-							ret = g_date_time_new_local (g_date_get_year (gdate),
-							                             g_date_get_month (gdate),
-							                             g_date_get_day (gdate),
-							                             0,
-							                             0,
-							                             0.0);
+							ret = g_date_time_new_local ((gint)g_date_get_year (gdate),
+							                             (gint)g_date_get_month (gdate),
+							                             (gint)g_date_get_day (gdate),
+							                             (gint)0,
+							                             (gint)0,
+							                             (gdouble)0.0);
 						}
 				}
 			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
@@ -2833,7 +2936,9 @@ gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
 	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
 
 	dm = gdaex_query (gdaex, _sql);
+	g_free (_sql);
 	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, missing_func, user_data);
+	g_object_unref (dm);
 }
 
 void

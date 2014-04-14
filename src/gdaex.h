@@ -1,7 +1,7 @@
 /*
  *  gdaex.h
  *
- *  Copyright (C) 2005-2013 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *  
@@ -84,6 +84,9 @@ gboolean gdaex_data_model_is_empty (GdaDataModel *data_model);
 gchar *gdaex_data_model_get_field_value_stringify_at (GdaDataModel *data_model,
                                                      gint row,
                                                      const gchar *field_name);
+gchar *gdaex_data_model_get_field_value_stringify_escaped_at (GdaDataModel *data_model,
+                                                     gint row,
+                                                     const gchar *field_name);
 gint gdaex_data_model_get_field_value_integer_at (GdaDataModel *data_model,
                                                  gint row,
                                                  const gchar *field_name);
@@ -110,6 +113,9 @@ struct tm *gdaex_data_model_get_field_value_tm_at (GdaDataModel *data_model,
                                                  const gchar *field_name);
 
 gchar *gdaex_data_model_get_value_stringify_at (GdaDataModel *data_model,
+                                               gint row,
+                                               gint col);
+gchar *gdaex_data_model_get_value_stringify_escaped_at (GdaDataModel *data_model,
                                                gint row,
                                                gint col);
 gint gdaex_data_model_get_value_integer_at (GdaDataModel *data_model,
@@ -139,6 +145,8 @@ struct tm *gdaex_data_model_get_value_tm_at (GdaDataModel *data_model,
 
 gchar *gdaex_data_model_iter_get_field_value_stringify_at (GdaDataModelIter *iter,
                                                      const gchar *field_name);
+gchar *gdaex_data_model_iter_get_field_value_stringify_escaped_at (GdaDataModelIter *iter,
+                                                     const gchar *field_name);
 gint gdaex_data_model_iter_get_field_value_integer_at (GdaDataModelIter *iter,
                                                  const gchar *field_name);
 gfloat gdaex_data_model_iter_get_field_value_float_at (GdaDataModelIter *iter,
@@ -157,6 +165,8 @@ struct tm *gdaex_data_model_iter_get_field_value_tm_at (GdaDataModelIter *iter,
                                                  const gchar *field_name);
 
 gchar *gdaex_data_model_iter_get_value_stringify_at (GdaDataModelIter *iter,
+                                               gint col);
+gchar *gdaex_data_model_iter_get_value_stringify_escaped_at (GdaDataModelIter *iter,
                                                gint col);
 gint gdaex_data_model_iter_get_value_integer_at (GdaDataModelIter *iter,
                                            gint col);
