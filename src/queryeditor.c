@@ -3525,12 +3525,6 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 										val2_sql = g_strdup (val2_sql);
 									}
 							}
-						else if (GTK_IS_FORM_DECODER (priv->txt1))
-							{
-								val1 = (gchar *)gtk_form_decoder_get_decoded (GTK_FORM_DECODER (priv->txt1));
-								val1_sql = (gchar *)gtk_form_decoder_get_key (GTK_FORM_DECODER (priv->txt1));
-							}
-						else
 							{
 								where_type = 0;
 								val1 = g_strdup ("");
