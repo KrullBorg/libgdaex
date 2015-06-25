@@ -214,7 +214,7 @@ main (int argc, char *argv[])
 
 	gtk_init (&argc, &argv);
 
-	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=test_prefix.db", TESTSDIR));
+	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=query_editor.db", TESTSDIR));
 	if (gdaex == NULL)
 		{
 			g_error ("Error on GdaEx initialization.");

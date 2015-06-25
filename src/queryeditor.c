@@ -166,6 +166,10 @@ static void gdaex_query_editor_on_btn_order_clean_clicked (GtkButton *button,
 static void gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
                                                     gpointer user_data);
 
+static void gdaex_query_editor_on_txt1_btn_browse_clicked (gpointer instance, gpointer user_data);
+static void gdaex_query_editor_on_txt2_btn_browse_clicked (gpointer instance, gpointer user_data);
+
+
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
 typedef GtkWidget *(* GtkDateEntryNew) (const gchar *format,
@@ -3521,6 +3525,11 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 										val2_sql = g_strdup (val2_sql);
 									}
 							}
+						else if (GTK_IS_FORM_DECODER (priv->txt1))
+							{
+								val1 = (gchar *)gtk_form_decoder_get_decoded (GTK_FORM_DECODER (priv->txt1));
+								val1_sql = (gchar *)gtk_form_decoder_get_key (GTK_FORM_DECODER (priv->txt1));
+							}
 						else
 							{
 								where_type = 0;
@@ -4525,4 +4534,16 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 			g_free (field_name);
 			g_free (order);
 		}
+}
+
+static void
+gdaex_query_editor_on_txt1_btn_browse_clicked (gpointer instance, gpointer user_data)
+{
+	g_debug ("Txt1 Open clicked.");
+}
+
+static void
+gdaex_query_editor_on_txt2_btn_browse_clicked (gpointer instance, gpointer user_data)
+{
+	g_debug ("Txt2 Open clicked.");
 }
