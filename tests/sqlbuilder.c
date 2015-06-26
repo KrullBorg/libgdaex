@@ -27,6 +27,10 @@ main (int argc, char **argv)
 
 	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
 	gdaex_sql_builder_from (sqlb, "pippo", "pluto");
+	gdaex_sql_builder_fields (sqlb,
+							  "pippo", "id", "",
+							  "pippo", "name", "the_name",
+							  NULL);
 
 	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb));
 	

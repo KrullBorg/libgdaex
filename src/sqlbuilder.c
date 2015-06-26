@@ -25,6 +25,8 @@
 	#include <config.h>
 #endif
 
+#include <stdarg.h>
+
 #include <glib/gi18n-lib.h>
 
 #include "sqlbuilder.h"
@@ -46,6 +48,15 @@ static void gdaex_sql_builder_get_property (GObject *object,
 
 typedef struct _GdaExSqlBuilderTable GdaExSqlBuilderTable;
 struct _GdaExSqlBuilderTable
+{
+  guint id;
+  gchar *name;
+  gchar *alias;
+  GHashTable *ht_fields;
+};
+
+typedef struct _GdaExSqlBuilderField GdaExSqlBuilderField;
+struct _GdaExSqlBuilderField
 {
   guint id;
   gchar *name;
@@ -92,6 +103,47 @@ GdaExSqlBuilder
 	return gdaex_sql_builder;
 }
 
+GdaExSqlBuilderField
+*gdaex_sql_builder_get_field (GdaExSqlBuilder *sqlb, GdaExSqlBuilderTable *table, const gchar *field_name, gboolean add)
+{
+	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
+
+	GdaExSqlBuilderField *f;
+
+	f = g_hash_table_lookup (table->ht_fields, field_name);
+  if (f == NULL && add)
+	{
+	  f = g_new0 (GdaExSqlBuilderField, 1);
+	  f->id = gda_sql_builder_select_add_field (priv->sqlb, field_name, table->name, NULL);
+	  f->name = g_strdup (field_name);
+	  f->alias = NULL;
+	  g_hash_table_insert (table->ht_fields, g_strdup (field_name), f);
+	}
+  
+  return f;
+}
+
+GdaExSqlBuilderTable
+*gdaex_sql_builder_get_table (GdaExSqlBuilder *sqlb, const gchar *table_name, gboolean add)
+{
+	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
+
+	GdaExSqlBuilderTable *t;
+
+	t = g_hash_table_lookup (priv->ht_tables, table_name);
+	if (t == NULL && add)
+	  {
+		t = g_new0 (GdaExSqlBuilderTable, 1);
+		t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), NULL);
+		t->name = g_strdup (table_name);
+		t->alias = NULL;
+		t->ht_fields = g_hash_table_new (g_str_hash, g_str_equal);
+		g_hash_table_insert (priv->ht_tables, g_strdup (t->name), t);
+	  }
+
+	return t;
+}
+
 void
 gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *table_alias)
 {
@@ -99,15 +151,55 @@ gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, const gc
 
 	GdaExSqlBuilderTable *t;
 
-	t = g_hash_table_lookup (priv->ht_tables, table_name);
-	if (t == NULL)
+	t = gdaex_sql_builder_get_table (sqlb, table_name, TRUE);
+	if (t->alias != NULL)
 	  {
-		t = g_new0 (GdaExSqlBuilderTable, 1);
-		t->name = g_strdup (table_name);
+		g_free (t->alias);
 		t->alias = g_strdup (table_alias);
-		t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), NULL);
-		g_hash_table_insert (priv->ht_tables, t->name, t);
 	  }
+}
+
+void
+gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...)
+{
+  va_list ap;
+  
+	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
+
+	va_start (ap, sqlb);
+	do
+	  {
+		gchar *table_name = va_arg (ap, gchar *);
+		if (table_name != NULL)
+		  {
+			gchar *field_name = va_arg (ap, gchar *);
+			if (field_name != NULL)
+			  {
+				gchar *field_alias = va_arg (ap, gchar *);
+				if (field_alias != NULL)
+				  {
+					GdaExSqlBuilderTable *t = gdaex_sql_builder_get_table (sqlb, table_name, TRUE);
+					GdaExSqlBuilderField *f = gdaex_sql_builder_get_field (sqlb, t, field_name, TRUE);
+
+					gchar *_field_alias = g_strstrip (g_strdup (field_alias));
+					gda_sql_builder_select_add_field (priv->sqlb, field_name, table_name, _field_alias);
+					g_free (_field_alias);
+				  }
+				else
+				  {
+					break;
+				  }
+			  }
+			else
+			  {
+				break;
+			  }
+		  }
+		else
+		  {
+			break;
+		  }
+	  } while (TRUE);
 }
 
 GdaSqlBuilder
@@ -128,7 +220,6 @@ const gchar
 
 	ret = NULL;
 
-	gda_sql_builder_select_add_field (priv->sqlb, "*", NULL, NULL);
 	stmt = gda_sql_builder_get_statement (priv->sqlb, NULL);
 	if (stmt != NULL)
 	  {
