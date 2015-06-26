@@ -26,13 +26,17 @@ main (int argc, char **argv)
 	gtk_init (&argc, &argv);
 
 	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
-	gdaex_sql_builder_from (sqlb, "pippo", "pluto");
+
+	gdaex_sql_builder_from_v (sqlb,
+							  "pippo", "pluto",
+							  "topolino", "",
+							  NULL);
+
 	gdaex_sql_builder_fields (sqlb,
 							  "pippo", "id", "",
 							  "pippo", "name", "the_name",
 							  NULL);
 	
-	gdaex_sql_builder_from (sqlb, "topolino", NULL);
 	gdaex_sql_builder_join (sqlb, "pippo", GDA_SQL_SELECT_JOIN_INNER, "topolino",
 							"pippo", "id", "",
 							GDA_SQL_OPERATOR_TYPE_EQ,

@@ -103,7 +103,7 @@ GdaExSqlBuilder
 	return gdaex_sql_builder;
 }
 
-GdaExSqlBuilderField
+static GdaExSqlBuilderField
 *gdaex_sql_builder_get_field (GdaExSqlBuilder *sqlb, GdaExSqlBuilderTable *table, const gchar *field_name, const gchar *field_alias, gboolean add)
 {
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
@@ -130,7 +130,7 @@ GdaExSqlBuilderField
   return f;
 }
 
-GdaExSqlBuilderTable
+static GdaExSqlBuilderTable
 *gdaex_sql_builder_get_table (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *table_alias, gboolean add)
 {
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
@@ -166,6 +166,36 @@ gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, const gc
 	GdaExSqlBuilderTable *t;
 
 	t = gdaex_sql_builder_get_table (sqlb, table_name, table_alias, TRUE);
+}
+
+void
+gdaex_sql_builder_from_v (GdaExSqlBuilder *sqlb, ...)
+{
+  va_list ap;
+
+  GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
+
+	va_start (ap, sqlb);
+	do
+	  {
+		gchar *table_name = va_arg (ap, gchar *);
+		if (table_name != NULL)
+		  {
+			gchar *table_alias = va_arg (ap, gchar *);
+			if (table_alias != NULL)
+			  {
+				gdaex_sql_builder_from (sqlb, table_name, table_alias);
+			  }
+			else
+			  {
+				break;
+			  }
+		  }
+		else
+		  {
+			break;
+		  }
+	  } while (TRUE);
 }
 
 void
