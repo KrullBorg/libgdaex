@@ -59,6 +59,11 @@ GType gdaex_sql_builder_get_type (void) G_GNUC_CONST;
 GdaExSqlBuilder *gdaex_sql_builder_new (GdaSqlStatementType stmt_type);
 
 void gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *table_alias);
+void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
+							 const gchar *table_name,
+							 GdaSqlSelectJoinType join_type,
+							 const gchar *table_name_right,
+							 ...);
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);

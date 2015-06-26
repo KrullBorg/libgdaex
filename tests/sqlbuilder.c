@@ -31,6 +31,13 @@ main (int argc, char **argv)
 							  "pippo", "id", "",
 							  "pippo", "name", "the_name",
 							  NULL);
+	
+	gdaex_sql_builder_from (sqlb, "topolino", NULL);
+	gdaex_sql_builder_join (sqlb, "pippo", GDA_SQL_SELECT_JOIN_INNER, "topolino",
+							"pippo", "id", "",
+							GDA_SQL_OPERATOR_TYPE_EQ,
+							"topolino", "id_pippo", "",
+							NULL);
 
 	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb));
 	
