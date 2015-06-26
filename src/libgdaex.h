@@ -29,6 +29,7 @@
 #include "gridcolumn.h"
 #include "queryeditor.h"
 #include "queryeditor_widget_interface.h"
+#include "sqlbuilder.h"
 
 
 #endif /* __LIBGDAEX_H__ */

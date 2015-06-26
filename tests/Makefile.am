@@ -19,6 +19,7 @@ noinst_PROGRAMS = fill_liststore \
                   grid \
                   query_editor \
                   select \
+                  sqlbuilder \
                   test_prefix
 
 LDADD = $(top_builddir)/src/libgdaex.la
