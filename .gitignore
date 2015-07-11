@@ -48,3 +48,4 @@ tests/fill_liststore
 tests/*.exe
 tests/select
 tests/getsql
+tests/sqlbuilder

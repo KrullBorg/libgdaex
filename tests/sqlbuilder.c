@@ -43,7 +43,7 @@ main (int argc, char **argv)
 							"topolino", "id_pippo", "",
 							NULL);
 
-	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb));
+	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb, NULL, NULL));
 	
 	return 0;
 }

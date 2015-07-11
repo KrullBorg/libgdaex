@@ -70,7 +70,7 @@ void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);
-const gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb);
+const gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
 
 
 G_END_DECLS

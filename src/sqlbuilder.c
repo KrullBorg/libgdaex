@@ -344,7 +344,7 @@ GdaSqlBuilder
 }
 
 const gchar
-*gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb)
+*gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
 {
   gchar *ret;
   GdaStatement *stmt;
@@ -356,7 +356,12 @@ const gchar
 	stmt = gda_sql_builder_get_statement (priv->sqlb, NULL);
 	if (stmt != NULL)
 	  {
-		ret = gda_statement_to_sql (stmt, NULL, NULL);
+		ret = gda_statement_to_sql_extended (stmt,
+											 cnc,
+											 params,
+											 GDA_STATEMENT_SQL_PARAMS_AS_VALUES,
+											 NULL,
+											 NULL);
 	  }
 
 	return ret;
