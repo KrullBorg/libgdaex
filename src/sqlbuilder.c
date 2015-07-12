@@ -46,6 +46,14 @@ static void gdaex_sql_builder_get_property (GObject *object,
 
 #define GDAEX_SQLBUILDER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GDAEX_TYPE_SQLBUILDER, GdaExSqlBuilderPrivate))
 
+typedef struct _GdaExSqlBuilderField GdaExSqlBuilderField;
+struct _GdaExSqlBuilderField
+{
+	guint id;
+	gchar *name;
+	gchar *alias;
+};
+
 typedef struct _GdaExSqlBuilderTable GdaExSqlBuilderTable;
 struct _GdaExSqlBuilderTable
 {
@@ -55,20 +63,13 @@ struct _GdaExSqlBuilderTable
 	GHashTable *ht_fields;
 };
 
-typedef struct _GdaExSqlBuilderField GdaExSqlBuilderField;
-struct _GdaExSqlBuilderField
-{
-	guint id;
-	gchar *name;
-	gchar *alias;
-};
-
 typedef struct _GdaExSqlBuilderPrivate GdaExSqlBuilderPrivate;
 struct _GdaExSqlBuilderPrivate
 {
 	GdaSqlStatementType stmt_type;
 	GdaSqlBuilder *sqlb;
 	GHashTable *ht_tables;
+	GdaSqlBuilderId id_where;
 };
 
 G_DEFINE_TYPE (GdaExSqlBuilder, gdaex_sql_builder, G_TYPE_OBJECT)
@@ -89,7 +90,6 @@ gdaex_sql_builder_init (GdaExSqlBuilder *gdaex_sql_builder)
 {
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (gdaex_sql_builder);
 
-	priv->ht_tables = g_hash_table_new (g_str_hash, g_str_equal);
 }
 
 GdaExSqlBuilder
@@ -101,6 +101,8 @@ GdaExSqlBuilder
 
 	priv->stmt_type = stmt_type;
 	priv->sqlb = gda_sql_builder_new (priv->stmt_type);
+	priv->ht_tables = g_hash_table_new (g_str_hash, g_str_equal);
+	priv->id_where = 0;
 
 	return gdaex_sql_builder;
 }
@@ -118,11 +120,11 @@ static GdaExSqlBuilderField
 			f = g_new0 (GdaExSqlBuilderField, 1);
 			if (priv->stmt_type == GDA_SQL_STATEMENT_SELECT)
 				{
-					f->id = gda_sql_builder_select_add_field (priv->sqlb, field_name, table->alias != NULL ? table->alias : table->name, field_alias);
+					f->id = gda_sql_builder_select_add_field (priv->sqlb, field_name, g_strcmp0 (table->alias, "") != 0 ? table->alias : table->name, field_alias);
 				}
 			else
 				{
-					/* TODO */
+					f->id = gda_sql_builder_add_id (priv->sqlb, g_strcmp0 (field_alias, "") != 0 ? field_alias : field_name);
 				}
 			f->name = g_strdup (field_name);
 			if (field_alias != NULL)
@@ -181,20 +183,28 @@ gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, const gc
 	gdaex_sql_builder_get_table (sqlb, table_name, table_alias, TRUE);
 }
 
+/**
+ * gdaex_sql_builder_from_v:
+ * @sqlb: a #GdaExSqlBuilder object.
+ * @...: an #NULL terminated array of couples table_name - table_alias.
+ */
 void
 gdaex_sql_builder_from_v (GdaExSqlBuilder *sqlb, ...)
 {
 	va_list ap;
 
+	gchar *table_name;
+	gchar *table_alias;
+	
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
 
 	va_start (ap, sqlb);
 	do
 		{
-			gchar *table_name = va_arg (ap, gchar *);
+			table_name = va_arg (ap, gchar *);
 			if (table_name != NULL)
 				{
-					gchar *table_alias = va_arg (ap, gchar *);
+					table_alias = va_arg (ap, gchar *);
 					if (table_alias != NULL)
 						{
 							gdaex_sql_builder_from (sqlb, table_name, table_alias);
@@ -217,52 +227,51 @@ gdaex_sql_builder_from_v (GdaExSqlBuilder *sqlb, ...)
 
 void
 gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
-                        const gchar *table_name,
                         GdaSqlSelectJoinType join_type,
-                        const gchar *table_name_right,
                         ...)
 {
 	va_list ap;
 
-	GdaExSqlBuilderTable *t1;
-	GdaExSqlBuilderTable *t2;
-  
+	gchar *field_table_name_left;
+	gchar *field_name_left;
+	gchar *field_alias_left;
+	gchar *field_table_name_right;
+	gchar *field_name_right;
+	gchar *field_alias_right;
+
+	GdaExSqlBuilderTable *t_left;
+	GdaExSqlBuilderField *f_left;
+	GdaExSqlBuilderTable *t_right;
+	GdaExSqlBuilderField *f_right;
+
+	gchar *tmp;
+	GdaSqlOperatorType op;
+		
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
 
 	if (priv->stmt_type != GDA_SQL_STATEMENT_SELECT) return;
-	
-	t1 = gdaex_sql_builder_get_table (sqlb, table_name, NULL, TRUE);
-	t2 = gdaex_sql_builder_get_table (sqlb, table_name_right, NULL, TRUE);
-	
-	va_start (ap, table_name_right);
+
+	va_start (ap, join_type);
 	do
 		{
-			gchar *table_name;
-			gchar *field_name;
-			gchar *field_alias;
-			gchar *table_name_right;
-			gchar *field_name_right;
-			gchar *field_alias_right;
-
-			GdaExSqlBuilderTable *t;
-			GdaExSqlBuilderField *f;
-			GdaExSqlBuilderTable *t_right;
-			GdaExSqlBuilderField *f_right;
-
-			gchar *tmp;
-			GdaSqlOperatorType op;
-		
-			table_name = va_arg (ap, gchar *);
-			if (table_name != NULL)
+			field_table_name_left = NULL;
+			field_name_left = NULL;
+			field_alias_left = NULL;
+			field_table_name_right = NULL;
+			field_name_right = NULL;
+			field_alias_right = NULL;
+			
+			field_table_name_left = va_arg (ap, gchar *);
+			if (field_table_name_left != NULL)
 				{
-					field_name = va_arg (ap, gchar *);
-					if (field_name != NULL)
+					field_name_left = va_arg (ap, gchar *);
+					if (field_name_left != NULL)
 						{
-							field_alias = va_arg (ap, gchar *);
-							if (field_alias != NULL)
+							field_alias_left = va_arg (ap, gchar *);
+							if (field_alias_left != NULL)
 								{
-									t = gdaex_sql_builder_get_table (sqlb, table_name, NULL, TRUE);
-									f = gdaex_sql_builder_get_field (sqlb, t, field_name, field_alias, TRUE);
+									t_left = gdaex_sql_builder_get_table (sqlb, field_table_name_left, NULL, TRUE);
+									f_left = gdaex_sql_builder_get_field (sqlb, t_left, field_name_left, field_alias_left, TRUE);
 								}
 							else
 								{
@@ -281,8 +290,8 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 
 			op = va_arg (ap, guint);
 		
-			table_name_right = va_arg (ap, gchar *);
-			if (table_name_right != NULL)
+			field_table_name_right = va_arg (ap, gchar *);
+			if (field_table_name_right != NULL)
 				{
 					field_name_right = va_arg (ap, gchar *);
 					if (field_name_right != NULL)
@@ -290,7 +299,7 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 							field_alias_right = va_arg (ap, gchar *);
 							if (field_alias_right != NULL)
 								{
-									t_right = gdaex_sql_builder_get_table (sqlb, table_name_right, NULL, TRUE);
+									t_right = gdaex_sql_builder_get_table (sqlb, field_table_name_right, NULL, TRUE);
 									f_right = gdaex_sql_builder_get_field (sqlb, t_right, field_name_right, field_alias_right, TRUE);
 								}
 							else
@@ -308,8 +317,8 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 					break;
 				}
 
-			GdaSqlBuilderId jid = gda_sql_builder_add_cond (priv->sqlb, op, f_right->id, f->id, 0);
-			gda_sql_builder_select_join_targets (priv->sqlb, t->id, t_right->id, join_type, jid);
+			GdaSqlBuilderId jid = gda_sql_builder_add_cond (priv->sqlb, op, f_right->id, f_left->id, 0);
+			gda_sql_builder_select_join_targets (priv->sqlb, t_left->id, t_right->id, join_type, jid);
 		} while (TRUE);
 	va_end (ap);
 }
@@ -350,6 +359,82 @@ gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...)
 				{
 					break;
 				}
+		} while (TRUE);
+	va_end (ap);
+}
+
+void
+gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
+{
+	va_list ap;
+
+	gchar *table_name;
+	gchar *field_name;
+	gchar *field_alias;
+	GValue *gval;
+
+	GdaExSqlBuilderTable *t;
+	GdaExSqlBuilderField *f;
+
+	GdaSqlOperatorType op_expr;
+
+	GdaSqlBuilderId id_expr;
+	GdaSqlBuilderId id_cond;
+		
+	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
+
+	va_start (ap, op);
+	do
+		{
+			table_name = va_arg (ap, gchar *);
+			if (table_name != NULL)
+				{
+					field_name = va_arg (ap, gchar *);
+					if (field_name != NULL)
+						{
+							field_alias = va_arg (ap, gchar *);
+							if (field_alias != NULL)
+								{
+									t = gdaex_sql_builder_get_table (sqlb, table_name, NULL, TRUE);
+									f = gdaex_sql_builder_get_field (sqlb, t, field_name, field_alias, TRUE);
+								}
+							else
+								{
+									break;
+								}
+						}
+					else
+						{
+							break;
+						}
+				}
+			else
+				{
+					break;
+				}
+
+			op_expr = va_arg (ap, guint);
+		
+			gval = va_arg (ap, GValue *);
+			if (gval != NULL)
+				{
+					id_expr = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+				}
+			else
+				{
+					break;
+				}
+
+			id_cond = gda_sql_builder_add_cond (priv->sqlb, op_expr, f->id, id_expr, 0);
+			if (priv->id_where != 0)
+				{
+					priv->id_where = gda_sql_builder_add_cond (priv->sqlb, op, priv->id_where, id_cond, 0);
+				}
+			else
+				{
+					priv->id_where = id_cond;
+				}
+			gda_sql_builder_set_where (priv->sqlb, priv->id_where);
 		} while (TRUE);
 	va_end (ap);
 }

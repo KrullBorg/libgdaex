@@ -62,12 +62,13 @@ void gdaex_sql_builder_from (GdaExSqlBuilder *sqlb, const gchar *table_name, con
 void gdaex_sql_builder_from_v (GdaExSqlBuilder *sqlb, ...);
 
 void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
-							 const gchar *table_name,
 							 GdaSqlSelectJoinType join_type,
-							 const gchar *table_name_right,
 							 ...);
 
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
+
+void gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,
+							  ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);
 const gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
