@@ -67,8 +67,8 @@ void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
-void gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,
-							  ...);
+GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,
+										 ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);
 const gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
