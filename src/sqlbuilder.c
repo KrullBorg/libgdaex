@@ -92,6 +92,12 @@ gdaex_sql_builder_init (GdaExSqlBuilder *gdaex_sql_builder)
 
 }
 
+/**
+ * gdaex_sql_builder_new:
+ * @stmt_type:
+ *
+ * Returns:
+ */
 GdaExSqlBuilder
 *gdaex_sql_builder_new (GdaSqlStatementType stmt_type)
 {
@@ -235,6 +241,12 @@ gdaex_sql_builder_from_v (GdaExSqlBuilder *sqlb, ...)
 		} while (TRUE);
 }
 
+/**
+ * gdaex_sql_builder_join:
+ * @sqlb:
+ * @join_type:
+ * @...:
+ */
 void
 gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
                         GdaSqlSelectJoinType join_type,
@@ -333,6 +345,11 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 	va_end (ap);
 }
 
+/**
+ * gdaex_sql_builder_fields:
+ * @sqlb:
+ * @...:
+ */
 void
 gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...)
 {
@@ -387,6 +404,14 @@ gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...)
 	va_end (ap);
 }
 
+/**
+ * gdaex_sql_builder_where:
+ * @sqlb:
+ * @op:
+ * @...:
+ *
+ * Returns:
+ */
 GdaSqlBuilderId
 gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 {
@@ -470,6 +495,12 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 	return priv->id_where;
 }
 
+/**
+ * gaex_sql_builder_get_gda_sql_builder:
+ * @sqlb:
+ *
+ * Returns:
+ */
 GdaSqlBuilder
 *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb)
 {
@@ -478,6 +509,14 @@ GdaSqlBuilder
 	return priv->sqlb;
 }
 
+/**
+ * gdaex_sql_builder_get_sql:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ * Returns:
+ */
 const gchar
 *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
 {
