@@ -577,7 +577,7 @@ GdaSqlBuilder
  *
  * Returns:
  */
-const gchar
+gchar
 *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
 {
 	gchar *ret;
@@ -612,6 +612,46 @@ const gchar
 			g_warning ("Error on creating GdaStatement: %s.",
 					   error != NULL && error->message != NULL ? error->message : "no details");
 		}
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_query:
+ * @sqlb:
+ * @gdaex:
+ *
+ * Returns: a #GdaDataModel.
+ */
+GdaDataModel
+*gdaex_sql_builder_query (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
+{
+	gchar *sql;
+	GdaDataModel *dm;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	sql = gdaex_sql_builder_get_sql (sqlb, (GdaConnection *)gdaex_get_gdaconnection (gdaex), params);
+
+	dm = gdaex_query (gdaex, sql);
+	g_free (sql);
+
+	return dm;
+}
+
+gint
+gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
+{
+	gchar *sql;
+	GdaDataModel *dm;
+	gint ret;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	sql = gdaex_sql_builder_get_sql (sqlb, (GdaConnection *)gdaex_get_gdaconnection (gdaex), params);
+
+	ret = gdaex_execute (gdaex, sql);
+	g_free (sql);
 
 	return ret;
 }

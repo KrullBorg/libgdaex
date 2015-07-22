@@ -73,7 +73,10 @@ GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorTy
 void gdaex_sql_builder_order (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);
-const gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+
+GdaDataModel *gdaex_sql_builder_query (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params);
+gint gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params);
 
 
 G_END_DECLS
