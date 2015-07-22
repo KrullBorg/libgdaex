@@ -37,7 +37,7 @@ main (int argc, char **argv)
 							  "pippo", "id", "", NULL,
 							  "pippo", "name", "the_name", NULL,
 							  NULL);
-	
+
 	gdaex_sql_builder_join (sqlb, GDA_SQL_SELECT_JOIN_INNER,
 							"pippo", "id", "",
 							GDA_SQL_OPERATOR_TYPE_EQ,
@@ -53,7 +53,7 @@ main (int argc, char **argv)
 							 gval,
 							 NULL);
 	g_value_unset (gval);
-	
+
 	gval = g_new0 (GValue, 1);
 	g_value_init (gval, G_TYPE_STRING);
 	g_value_set_string (gval, "ichichc");
@@ -63,6 +63,11 @@ main (int argc, char **argv)
 							 gval,
 							 NULL);
 	g_value_unset (gval);
+
+	gdaex_sql_builder_order (sqlb,
+							 "pippo", "name", "", TRUE,
+							 "pippo", "id", "", FALSE,
+							 NULL);
 
 	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb, NULL, NULL));
 
@@ -74,7 +79,7 @@ main (int argc, char **argv)
 							  "pippo", "pluto",
 							  "topolino", "",
 							  NULL);
-	
+
 	gval = g_new0 (GValue, 1);
 	g_value_init (gval, G_TYPE_INT);
 	g_value_set_int (gval, 1);
@@ -101,8 +106,8 @@ main (int argc, char **argv)
 	g_value_set_string (gval, "il nome di pippo");
 	gdaex_sql_builder_fields (sqlb,
 							  "pippo", "name", "", gval,
-							  NULL);	
-	
+							  NULL);
+
 	gval = g_new0 (GValue, 1);
 	g_value_init (gval, G_TYPE_INT);
 	g_value_set_int (gval, 1);
@@ -129,8 +134,8 @@ main (int argc, char **argv)
 	g_value_set_string (gval, "il nome di pippo");
 	gdaex_sql_builder_fields (sqlb,
 							  "pippo", "name", "", gval,
-							  NULL);	
-	
+							  NULL);
+
 	gval = g_new0 (GValue, 1);
 	g_value_init (gval, G_TYPE_INT);
 	g_value_set_int (gval, 1);
