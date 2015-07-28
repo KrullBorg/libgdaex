@@ -4,17 +4,17 @@
  *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
- *  
+ *
  *  libgdaex is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  libgdaex is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with libgdaex; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -40,7 +40,7 @@
 static guint debug;
 static gchar *log_file;
 
-static GOptionEntry entries[] = 
+static GOptionEntry entries[] =
 {
 	{ "gdaex-debug-level", 0, 0, G_OPTION_ARG_INT, &debug, "Sets the debug level", NULL },
 	{ "gdaex-log-file", 0, 0, G_OPTION_ARG_FILENAME, &log_file, "Path to file where to write debug info (or stdout or stderr)", NULL },
@@ -428,7 +428,7 @@ gdaex_post_parse_options (GOptionContext *context,
 							g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MASK | G_LOG_FLAG_FATAL
 							                   | G_LOG_FLAG_RECURSION, gdaex_log_handler, user_data);
 						}
-				}	
+				}
 		}
 
 	return TRUE;
@@ -485,6 +485,22 @@ const gchar
 	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
 
 	return gda_server_provider_get_name (gda_connection_get_provider (priv->gda_conn));
+}
+
+/**
+ * gdaex_get_sql_parser:
+ * @gdaex: a #GdaEx object.
+ *
+ * Returns: the sql parser associated to the #GdaEx.
+ */
+const GdaSqlParser
+*gdaex_get_sql_parser (GdaEx *gdaex)
+{
+	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+
+	GdaExPrivate *priv = GDAEX_GET_PRIVATE (gdaex);
+
+	return priv->gda_parser;
 }
 
 /**
@@ -1297,7 +1313,7 @@ GdaTimestamp
 					else if (gda_value_isa (v, G_TYPE_DATE_TIME))
 						{
 							GDateTime *gdatetime;
-					
+
 							gdatetime = gdaex_data_model_get_value_gdatetime_at (data_model, row, col);
 							gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
 							gdatimestamp->year = g_date_time_get_year (gdatetime);
@@ -2111,7 +2127,7 @@ GdaTimestamp
 			else if (gda_value_isa (v, G_TYPE_DATE_TIME))
 				{
 					GDateTime *gdatetime;
-					
+
 					gdatetime = gdaex_data_model_iter_get_value_gdatetime_at (iter, col);
 					gdatimestamp = g_malloc0 (sizeof (GdaTimestamp));
 					gdatimestamp->year = g_date_time_get_year (gdatetime);

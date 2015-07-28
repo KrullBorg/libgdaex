@@ -4,21 +4,21 @@
  *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
- *  
+ *
  *  libgdaex is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  libgdaex is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with libgdaex; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *  
+ *
  */
 
 #include <time.h>
@@ -73,6 +73,7 @@ GOptionGroup *gdaex_get_option_group (GdaEx *gdaex);
 
 const GdaConnection *gdaex_get_gdaconnection (GdaEx *gdaex);
 const gchar *gdaex_get_provider (GdaEx *gdaex);
+const GdaSqlParser *gdaex_get_sql_parser (GdaEx *gdaex);
 
 const gchar *gdaex_get_tables_name_prefix (GdaEx *gdaex);
 void gdaex_set_tables_name_prefix (GdaEx *gdaex, const gchar *tables_name_prefix);
