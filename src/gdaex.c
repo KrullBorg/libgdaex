@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -3447,6 +3447,202 @@ gchar
 
 	return ret;
 }
+
+/**
+ * gdaex_save_file_in_blob:
+ * @gdaex:
+ * @sql:
+ * @blob_field_name:
+ * @filename:
+ *
+ * Returns:
+ */
+gboolean
+gdaex_save_file_in_blob (GdaEx *gdaex,
+						 const gchar *sql,
+						 const gchar *blob_field_name,
+						 const gchar *filename)
+{
+	GdaConnection *gda_con;
+	GdaSqlParser *parser;
+	GdaStatement *stmt;
+	GError *error;
+	GdaSet *plist;
+	GdaHolder *param;
+	GValue *value;
+	gint res;
+
+	g_return_val_if_fail (IS_GDAEX (gdaex), FALSE);
+
+	gda_con = (GdaConnection *)gdaex_get_gdaconnection (gdaex);
+
+	parser = (GdaSqlParser *)gdaex_get_sql_parser (gdaex);
+	if (parser == NULL)
+		{
+			g_warning ("Error on sql parser creation.");
+			return FALSE;
+		}
+
+	error = NULL;
+	stmt = gda_sql_parser_parse_string (parser, sql, NULL, &error);
+	if (stmt == NULL || error != NULL)
+		{
+			g_warning ("Error on sql string parsing: %s.",
+			           error != NULL && error->message != NULL ? error->message : "no details");
+			return FALSE;
+		}
+	gda_statement_get_parameters (stmt, &plist, NULL);
+
+	gda_connection_begin_transaction (gda_con, NULL, 0, NULL);
+
+	param = gda_set_get_holder (plist, blob_field_name);
+	value = gda_value_new_blob_from_file (filename);
+	error = NULL;
+	if (!gda_holder_take_value (param, value, &error))
+		{
+			g_object_unref (plist);
+
+			gda_connection_rollback_transaction (gda_con, NULL, NULL);
+
+			/* TODO error */
+			g_warning ("Error on setting blob: %s.",
+			           error != NULL && error->message != NULL ? error->message : "no details");
+			return FALSE;
+		}
+	else
+		{
+			error = NULL;
+			res = gda_connection_statement_execute_non_select (gda_con, stmt, plist, NULL, &error);
+
+			g_object_unref (plist);
+			g_object_unref (stmt);
+
+			if (error != NULL)
+				{
+					gda_connection_rollback_transaction (gda_con, NULL, NULL);
+
+					/* TODO error */
+					g_warning ("Error on statement execution for blob updating: %s.",
+					           error != NULL && error->message != NULL ? error->message : "no details");
+					return FALSE;
+				}
+			gda_connection_commit_transaction (gda_con, NULL, NULL);
+		}
+
+	return TRUE;
+}
+
+/**
+ * gdaex_get_blob:
+ * @gdaex:
+ * @sql:
+ * @filename_field_name:
+ * @blob_field_name:
+ *
+ * Returns: the absolute path of the file created from the blob.
+ */
+const gchar
+*gdaex_get_blob (GdaEx *gdaex,
+				 const gchar *sql,
+				 const gchar *filename_field_name,
+				 const gchar *blob_field_name)
+{
+	GdaDataModel *dm;
+	GError *error;
+	gint fin;
+	gchar *filename_tmp;
+	const GValue *value;
+	const gchar *path;
+	gchar *filename_orig;
+	const GdaBlob *blob;
+	gint i;
+
+	gchar *ret;
+
+	ret = NULL;
+
+	dm = gdaex_query (gdaex, sql);
+	if (dm != NULL)
+		{
+			error = NULL;
+			value = gda_data_model_get_value_at (dm,
+			                                     gda_data_model_get_column_index (dm, blob_field_name),
+			                                     0, &error);
+			if (!gda_value_is_null (value) && gda_value_isa (value, GDA_TYPE_BLOB))
+				{
+					blob = gda_value_get_blob (value);
+
+					filename_orig = g_strdup ("");
+					error = NULL;
+					value = gda_data_model_get_value_at (dm,
+					                                     gda_data_model_get_column_index (dm, filename_field_name),
+					                                     0, &error);
+					if (!gda_value_is_null (value))
+						{
+							path = g_value_get_string (value);
+							filename_orig = g_path_get_basename (path);
+						}
+
+					error = NULL;
+					fin = g_file_open_tmp (g_strdup_printf ("gdaex-XXXXXX-%s", filename_orig),
+					                       &filename_tmp, &error);
+					if (fin > 0 && error == NULL)
+						{
+							close (fin);
+
+							if (blob->op)
+								{
+									GValue *dest_value;
+									GdaBlob *dest_blob;
+
+									dest_value = gda_value_new_blob_from_file (filename_tmp);
+									dest_blob = (GdaBlob *)gda_value_get_blob (dest_value);
+									if (!gda_blob_op_write_all (dest_blob->op, (GdaBlob *)blob))
+										{
+											g_warning ("Error on file reading.");
+											g_free (ret);
+											ret = NULL;
+										}
+									else
+										{
+											ret = g_strdup (filename_tmp);
+										}
+									gda_value_free (dest_value);
+								}
+							else
+								{
+									error = NULL;
+									if (!g_file_set_contents (filename_tmp, (gchar *)((GdaBinary*)blob)->data,
+									                          ((GdaBinary*)blob)->binary_length, &error) || error != NULL)
+										{
+											g_warning ("Error on file reading.");
+											g_free (ret);
+											ret = NULL;
+										}
+									else
+										{
+											ret = g_strdup (filename_tmp);
+										}
+								}
+						}
+					else
+						{
+							g_warning ("Error on file reading: %s.",
+							           error != NULL && error->message != NULL ? error->message : "no details");
+							g_free (ret);
+							ret = NULL;
+						}
+
+					g_free (filename_tmp);
+					g_free (filename_orig);
+				}
+
+			g_object_unref (dm);
+		}
+
+	return ret;
+}
+
 
 /* PRIVATE */
 static void
