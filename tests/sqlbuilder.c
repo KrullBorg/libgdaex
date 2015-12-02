@@ -38,6 +38,8 @@ main (int argc, char **argv)
 							  "pippo", "name", "the_name", NULL,
 							  NULL);
 
+	gdaex_sql_builder_field (sqlb, "pippo", "income", NULL, NULL);
+
 	gdaex_sql_builder_join (sqlb, GDA_SQL_SELECT_JOIN_INNER,
 							"pippo", "id", "",
 							GDA_SQL_OPERATOR_TYPE_EQ,

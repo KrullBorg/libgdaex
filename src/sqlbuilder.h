@@ -65,6 +65,7 @@ void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 							 GdaSqlSelectJoinType join_type,
 							 ...);
 
+void gdaex_sql_builder_field (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *field_name, const gchar *field_alias, GValue *gval);
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,

@@ -346,6 +346,24 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 }
 
 /**
+ * gdaex_sql_builder_field:
+ * @sqlb:
+ * @table_name:
+ * @field_name:
+ * @field_alias:
+ * @gval:
+ *
+ */
+void
+gdaex_sql_builder_field (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *field_name, const gchar *field_alias, GValue *gval)
+{
+	GdaExSqlBuilderTable *t;
+
+	t = gdaex_sql_builder_get_table (sqlb, table_name, NULL, TRUE);
+	gdaex_sql_builder_get_field (sqlb, t, field_name, field_alias, gval, TRUE);
+}
+
+/**
  * gdaex_sql_builder_fields:
  * @sqlb:
  * @...:
