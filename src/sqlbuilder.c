@@ -452,7 +452,7 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 	if (priv->stmt_type == GDA_SQL_STATEMENT_INSERT)
 		{
-			return;
+			return -1;
 		}
 
 	va_start (ap, op);
@@ -664,7 +664,7 @@ gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
 	GdaDataModel *dm;
 	gint ret;
 
-	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+	g_return_val_if_fail (IS_GDAEX (gdaex), -1);
 
 	sql = gdaex_sql_builder_get_sql (sqlb, (GdaConnection *)gdaex_get_gdaconnection (gdaex), params);
 
