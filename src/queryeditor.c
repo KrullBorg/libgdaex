@@ -3441,7 +3441,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						val1_sql = NULL;
 						val2_sql = NULL;
 
-						/* if it is the first condition, "link" doesn't is visibile */
+						/* if it is the first condition, "link" isn't visibile */
 						GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter);
 						gint *indices = gtk_tree_path_get_indices (path);
 						if (indices[gtk_tree_path_get_depth (path) - 1] != 0)
@@ -3525,6 +3525,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 										val2_sql = g_strdup (val2_sql);
 									}
 							}
+						else
 							{
 								where_type = 0;
 								val1 = g_strdup ("");
