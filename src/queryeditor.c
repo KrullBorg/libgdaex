@@ -475,7 +475,7 @@ GtkWidget
 }
 
 void
-gdaex_query_editor_set_show_visibile (GdaExQueryEditor *qe, gboolean visibile)
+gdaex_query_editor_set_show_visible (GdaExQueryEditor *qe, gboolean visibile)
 {
 	GdaExQueryEditorPrivate *priv;
 
@@ -497,7 +497,7 @@ gdaex_query_editor_set_show_visibile (GdaExQueryEditor *qe, gboolean visibile)
 }
 
 void
-gdaex_query_editor_set_where_visibile (GdaExQueryEditor *qe, gboolean visibile)
+gdaex_query_editor_set_where_visible (GdaExQueryEditor *qe, gboolean visibile)
 {
 	GdaExQueryEditorPrivate *priv;
 
@@ -519,7 +519,7 @@ gdaex_query_editor_set_where_visibile (GdaExQueryEditor *qe, gboolean visibile)
 }
 
 void
-gdaex_query_editor_set_order_visibile (GdaExQueryEditor *qe, gboolean visibile)
+gdaex_query_editor_set_order_visible (GdaExQueryEditor *qe, gboolean visibile)
 {
 	GdaExQueryEditorPrivate *priv;
 
