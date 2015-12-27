@@ -69,6 +69,9 @@ enum
 static void gdaex_query_editor_class_init (GdaExQueryEditorClass *class);
 static void gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor);
 
+static void gdaex_query_editor_dispose (GObject *object);
+static void gdaex_query_editor_finalize (GObject *object);
+
 static void gdaex_query_editor_set_property (GObject *object,
                                guint property_id,
                                const GValue *value,
@@ -293,6 +296,9 @@ gdaex_query_editor_class_init (GdaExQueryEditorClass *class)
 	object_class->set_property = gdaex_query_editor_set_property;
 	object_class->get_property = gdaex_query_editor_get_property;
 
+	object_class->dispose = gdaex_query_editor_dispose;
+	object_class->finalize = gdaex_query_editor_finalize;
+
 	g_type_class_add_private (object_class, sizeof (GdaExQueryEditorPrivate));
 }
 
@@ -301,14 +307,6 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 {
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
 
-	gdaex_query_editor_clean (gdaex_query_editor);
-
-	priv->lstore_link_type = gtk_list_store_new (2,
-	                                             G_TYPE_UINT,
-	                                             G_TYPE_STRING);
-	priv->lstore_where_type = gtk_list_store_new (2,
-	                                              G_TYPE_UINT,
-	                                              G_TYPE_STRING);
 }
 
 /**
@@ -330,6 +328,15 @@ GdaExQueryEditor
 	gdaex_query_editor = GDAEX_QUERY_EDITOR (g_object_new (gdaex_query_editor_get_type (), NULL));
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	gdaex_query_editor_clean (gdaex_query_editor);
+
+	priv->lstore_link_type = gtk_list_store_new (2,
+	                                             G_TYPE_UINT,
+	                                             G_TYPE_STRING);
+	priv->lstore_where_type = gtk_list_store_new (2,
+	                                              G_TYPE_UINT,
+	                                              G_TYPE_STRING);
 
 	priv->gdaex = gdaex;
 
@@ -2723,6 +2730,43 @@ gdaex_query_editor_get_property (GObject *object,
 }
 
 static void
+gdaex_query_editor_dispose (GObject *object)
+{
+	GdaExQueryEditor *gdaex_query_editor = (GdaExQueryEditor *)object;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	gtk_tree_store_clear (priv->tstore_fields);
+	gtk_list_store_clear (priv->lstore_show);
+	gtk_tree_store_clear (priv->tstore_where);
+	gtk_list_store_clear (priv->lstore_order);
+
+	if (priv->tables != NULL)
+		{
+			g_hash_table_destroy (priv->tables);
+			priv->tables = NULL;
+		}
+
+	if (priv->relations != NULL)
+		{
+			g_slist_free (priv->relations);
+			priv->relations = NULL;
+		}
+
+	G_OBJECT_CLASS (gdaex_query_editor_parent_class)->dispose (object);
+}
+
+static void
+gdaex_query_editor_finalize (GObject *object)
+{
+	GdaExQueryEditor *gdaex_query_editor = (GdaExQueryEditor *)object;
+	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+	gtk_widget_destroy (priv->hpaned_main);
+
+	G_OBJECT_CLASS (gdaex_query_editor_parent_class)->finalize (object);
+}
+
+static void
 gdaex_query_editor_clean (GdaExQueryEditor *gdaex_query_editor)
 {
 	GdaExQueryEditorPrivate *priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
@@ -2732,12 +2776,6 @@ gdaex_query_editor_clean (GdaExQueryEditor *gdaex_query_editor)
 			g_hash_table_destroy (priv->tables);
 		}
 	priv->tables = g_hash_table_new (g_str_hash, g_str_equal);
-
-	if (GTK_IS_PANED (priv->hpaned_main))
-		{
-			gtk_widget_destroy (priv->hpaned_main);
-		}
-	priv->hpaned_main = NULL;
 
 	if (priv->relations != NULL)
 		{
