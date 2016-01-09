@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,8 @@
 
 #include <glib-object.h>
 
+#include <libxml/tree.h>
+
 
 G_BEGIN_DECLS
 
@@ -38,16 +40,20 @@ struct _GdaExQueryEditorIWidgetIface
 	{
 		GTypeInterface g_iface;
 
-		const gchar *(*get_value) (GdaExQueryEditorIWidget *irole);
-		const gchar *(*get_value_sql) (GdaExQueryEditorIWidget *irole);
-		void (*set_value) (GdaExQueryEditorIWidget *irole, const gchar *value);
+		const gchar *(*get_value) (GdaExQueryEditorIWidget *iwidget);
+		const gchar *(*get_value_sql) (GdaExQueryEditorIWidget *iwidget);
+		void (*set_value) (GdaExQueryEditorIWidget *iwidget, const gchar *value);
+
+		void (*xml_parsing) (GdaExQueryEditorIWidget *iwidget, xmlNode *xnode);
 	};
 
-GType gdaex_query_editor_irole_get_type (void) G_GNUC_CONST;
+GType gdaex_query_editor_iwidget_get_type (void) G_GNUC_CONST;
 
 const gchar *gdaex_query_editor_iwidget_get_value (GdaExQueryEditorIWidget *iwidget);
 const gchar *gdaex_query_editor_iwidget_get_value_sql (GdaExQueryEditorIWidget *iwidget);
 void gdaex_query_editor_iwidget_set_value (GdaExQueryEditorIWidget *iwidget, const gchar *value);
+
+void gdaex_query_editor_xml_parsing (GdaExQueryEditorIWidget *iwidget, xmlNode *xnode);
 
 
 G_END_DECLS

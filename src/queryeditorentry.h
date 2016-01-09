@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,12 +26,12 @@
 G_BEGIN_DECLS
 
 
-#define GTK_TYPE_MASKED_ENTRY                 (gdaex_query_editor_entry_get_type ())
-#define GDAEX_QUERY_EDITOR_ENTRY(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_MASKED_ENTRY, GdaExQueryEditorEntry))
-#define GDAEX_QUERY_EDITOR_ENTRY_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_MASKED_ENTRY, GdaExQueryEditorEntryClass))
-#define GTK_IS_MASKED_ENTRY(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_MASKED_ENTRY))
-#define GTK_IS_MASKED_ENTRY_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_MASKED_ENTRY))
-#define GDAEX_QUERY_EDITOR_ENTRY_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_MASKED_ENTRY, GdaExQueryEditorEntryClass))
+#define GDAEX_QUERY_EDITOR_TYPE_ENTRY                 (gdaex_query_editor_entry_get_type ())
+#define GDAEX_QUERY_EDITOR_ENTRY(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_QUERY_EDITOR_TYPE_ENTRY, GdaExQueryEditorEntry))
+#define GDAEX_QUERY_EDITOR_ENTRY_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_QUERY_EDITOR_TYPE_ENTRY, GdaExQueryEditorEntryClass))
+#define GDAEX_QUERY_EDITOR_IS_ENTRY(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_QUERY_EDITOR_TYPE_ENTRY))
+#define GDAEX_QUERY_EDITOR_IS_ENTRY_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GDAEX_QUERY_EDITOR_TYPE__ENTRY))
+#define GDAEX_QUERY_EDITOR_ENTRY_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GDAEX_QUERY_EDITOR_TYPE_ENTRY, GdaExQueryEditorEntryClass))
 
 
 typedef struct _GdaExQueryEditorEntry        GdaExQueryEditorEntry;
