@@ -3647,6 +3647,8 @@ gdaex_query_editor_show_add_iter (GdaExQueryEditor *qe, GtkTreeIter *iter)
 	                    COL_SHOW_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 	                    -1);
 
+	gtk_tree_selection_select_iter (priv->sel_show, iter);
+
 	g_free (table_name);
 	g_free (field_name);
 }
@@ -3877,6 +3879,8 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 					gtk_tree_view_expand_to_path (GTK_TREE_VIEW (priv->trv_where),
 					                              gtk_tree_model_get_path (GTK_TREE_MODEL (priv->tstore_where), &iter_parent));
 				}
+
+			gtk_tree_selection_select_iter (priv->sel_where, &iter);
 
 			g_free (table_name);
 			g_free (field_name);
@@ -4445,6 +4449,8 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 			                    COL_ORDER_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 			                    COL_ORDER_ORDER, "ASC",
 			                    -1);
+
+			gtk_tree_selection_select_iter (priv->sel_order, &iter);
 
 			gdaex_query_editor_on_sel_fields_changed (NULL, user_data);
 
