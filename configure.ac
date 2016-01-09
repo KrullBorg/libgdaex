@@ -43,7 +43,8 @@ AM_GLIB_GNU_GETTEXT
 PKG_CHECK_MODULES(GDAEX, [gmodule-2.0 >= 2
                           libgda-5.0 >= 5
                           gio-2.0 >= 2.36
-                          gtk+-3.0 >= 3])
+                          gtk+-3.0 >= 3
+						  libzakutils])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)

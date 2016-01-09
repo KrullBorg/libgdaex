@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@
 
 #include "queryeditor.h"
 #include "queryeditorentry.h"
+#include "queryeditorentrydate.h"
 
 #define GROUP "{--group--}"
 
@@ -175,21 +176,12 @@ static void gdaex_query_editor_on_txt2_btn_browse_clicked (gpointer instance, gp
 
 #define GDAEX_QUERY_EDITOR_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), TYPE_GDAEX_QUERY_EDITOR, GdaExQueryEditorPrivate))
 
-typedef GtkWidget *(* GtkDateEntryNew) (const gchar *format,
-                                        const gchar *separator,
-                                        gboolean calendar_button_is_visible);
-typedef void (* GtkDateEntrySetDateVisible) (gpointer gtkdateentry, gboolean visible);
-typedef void (* GtkDateEntrySetTimeVisible) (gpointer gtkdateentry, gboolean visible);
-
 typedef struct _GdaExQueryEditorPrivate GdaExQueryEditorPrivate;
 struct _GdaExQueryEditorPrivate
 	{
 		GdaEx *gdaex;
 
-		GModule *gtk_date_entry_module;
-		GtkDateEntryNew gtk_date_entry_new;
-		GtkDateEntrySetDateVisible gtk_date_entry_set_date_visible;
-		GtkDateEntrySetTimeVisible gtk_date_entry_set_time_visible;
+		GPtrArray *ar_modules;
 
 		GtkBuilder *gtkbuilder;
 
@@ -310,6 +302,103 @@ gdaex_query_editor_init (GdaExQueryEditor *gdaex_query_editor)
 
 }
 
+static void
+gdaex_query_editor_load_modules (GdaExQueryEditor *gdaex_query_editor)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	gchar *modulesdir;
+	GDir *dir;
+	GError *error;
+
+	GModule *module;
+	const gchar *filename;
+
+	if (g_module_supported ())
+		{
+			priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (gdaex_query_editor);
+
+			modulesdir = (gchar *)g_getenv ("LIBGDAEX_MODULESDIR");
+			if (modulesdir == NULL)
+				{
+#ifdef G_OS_WIN32
+
+					gchar *moddir;
+					gchar *p;
+
+					moddir = g_win32_get_package_installation_directory_of_module (NULL);
+
+					p = g_strrstr (moddir, g_strdup_printf ("%c", G_DIR_SEPARATOR));
+					if (p != NULL
+						&& (g_ascii_strcasecmp (p + 1, "src") == 0
+							|| g_ascii_strcasecmp (p + 1, ".libs") == 0))
+						{
+							modulesdir = g_strdup (MODULESDIR);
+						}
+					else
+						{
+							modulesdir = g_build_filename (moddir, "lib", PACKAGE, "modules", NULL);
+						}
+
+#else
+
+					modulesdir = g_strdup (MODULESDIR);
+
+#endif
+				}
+
+			/* load myself as module (for filters and validators) */
+			module = g_module_open (NULL, G_MODULE_BIND_LAZY);
+			if (module == NULL)
+				{
+					g_warning (_("Unable to load module of myself"));
+				}
+			else
+				{
+					if (priv->ar_modules == NULL)
+						{
+							priv->ar_modules = g_ptr_array_new ();
+						}
+					g_ptr_array_add (priv->ar_modules, (gpointer)module);
+				}
+
+			/* for each file in MODULESDIR */
+			error = NULL;
+			dir = g_dir_open (modulesdir, 0, &error);
+			if (dir != NULL && error == NULL)
+				{
+					while ((filename = g_dir_read_name (dir)) != NULL)
+						{
+							/* trying to open the module */
+							module = g_module_open (filename, G_MODULE_BIND_LAZY);
+							if (module != NULL)
+								{
+									if (priv->ar_modules == NULL)
+										{
+											priv->ar_modules = g_ptr_array_new ();
+										}
+								    g_ptr_array_add (priv->ar_modules, (gpointer)module);
+								}
+							else
+								{
+									g_warning (_("Unable to load %s: %s."), filename, g_module_error ());
+								}
+						}
+
+					g_dir_close (dir);
+				}
+			else
+				{
+					g_warning (_("Unable to open modules dir: %s."),
+							   error != NULL && error->message != NULL ? error->message : _("no details"));
+				}
+		}
+	else
+		{
+			g_warning (_("Modules not supported by this operating system."));
+		}
+}
+
 /**
  * gdaex_query_editor_new:
  * @gdaex:
@@ -341,33 +430,7 @@ GdaExQueryEditor
 
 	priv->gdaex = gdaex;
 
-	/* test if we can use GtkDateEntry */
-	priv->gtk_date_entry_module = NULL;
-	priv->gtk_date_entry_new = NULL;
-	priv->gtk_date_entry_set_date_visible = NULL;
-	priv->gtk_date_entry_set_time_visible = NULL;
-	if (g_module_supported ())
-		{
-			/* TODO it must be found in a better way */
-#ifdef G_OS_WIN32
-			priv->gtk_date_entry_module = g_module_open (g_build_filename (g_win32_get_package_installation_directory_of_module (NULL), "libgtkdateentry-0.dll", NULL), G_MODULE_BIND_LAZY);
-#else
-			priv->gtk_date_entry_module = g_module_open ("/usr/local/lib/libgtkdateentry.la", G_MODULE_BIND_LAZY);
-#endif
-			if (priv->gtk_date_entry_module != NULL)
-				{
-					if (!g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_new", (gpointer *)&(priv->gtk_date_entry_new))
-					    || !g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_set_date_visible", (gpointer *)&(priv->gtk_date_entry_set_date_visible))
-					    || !g_module_symbol (priv->gtk_date_entry_module, "gtk_date_entry_set_time_visible", (gpointer *)&(priv->gtk_date_entry_set_time_visible)))
-						{
-							g_module_close (priv->gtk_date_entry_module);
-							priv->gtk_date_entry_module = NULL;
-							priv->gtk_date_entry_new = NULL;
-							priv->gtk_date_entry_set_date_visible = NULL;
-							priv->gtk_date_entry_set_time_visible = NULL;
-						}
-				}
-		}
+	gdaex_query_editor_load_modules (gdaex_query_editor);
 
 	priv->gtkbuilder = gdaex_get_gtkbuilder (priv->gdaex);
 
@@ -657,80 +720,62 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 
 	if (!GDAEX_QUERY_EDITOR_IS_IWIDGET (_field->iwidget_from))
 		{
-			if (priv->gtk_date_entry_module != NULL
-			    && (_field->type == GDAEX_QE_FIELD_TYPE_DATE
-			        || _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
-			        || _field->type == GDAEX_QE_FIELD_TYPE_TIME))
+			if (_field->type == GDAEX_QE_FIELD_TYPE_DATE
+				|| _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
+				|| _field->type == GDAEX_QE_FIELD_TYPE_TIME)
 				{
-					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (priv->gtk_date_entry_new (NULL, NULL, TRUE));
+					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_date_new ());
+					/* TODO
+					 * read format from locale */
 					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
 						{
-							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_from, TRUE);
-							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_from, FALSE);
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_from), "%d/%m/%Y");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 10);
 						}
 					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
 						{
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_from), "%d/%m/%Y %H:%M:%S");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 19);
 						}
 					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
 						{
-							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_from, FALSE);
-							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_from, TRUE);
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_from), "%H:%M:%S");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 8);
 						}
 				}
 			else
 				{
 					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
-					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 10);
-						}
-					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 19);
-						}
-					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 8);
-						}
 				}
 		}
 	if (!GDAEX_QUERY_EDITOR_IS_IWIDGET (_field->iwidget_to))
 		{
-			if (priv->gtk_date_entry_module != NULL
-			    && (_field->type == GDAEX_QE_FIELD_TYPE_DATE
-			        || _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
-			        || _field->type == GDAEX_QE_FIELD_TYPE_TIME))
+			if (_field->type == GDAEX_QE_FIELD_TYPE_DATE
+				|| _field->type == GDAEX_QE_FIELD_TYPE_DATETIME
+				|| _field->type == GDAEX_QE_FIELD_TYPE_TIME)
 				{
-					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (priv->gtk_date_entry_new (NULL, NULL, TRUE));
+					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_date_new ());
+					/* TODO
+					 * read format from locale */
 					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
 						{
-							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_to, TRUE);
-							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_to, FALSE);
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_to), "%d/%m/%Y");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 10);
 						}
 					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
 						{
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_to), "%d/%m/%Y %H:%M:%S");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 19);
 						}
 					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
 						{
-							priv->gtk_date_entry_set_date_visible ((gpointer)_field->iwidget_to, FALSE);
-							priv->gtk_date_entry_set_time_visible ((gpointer)_field->iwidget_to, TRUE);
+							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_to), "%H:%M:%S");
+							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 8);
 						}
 				}
 			else
 				{
 					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
-					if (_field->type == GDAEX_QE_FIELD_TYPE_DATE)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 10);
-						}
-					else if (_field->type == GDAEX_QE_FIELD_TYPE_DATETIME)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 19);
-						}
-					else if (_field->type == GDAEX_QE_FIELD_TYPE_TIME)
-						{
-							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 8);
-						}
 				}
 		}
 
@@ -1062,11 +1107,16 @@ gdaex_query_editor_str_to_join_type (gchar *str)
 	return ret;
 }
 
+typedef GdaExQueryEditorIWidget *(* IWidgetConstructorFunc) (void);
+typedef gboolean (* IWidgetXmlParsingFunc) (GdaExQueryEditorIWidget *, xmlNodePtr);
+
 void
 gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
                                          xmlNode *root,
                                          gboolean clean)
 {
+	GdaExQueryEditorPrivate *priv;
+
 	xmlDoc *xdoc;
 	xmlXPathContextPtr xpcontext;
 	xmlXPathObjectPtr xpresult;
@@ -1093,9 +1143,14 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 	GdaExQueryEditorJoinType join_type;
 	GSList *fields_joined;
 
+	IWidgetConstructorFunc iwidget_constructor;
+	IWidgetXmlParsingFunc iwidget_xml_parsing;
+
 	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
 	g_return_if_fail (root != NULL);
 	g_return_if_fail (xmlStrcmp (root->name, "gdaex_query_editor") == 0);
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	if (clean)
 		{
@@ -1282,6 +1337,64 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 															xdecode = xdecode->next;
 														}
 												}
+											else if (xmlStrcmp (cur->name, "widget") == 0
+													 || xmlStrcmp (cur->name, "widget_from") == 0
+													 || xmlStrcmp (cur->name, "widget_to") == 0)
+												{
+													gchar *type;
+
+													guint i;
+
+													GdaExQueryEditorIWidget *iwidget;
+
+													type = xmlGetProp (xnode, (const xmlChar *)"type");
+
+													iwidget = NULL;
+													for (i = 0; i < priv->ar_modules->len; i++)
+														{
+															if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
+																				 g_strconcat (type, "_new", NULL),
+																				 (gpointer *)&iwidget_constructor))
+																{
+																	if (iwidget_constructor != NULL)
+																		{
+																			iwidget = iwidget_constructor ();
+																			if (iwidget != NULL)
+																				{
+																					if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
+																										 g_strconcat (type, "_xml_parsing", NULL),
+																										 (gpointer *)&iwidget_xml_parsing))
+																						{
+																							if (iwidget_xml_parsing != NULL)
+																								{
+																									iwidget_xml_parsing (iwidget, cur);
+																								}
+																						}
+																				}
+																			break;
+																		}
+																}
+														}
+
+													if (iwidget == NULL)
+														{
+															g_warning (_("Unknown iwidget type «%s»."), type);
+														}
+
+													if (xmlStrcmp (cur->name, "widget") == 0)
+														{
+															field->iwidget_from = iwidget;
+															field->iwidget_to = iwidget;
+														}
+													else if (xmlStrcmp (cur->name, "widget_from") == 0)
+														{
+															field->iwidget_from = iwidget;
+														}
+													else if (xmlStrcmp (cur->name, "widget_to") == 0)
+														{
+															field->iwidget_to = iwidget;
+														}
+												}
 
 											cur = cur->next;
 										}
@@ -1458,11 +1571,11 @@ static GDate
 	month = 0;
 	day = 0;
 
-	if (strlen (sql) >= 10)
+	if (strlen (sql + 1) >= 10)
 		{
-			year = strtol (g_strndup (sql, 4), NULL, 10);
-			month = strtol (g_strndup (sql + 5, 2), NULL, 10);
-			day = strtol (g_strndup (sql + 8, 2), NULL, 10);
+			year = strtol (g_strndup (sql + 1, 4), NULL, 10);
+			month = strtol (g_strndup (sql + 6, 2), NULL, 10);
+			day = strtol (g_strndup (sql + 9, 2), NULL, 10);
 
 			ret = g_date_new_dmy (day,
 			                      month,
@@ -1479,21 +1592,21 @@ static GdaTimestamp
 
 	ret = NULL;
 
-	if (strlen (sql) >= 10)
+	if (strlen (sql + 1) >= 10)
 		{
 			ret = g_new0 (GdaTimestamp, 1);
 
-			ret->year = strtol (g_strndup (sql, 4), NULL, 10);
-			ret->month = strtol (g_strndup (sql + 5, 2), NULL, 10);
-			ret->day = strtol (g_strndup (sql + 8, 2), NULL, 10);
+			ret->year = strtol (g_strndup (sql + 1, 4), NULL, 10);
+			ret->month = strtol (g_strndup (sql + 6, 2), NULL, 10);
+			ret->day = strtol (g_strndup (sql + 9, 2), NULL, 10);
 
-			if (strlen (sql) >= 12)
+			if (strlen (sql + 1) >= 12)
 				{
-					ret->hour = strtol (g_strndup (sql + 11, 2), NULL, 10);
-					ret->minute = strtol (g_strndup (sql + 14, 2), NULL, 10);
-					if (strlen (sql) >= 16)
+					ret->hour = strtol (g_strndup (sql + 12, 2), NULL, 10);
+					ret->minute = strtol (g_strndup (sql + 15, 2), NULL, 10);
+					if (strlen (sql + 1) >= 16)
 						{
-							ret->second = strtol (g_strndup (sql + 17, 2), NULL, 10);
+							ret->second = strtol (g_strndup (sql + 18, 2), NULL, 10);
 						}
 				}
 		}
@@ -1835,17 +1948,25 @@ gdaex_query_editor_sql_where (GdaExQueryEditor *qe,
 						}
 
 					id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, where_op, id_field, id_value1, id_value2);
-					if (not && where_type != GDAEX_QE_WHERE_TYPE_IS_NULL)
+					if (id_cond_iter == 0)
 						{
-							id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
-						}
-					if (id_ret == 0)
-						{
-							id_ret = id_cond_iter;
+							g_warning (_("Unable to create GdaSqlBuilder condition."));
+							continue;
 						}
 					else
 						{
-							id_ret = gda_sql_builder_add_cond (sqlbuilder, link_op, id_ret, id_cond_iter, 0);
+							if (not && where_type != GDAEX_QE_WHERE_TYPE_IS_NULL)
+								{
+									id_cond_iter = gda_sql_builder_add_cond (sqlbuilder, GDA_SQL_OPERATOR_TYPE_NOT, id_cond_iter, 0, 0);
+								}
+							if (id_ret == 0)
+								{
+									id_ret = id_cond_iter;
+								}
+							else
+								{
+									id_ret = gda_sql_builder_add_cond (sqlbuilder, link_op, id_ret, id_cond_iter, 0);
+								}
 						}
 				}
 			else
@@ -3536,7 +3657,8 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 									{
 										val1 = g_strdup (val1);
 									}
-								if (val1_sql == NULL)
+								if (val1_sql == NULL
+									|| g_strcmp0 (val1_sql, "NULL") == 0)
 									{
 										val1_sql = g_strdup ("");
 									}
@@ -3555,7 +3677,8 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 									{
 										val2 = g_strdup (val2);
 									}
-								if (val2_sql == NULL)
+								if (val2_sql == NULL
+									|| g_strcmp0 (val2_sql, "NULL") == 0)
 									{
 										val2_sql = g_strdup ("");
 									}
