@@ -1347,7 +1347,7 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 
 													GdaExQueryEditorIWidget *iwidget;
 
-													type = xmlGetProp (xnode, (const xmlChar *)"type");
+													type = xmlGetProp (cur, (const xmlChar *)"type");
 
 													iwidget = NULL;
 													for (i = 0; i < priv->ar_modules->len; i++)
