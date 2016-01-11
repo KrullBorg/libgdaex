@@ -49,6 +49,8 @@ struct _GdaExQueryEditor
 struct _GdaExQueryEditorClass
 	{
 		GObjectClass parent_class;
+
+		guint iwidget_init_signal_id;
 	};
 
 GType gdaex_query_editor_get_type (void) G_GNUC_CONST;

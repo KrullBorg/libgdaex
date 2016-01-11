@@ -31,6 +31,11 @@ GTK_DOC_CHECK(1.0)
 IT_PROG_INTLTOOL
 
 dnl ******************************
+dnl glib-genmarshal
+dnl ******************************
+AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
+
+dnl ******************************
 dnl Translations
 dnl ******************************
 GETTEXT_PACKAGE=libgdaex

@@ -11,7 +11,14 @@ LIBS = $(GDAEX_LIBS)
 
 lib_LTLIBRARIES = libgdaex.la
 
+queryeditormarshal.c: queryeditormarshal.h queryeditor_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $(srcdir)/queryeditor_marshal.list --body --prefix=_gdaex_query_editor_marshal > $(srcdir)/$@
+
+queryeditormarshal.h: queryeditor_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $(srcdir)/queryeditor_marshal.list --header --prefix=_gdaex_query_editor_marshal > $(srcdir)/$@
+
 libgdaex_la_SOURCES = gdaex.c \
+                      queryeditormarshal.c \
                       queryeditor.c \
                       queryeditor_widget_interface.c \
                       queryeditorentry.c \
@@ -29,6 +36,9 @@ libgdaex_include_HEADERS = libgdaex.h \
                            sqlbuilder.h
 
 libgdaex_includedir = $(includedir)/libgdaex
+
+noinst_HEADERS = \
+                 queryeditormarshal.h
 
 install-exec-hook:
 	mkdir -p "$(libdir)/$(PACKAGE)/modules"

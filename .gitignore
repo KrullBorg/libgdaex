@@ -29,6 +29,7 @@ docs/reference/html/
 docs/reference/xml/
 src/.libs/
 src/.deps/
+src/*marshal.[ch]
 tests/.libs/
 tests/.deps/
 po/POTFILES

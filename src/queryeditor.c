@@ -28,6 +28,7 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+#include "queryeditormarshal.h"
 #include "queryeditor.h"
 #include "queryeditorentry.h"
 #include "queryeditorentrydate.h"
@@ -282,9 +283,9 @@ enum
 	};
 
 static void
-gdaex_query_editor_class_init (GdaExQueryEditorClass *class)
+gdaex_query_editor_class_init (GdaExQueryEditorClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (class);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
 	object_class->set_property = gdaex_query_editor_set_property;
 	object_class->get_property = gdaex_query_editor_get_property;
@@ -293,6 +294,23 @@ gdaex_query_editor_class_init (GdaExQueryEditorClass *class)
 	object_class->finalize = gdaex_query_editor_finalize;
 
 	g_type_class_add_private (object_class, sizeof (GdaExQueryEditorPrivate));
+
+	/**
+	 * GdaExQueryEditor::iwidget-init:
+	 *
+	 */
+	klass->iwidget_init_signal_id = g_signal_new ("iwidget-init",
+											G_TYPE_FROM_CLASS (object_class),
+											G_SIGNAL_RUN_LAST,
+											0,
+											NULL,
+											NULL,
+											_gdaex_query_editor_marshal_VOID__OBJECT_STRING_STRING,
+											G_TYPE_NONE,
+											3,
+											G_TYPE_OBJECT,
+											G_TYPE_STRING,
+											G_TYPE_STRING);
 }
 
 static void
@@ -1116,6 +1134,7 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
                                          gboolean clean)
 {
 	GdaExQueryEditorPrivate *priv;
+	GdaExQueryEditorClass *klass;
 
 	xmlDoc *xdoc;
 	xmlXPathContextPtr xpcontext;
@@ -1149,6 +1168,8 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
 	g_return_if_fail (root != NULL);
 	g_return_if_fail (xmlStrcmp (root->name, "gdaex_query_editor") == 0);
+
+	klass = GDAEX_QUERY_EDITOR_GET_CLASS (qe);
 
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
@@ -1361,6 +1382,12 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 																			iwidget = iwidget_constructor ();
 																			if (iwidget != NULL)
 																				{
+																					g_signal_emit (qe, klass->iwidget_init_signal_id,
+																								   0,
+																								   iwidget,
+																								   table_name,
+																								   field->name);
+
 																					if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
 																										 g_strconcat (type, "_xml_parsing", NULL),
 																										 (gpointer *)&iwidget_xml_parsing))
