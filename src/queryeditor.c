@@ -3989,6 +3989,8 @@ gdaex_query_editor_on_sel_show_changed (GtkTreeSelection *treeselection,
 			g_free (table_name);
 			g_free (field_name);
 			g_free (alias);
+
+			gtk_widget_grab_focus (priv->txt_alias);
 		}
 }
 
@@ -4588,6 +4590,11 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			gtk_widget_show (priv->hbox_where);
 			gtk_widget_show (priv->vbx_values);
 			gtk_widget_show (priv->vbx_values_container);
+
+			if (GTK_IS_WIDGET (priv->txt_from))
+				{
+					gtk_widget_grab_focus (priv->txt_from);
+				}
 		}
 }
 
@@ -4778,6 +4785,8 @@ gdaex_query_editor_on_sel_order_changed (GtkTreeSelection *treeselection,
 			gtk_widget_show (priv->vbx_values_container);
 
 			g_free (order);
+
+			gtk_widget_grab_focus (priv->opt_asc);
 		}
 }
 
