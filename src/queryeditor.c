@@ -199,6 +199,7 @@ struct _GdaExQueryEditorPrivate
 		GtkWidget *vbx_values_container;
 		GtkWidget *vbx_values;
 
+		GtkWidget *trv_fields;
 		GtkWidget *trv_where;
 
 		GtkTreeStore *tstore_fields;
@@ -480,6 +481,7 @@ GdaExQueryEditor
 
 	priv->notebook = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "notebook1"));
 
+	priv->trv_fields = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "treeview1"));
 	priv->trv_where = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "treeview3"));
 
 	priv->tstore_fields = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_fields"));
@@ -487,7 +489,7 @@ GdaExQueryEditor
 	priv->tstore_where = GTK_TREE_STORE (gtk_builder_get_object (priv->gtkbuilder, "tstore_where"));
 	priv->lstore_order = GTK_LIST_STORE (gtk_builder_get_object (priv->gtkbuilder, "lstore_order"));
 
-	priv->sel_fields = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview1")));
+	priv->sel_fields = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->trv_fields));
 	priv->sel_show = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview2")));
 	priv->sel_where = gtk_tree_view_get_selection (GTK_TREE_VIEW (priv->trv_where));
 	priv->sel_order = gtk_tree_view_get_selection (GTK_TREE_VIEW (gtk_builder_get_object (priv->gtkbuilder, "treeview4")));
@@ -502,7 +504,7 @@ GdaExQueryEditor
 
 	g_signal_connect (priv->sel_fields, "changed",
 	                  G_CALLBACK (gdaex_query_editor_on_sel_fields_changed), (gpointer)gdaex_query_editor);
-	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "treeview1"), "row-activated",
+	g_signal_connect (G_OBJECT (priv->trv_fields), "row-activated",
 	                  G_CALLBACK (gdaex_query_editor_on_trv_fields_row_activated), (gpointer)gdaex_query_editor);
 
 	g_signal_connect (gtk_builder_get_object (priv->gtkbuilder, "button3"), "clicked",
@@ -3043,6 +3045,8 @@ gdaex_query_editor_refresh_gui (GdaExQueryEditor *qe)
 						}
 				}
 		}
+
+	gtk_tree_view_expand_all (GTK_TREE_VIEW (priv->trv_fields));
 }
 
 static void
