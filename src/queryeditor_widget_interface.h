@@ -41,6 +41,7 @@ struct _GdaExQueryEditorIWidgetIface
 		GTypeInterface g_iface;
 
 		const gchar *(*get_value) (GdaExQueryEditorIWidget *iwidget);
+		const gchar *(*get_value_visible) (GdaExQueryEditorIWidget *iwidget);
 		const gchar *(*get_value_sql) (GdaExQueryEditorIWidget *iwidget);
 		void (*set_value) (GdaExQueryEditorIWidget *iwidget, const gchar *value);
 
@@ -50,6 +51,7 @@ struct _GdaExQueryEditorIWidgetIface
 GType gdaex_query_editor_iwidget_get_type (void) G_GNUC_CONST;
 
 const gchar *gdaex_query_editor_iwidget_get_value (GdaExQueryEditorIWidget *iwidget);
+const gchar *gdaex_query_editor_iwidget_get_value_visible (GdaExQueryEditorIWidget *iwidget);
 const gchar *gdaex_query_editor_iwidget_get_value_sql (GdaExQueryEditorIWidget *iwidget);
 void gdaex_query_editor_iwidget_set_value (GdaExQueryEditorIWidget *iwidget, const gchar *value);
 

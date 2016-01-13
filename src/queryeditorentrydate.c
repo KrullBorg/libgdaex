@@ -42,6 +42,7 @@ static void gdaex_query_editor_entry_date_get_property (GObject *object,
                                            GParamSpec *pspec);
 
 static const gchar *gdaex_query_editor_entry_date_get_value (GdaExQueryEditorIWidget *iwidget);
+static const gchar *gdaex_query_editor_entry_date_get_value_visible (GdaExQueryEditorIWidget *iwidget);
 static const gchar *gdaex_query_editor_entry_date_get_value_sql (GdaExQueryEditorIWidget *iwidget);
 static void gdaex_query_editor_entry_date_set_value (GdaExQueryEditorIWidget *iwidget, const gchar *value);
 
@@ -80,6 +81,7 @@ static void
 gdaex_query_editor_entry_date_gdaex_query_editor_iwidget_interface_init (GdaExQueryEditorIWidgetIface *iface)
 {
 	iface->get_value = gdaex_query_editor_entry_date_get_value;
+	iface->get_value_visible = gdaex_query_editor_entry_date_get_value_visible;
 	iface->get_value_sql = gdaex_query_editor_entry_date_get_value_sql;
 	iface->set_value = gdaex_query_editor_entry_date_set_value;
 }
@@ -146,6 +148,12 @@ gdaex_query_editor_entry_date_get_property (GObject *object, guint property_id, 
 
 static const gchar
 *gdaex_query_editor_entry_date_get_value (GdaExQueryEditorIWidget *iwidget)
+{
+	return gtk_entry_get_text (GTK_ENTRY (iwidget));
+}
+
+static const gchar
+*gdaex_query_editor_entry_date_get_value_visible (GdaExQueryEditorIWidget *iwidget)
 {
 	return gtk_entry_get_text (GTK_ENTRY (iwidget));
 }

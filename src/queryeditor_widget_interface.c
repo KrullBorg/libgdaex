@@ -53,6 +53,27 @@ const gchar
 }
 
 const gchar
+*gdaex_query_editor_iwidget_get_value_visible (GdaExQueryEditorIWidget *iwidget)
+{
+	GdaExQueryEditorIWidgetIface *iface;
+
+	gchar *ret;
+
+	ret = NULL;
+
+	g_return_val_if_fail (GDAEX_QUERY_EDITOR_IS_IWIDGET (iwidget), ret);
+
+	iface = GDAEX_QUERY_EDITOR_IWIDGET_GET_IFACE (iwidget);
+
+	if (iface->get_value_visible)
+		{
+			ret = (gchar *)(* iface->get_value_visible) (iwidget);
+		}
+
+	return ret;
+}
+
+const gchar
 *gdaex_query_editor_iwidget_get_value_sql (GdaExQueryEditorIWidget *iwidget)
 {
 	GdaExQueryEditorIWidgetIface *iface;

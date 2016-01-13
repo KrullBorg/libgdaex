@@ -58,9 +58,13 @@
       <column type="gchararray"/>
       <!-- column-name condition_from -->
       <column type="gchararray"/>
+      <!-- column-name condition_from_visible -->
+      <column type="gchararray"/>
       <!-- column-name condition_from_sql -->
       <column type="gchararray"/>
       <!-- column-name condition_to -->
+      <column type="gchararray"/>
+      <!-- column-name condition_to_visible -->
       <column type="gchararray"/>
       <!-- column-name condition_to_sql -->
       <column type="gchararray"/>
@@ -350,7 +354,7 @@
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext7"/>
                                   <attributes>
-                                    <attribute name="text">8</attribute>
+                                    <attribute name="text">9</attribute>
                                   </attributes>
                                 </child>
                               </object>
@@ -361,7 +365,7 @@
                                 <child>
                                   <object class="GtkCellRendererText" id="cellrenderertext8"/>
                                   <attributes>
-                                    <attribute name="text">10</attribute>
+                                    <attribute name="text">12</attribute>
                                   </attributes>
                                 </child>
                               </object>

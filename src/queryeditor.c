@@ -83,6 +83,10 @@ static void gdaex_query_editor_get_property (GObject *object,
                                GValue *value,
                                GParamSpec *pspec);
 
+static GdaExQueryEditorIWidget *gdaex_query_editor_iwidget_construct (GdaExQueryEditor *qe,
+																	  const gchar *type,
+																	  xmlNode *xnode);
+
 static void gdaex_query_editor_clean (GdaExQueryEditor *gdaex_query_editor);
 
 static gboolean _gdaex_query_editor_add_table (GdaExQueryEditor *qe,
@@ -269,8 +273,10 @@ enum
 		COL_WHERE_CONDITION_TYPE,
 		COL_WHERE_CONDITION_TYPE_VISIBLE,
 		COL_WHERE_CONDITION_FROM,
+		COL_WHERE_CONDITION_FROM_VISIBLE,
 		COL_WHERE_CONDITION_FROM_SQL,
 		COL_WHERE_CONDITION_TO,
+		COL_WHERE_CONDITION_TO_VISIBLE,
 		COL_WHERE_CONDITION_TO_SQL
 	};
 
@@ -300,17 +306,18 @@ gdaex_query_editor_class_init (GdaExQueryEditorClass *klass)
 	 *
 	 */
 	klass->iwidget_init_signal_id = g_signal_new ("iwidget-init",
-											G_TYPE_FROM_CLASS (object_class),
-											G_SIGNAL_RUN_LAST,
-											0,
-											NULL,
-											NULL,
-											_gdaex_query_editor_marshal_VOID__OBJECT_STRING_STRING,
-											G_TYPE_NONE,
-											3,
-											G_TYPE_OBJECT,
-											G_TYPE_STRING,
-											G_TYPE_STRING);
+												  G_TYPE_FROM_CLASS (object_class),
+												  G_SIGNAL_RUN_LAST,
+												  0,
+												  NULL,
+												  NULL,
+												  _gdaex_query_editor_marshal_VOID__OBJECT_STRING_STRING_BOOLEAN,
+												  G_TYPE_NONE,
+												  4,
+												  G_TYPE_OBJECT,
+												  G_TYPE_STRING,
+												  G_TYPE_STRING,
+												  G_TYPE_BOOLEAN);
 }
 
 static void
@@ -1131,12 +1138,9 @@ typedef gboolean (* IWidgetXmlParsingFunc) (GdaExQueryEditorIWidget *, xmlNodePt
 static GdaExQueryEditorIWidget
 *gdaex_query_editor_iwidget_construct (GdaExQueryEditor *qe,
 									   const gchar *type,
-									   const gchar *table_name,
-									   const gchar *field_name,
 									   xmlNode *xnode)
 {
 	GdaExQueryEditorPrivate *priv;
-	GdaExQueryEditorClass *klass;
 
 	guint i;
 
@@ -1145,7 +1149,6 @@ static GdaExQueryEditorIWidget
 
 	GdaExQueryEditorIWidget *iwidget;
 
-	klass = GDAEX_QUERY_EDITOR_GET_CLASS (qe);
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
 
 	iwidget = NULL;
@@ -1160,12 +1163,6 @@ static GdaExQueryEditorIWidget
 							iwidget = iwidget_constructor ();
 							if (iwidget != NULL)
 								{
-									g_signal_emit (qe, klass->iwidget_init_signal_id,
-												   0,
-												   iwidget,
-												   table_name,
-												   field_name);
-
 									if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
 														 g_strconcat (type, "_xml_parsing", NULL),
 														 (gpointer *)&iwidget_xml_parsing))
@@ -1424,12 +1421,19 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 														{
 															field->iwidget_from = gdaex_query_editor_iwidget_construct (qe,
 																														type,
-																														table_name,
-																														field->name,
 																														cur);
 															if (field->iwidget_from == NULL)
 																{
-																	g_warning (_("Unknown iwidget type «%s»."), type);
+																	g_warning (_("Unknown iwidget_from type «%s»."), type);
+																}
+															else
+																{
+																	g_signal_emit (qe, klass->iwidget_init_signal_id,
+																				   0,
+																				   field->iwidget_from,
+																				   table_name,
+																				   field->name,
+																				   TRUE);
 																}
 														}
 													if (xmlStrcmp (cur->name, "widget") == 0
@@ -1437,9 +1441,20 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 														{
 															field->iwidget_to = gdaex_query_editor_iwidget_construct (qe,
 																													  type,
-																													  table_name,
-																													  field->name,
 																													  cur);
+															if (field->iwidget_to == NULL)
+																{
+																	g_warning (_("Unknown iwidget_to type «%s»."), type);
+																}
+															else
+																{
+																	g_signal_emit (qe, klass->iwidget_init_signal_id,
+																				   0,
+																				   field->iwidget_from,
+																				   table_name,
+																				   field->name,
+																				   FALSE);
+																}
 														}
 												}
 
@@ -2686,6 +2701,8 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 										gchar *to;
 										gchar *from_sql;
 										gchar *to_sql;
+										gchar *from_visible;
+										gchar *to_visible;
 
 										GdaExQueryEditorLinkType link_type;
 										GdaExQueryEditorWhereType where_type;
@@ -2696,6 +2713,10 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 
 										from_sql = xmlGetProp (node_field, "from");
 										to_sql = xmlGetProp (node_field, "to");
+										from_visible = xmlGetProp (node_field, "from_visible");
+										to_visible = xmlGetProp (node_field, "to_visible");
+
+
 										if (field->type == GDAEX_QE_FIELD_TYPE_DATE)
 											{
 												GDate *gdate = gdaex_query_editor_get_gdate_from_sql (from_sql);
@@ -2815,8 +2836,10 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 												                    COL_WHERE_CONDITION_NOT, (g_strcmp0 (not, "n") != 0),
 												                    COL_WHERE_CONDITION_TYPE, where_type,
 												                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+												                    COL_WHERE_CONDITION_FROM_VISIBLE, from_visible,
 												                    COL_WHERE_CONDITION_FROM, from,
 												                    COL_WHERE_CONDITION_FROM_SQL, from_sql,
+												                    COL_WHERE_CONDITION_TO_VISIBLE, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to_visible : ""),
 												                    COL_WHERE_CONDITION_TO, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to : ""),
 												                    COL_WHERE_CONDITION_TO_SQL, (where_type == GDAEX_QE_WHERE_TYPE_BETWEEN ? to_sql : ""),
 												                    -1);
@@ -2826,6 +2849,8 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 										g_free (to);
 										g_free (from_sql);
 										g_free (to_sql);
+										g_free (from_visible);
+										g_free (to_visible);
 										g_free (link);
 										g_free (not);
 										g_free (condition);
@@ -3642,9 +3667,13 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						guint link_type;
 						guint where_type;
 
+						gchar *val1_visible;
+						gchar *val2_visible;
 						gchar *val1_sql;
 						gchar *val2_sql;
 
+						val1_visible = NULL;
+						val2_visible = NULL;
 						val1_sql = NULL;
 						val2_sql = NULL;
 
@@ -3695,6 +3724,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 								                    -1);
 
 								val1 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_from));
+								val1_visible = (gchar *)gdaex_query_editor_iwidget_get_value_visible (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_from));
 								val1_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_from));
 								if (val1 == NULL)
 									{
@@ -3715,6 +3745,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 									}
 
 								val2 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
+								val2_visible = (gchar *)gdaex_query_editor_iwidget_get_value_visible (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
 								val2_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
 								if (val2 == NULL)
 									{
@@ -3749,8 +3780,10 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 						                    COL_WHERE_CONDITION_NOT, gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->chk_not)),
 						                    COL_WHERE_CONDITION_TYPE, where_type,
 						                    COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (where_type),
+						                    COL_WHERE_CONDITION_FROM_VISIBLE, val1_visible,
 						                    COL_WHERE_CONDITION_FROM, val1,
 						                    COL_WHERE_CONDITION_FROM_SQL, val1_sql,
+						                    COL_WHERE_CONDITION_TO_VISIBLE, val2_visible,
 						                    COL_WHERE_CONDITION_TO, val2,
 						                    COL_WHERE_CONDITION_TO_SQL, val2_sql,
 						                    -1);
