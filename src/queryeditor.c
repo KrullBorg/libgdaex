@@ -28,6 +28,8 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+#include <libzakutils/libzakutils.h>
+
 #include "queryeditormarshal.h"
 #include "queryeditor.h"
 #include "queryeditorentry.h"
@@ -994,33 +996,6 @@ gdaex_query_editor_str_to_field_type (gchar *str)
 	return ret;
 }
 
-static gboolean
-gdaex_query_editor_str_to_boolean (gchar *str)
-{
-	gboolean ret;
-
-	g_return_val_if_fail (str != NULL, FALSE);
-
-	ret = FALSE;
-
-	if (g_strcmp0 (str, "f") == 0
-	    || g_strcmp0 (str, "false") == 0
-	    || g_strcmp0 (str, "no") == 0
-	    || g_strcmp0 (str, "0") == 0)
-		{
-			ret = FALSE;
-		}
-	else if (g_strcmp0 (str, "t") == 0
-	    || g_strcmp0 (str, "true") == 0
-	    || g_strcmp0 (str, "yes") == 0
-	    || g_strcmp0 (str, "1") == 0)
-		{
-			ret = TRUE;
-		}
-
-	return ret;
-}
-
 static guint
 gdaex_query_editor_str_to_where_type (gchar *str)
 {
@@ -1361,15 +1336,15 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 												}
 											else if (xmlStrcmp (cur->name, "for_show") == 0)
 												{
-													field->for_show = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+													field->for_show = zak_utils_string_to_boolean (xmlNodeGetContent (cur));
 												}
 											else if (xmlStrcmp (cur->name, "always_showed") == 0)
 												{
-													field->always_showed = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+													field->always_showed = zak_utils_string_to_boolean (xmlNodeGetContent (cur));
 												}
 											else if (xmlStrcmp (cur->name, "for_where") == 0)
 												{
-													field->for_where = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+													field->for_where = zak_utils_string_to_boolean (xmlNodeGetContent (cur));
 												}
 											else if (xmlStrcmp (cur->name, "available_where_type") == 0)
 												{
@@ -1377,7 +1352,7 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 												}
 											else if (xmlStrcmp (cur->name, "for_order") == 0)
 												{
-													field->for_order = gdaex_query_editor_str_to_boolean (xmlNodeGetContent (cur));
+													field->for_order = zak_utils_string_to_boolean (xmlNodeGetContent (cur));
 												}
 											else if (xmlStrcmp (cur->name, "decode") == 0)
 												{
