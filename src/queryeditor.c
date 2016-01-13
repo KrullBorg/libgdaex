@@ -1128,6 +1128,62 @@ gdaex_query_editor_str_to_join_type (gchar *str)
 typedef GdaExQueryEditorIWidget *(* IWidgetConstructorFunc) (void);
 typedef gboolean (* IWidgetXmlParsingFunc) (GdaExQueryEditorIWidget *, xmlNodePtr);
 
+static GdaExQueryEditorIWidget
+*gdaex_query_editor_iwidget_construct (GdaExQueryEditor *qe,
+									   const gchar *type,
+									   const gchar *table_name,
+									   const gchar *field_name,
+									   xmlNode *xnode)
+{
+	GdaExQueryEditorPrivate *priv;
+	GdaExQueryEditorClass *klass;
+
+	guint i;
+
+	IWidgetConstructorFunc iwidget_constructor;
+	IWidgetXmlParsingFunc iwidget_xml_parsing;
+
+	GdaExQueryEditorIWidget *iwidget;
+
+	klass = GDAEX_QUERY_EDITOR_GET_CLASS (qe);
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
+
+	iwidget = NULL;
+	for (i = 0; i < priv->ar_modules->len; i++)
+		{
+			if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
+								 g_strconcat (type, "_new", NULL),
+								 (gpointer *)&iwidget_constructor))
+				{
+					if (iwidget_constructor != NULL)
+						{
+							iwidget = iwidget_constructor ();
+							if (iwidget != NULL)
+								{
+									g_signal_emit (qe, klass->iwidget_init_signal_id,
+												   0,
+												   iwidget,
+												   table_name,
+												   field_name);
+
+									if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
+														 g_strconcat (type, "_xml_parsing", NULL),
+														 (gpointer *)&iwidget_xml_parsing))
+										{
+											if (iwidget_xml_parsing != NULL)
+												{
+													iwidget_xml_parsing (iwidget, xnode);
+												}
+										}
+								}
+							break;
+						}
+				}
+		}
+
+	return iwidget;
+}
+
 void
 gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
                                          xmlNode *root,
@@ -1161,9 +1217,6 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 	gchar *table_right;
 	GdaExQueryEditorJoinType join_type;
 	GSList *fields_joined;
-
-	IWidgetConstructorFunc iwidget_constructor;
-	IWidgetXmlParsingFunc iwidget_xml_parsing;
 
 	g_return_if_fail (GDAEX_IS_QUERY_EDITOR (qe));
 	g_return_if_fail (root != NULL);
@@ -1364,62 +1417,29 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 												{
 													gchar *type;
 
-													guint i;
-
-													GdaExQueryEditorIWidget *iwidget;
-
 													type = xmlGetProp (cur, (const xmlChar *)"type");
 
-													iwidget = NULL;
-													for (i = 0; i < priv->ar_modules->len; i++)
+													if (xmlStrcmp (cur->name, "widget") == 0
+														|| xmlStrcmp (cur->name, "widget_from") == 0)
 														{
-															if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
-																				 g_strconcat (type, "_new", NULL),
-																				 (gpointer *)&iwidget_constructor))
+															field->iwidget_from = gdaex_query_editor_iwidget_construct (qe,
+																														type,
+																														table_name,
+																														field->name,
+																														cur);
+															if (field->iwidget_from == NULL)
 																{
-																	if (iwidget_constructor != NULL)
-																		{
-																			iwidget = iwidget_constructor ();
-																			if (iwidget != NULL)
-																				{
-																					g_signal_emit (qe, klass->iwidget_init_signal_id,
-																								   0,
-																								   iwidget,
-																								   table_name,
-																								   field->name);
-
-																					if (g_module_symbol ((GModule *)g_ptr_array_index (priv->ar_modules, i),
-																										 g_strconcat (type, "_xml_parsing", NULL),
-																										 (gpointer *)&iwidget_xml_parsing))
-																						{
-																							if (iwidget_xml_parsing != NULL)
-																								{
-																									iwidget_xml_parsing (iwidget, cur);
-																								}
-																						}
-																				}
-																			break;
-																		}
+																	g_warning (_("Unknown iwidget type «%s»."), type);
 																}
 														}
-
-													if (iwidget == NULL)
+													if (xmlStrcmp (cur->name, "widget") == 0
+														|| xmlStrcmp (cur->name, "widget_to") == 0)
 														{
-															g_warning (_("Unknown iwidget type «%s»."), type);
-														}
-
-													if (xmlStrcmp (cur->name, "widget") == 0)
-														{
-															field->iwidget_from = iwidget;
-															field->iwidget_to = iwidget;
-														}
-													else if (xmlStrcmp (cur->name, "widget_from") == 0)
-														{
-															field->iwidget_from = iwidget;
-														}
-													else if (xmlStrcmp (cur->name, "widget_to") == 0)
-														{
-															field->iwidget_to = iwidget;
+															field->iwidget_to = gdaex_query_editor_iwidget_construct (qe,
+																													  type,
+																													  table_name,
+																													  field->name,
+																													  cur);
 														}
 												}
 
