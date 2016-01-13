@@ -21,6 +21,7 @@ libgdaex_la_SOURCES = gdaex.c \
                       queryeditormarshal.c \
                       queryeditor.c \
                       queryeditor_widget_interface.c \
+                      queryeditorcheck.c \
                       queryeditorentry.c \
                       queryeditorentrydate.c \
                       sqlbuilder.c
@@ -31,6 +32,7 @@ libgdaex_include_HEADERS = libgdaex.h \
                            gdaex.h \
                            queryeditor.h \
                            queryeditor_widget_interface.h \
+                           queryeditorcheck.h \
                            queryeditorentry.h \
                            queryeditorentrydate.h \
                            sqlbuilder.h

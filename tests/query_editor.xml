@@ -68,6 +68,13 @@
 			<type>integer</type>
 			<available_where_type>number</available_where_type>
 		</field>
+		<field>
+			<name>married</name>
+			<name_visible>Married</name_visible>
+			<description>If married</description>
+			<type>boolean</type>
+			<available_where_type>equal</available_where_type>
+		</field>
 	</fields>
 
 	<fields table="orders">

@@ -32,6 +32,7 @@
 
 #include "queryeditormarshal.h"
 #include "queryeditor.h"
+#include "queryeditorcheck.h"
 #include "queryeditorentry.h"
 #include "queryeditorentrydate.h"
 
@@ -772,6 +773,10 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_from), 8);
 						}
 				}
+			else if (_field->type == GDAEX_QE_FIELD_TYPE_BOOLEAN)
+				{
+					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_check_new ());
+				}
 			else
 				{
 					_field->iwidget_from = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_entry_new ());
@@ -801,6 +806,10 @@ gdaex_query_editor_table_add_field (GdaExQueryEditor *qe,
 							gdaex_query_editor_entry_date_set_format (GDAEX_QUERY_EDITOR_ENTRY_DATE (_field->iwidget_to), "%H:%M:%S");
 							gtk_entry_set_max_length (GTK_ENTRY (_field->iwidget_to), 8);
 						}
+				}
+			else if (_field->type == GDAEX_QE_FIELD_TYPE_BOOLEAN)
+				{
+					_field->iwidget_to = GDAEX_QUERY_EDITOR_IWIDGET (gdaex_query_editor_check_new ());
 				}
 			else
 				{
@@ -970,15 +979,23 @@ gdaex_query_editor_str_to_field_type (gchar *str)
 
 	ret = 0;
 
-	if (g_strcmp0 (str, "text") == 0)
+	if (g_strcmp0 (str, "text") == 0
+		|| g_strcmp0 (str, "string") == 0)
 		{
 			ret = GDAEX_QE_FIELD_TYPE_TEXT;
 		}
-	else if (g_strcmp0 (str, "integer") == 0)
+	else if (g_strcmp0 (str, "integer") == 0
+			 || g_strcmp0 (str, "int") == 0)
 		{
 			ret = GDAEX_QE_FIELD_TYPE_INTEGER;
 		}
-	else if (g_strcmp0 (str, "double") == 0)
+	else if (g_strcmp0 (str, "boolean") == 0
+			 || g_strcmp0 (str, "bool") == 0)
+		{
+			ret = GDAEX_QE_FIELD_TYPE_BOOLEAN;
+		}
+	else if (g_strcmp0 (str, "double") == 0
+			 || g_strcmp0 (str, "float") == 0)
 		{
 			ret = GDAEX_QE_FIELD_TYPE_DOUBLE;
 		}
@@ -1901,6 +1918,14 @@ gdaex_query_editor_sql_where (GdaExQueryEditor *qe,
 										if (to_str != NULL)
 											{
 												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_INT, strtol (to_str, NULL, 10));
+											}
+										break;
+
+									case GDAEX_QE_FIELD_TYPE_BOOLEAN:
+										id_value1 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_BOOLEAN, zak_utils_string_to_boolean (from_str));
+										if (to_str != NULL)
+											{
+												id_value2 = gda_sql_builder_add_expr (sqlbuilder, NULL, G_TYPE_BOOLEAN, zak_utils_string_to_boolean (to_str));
 											}
 										break;
 
@@ -3713,6 +3738,14 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 									{
 										val1 = g_strdup (val1);
 									}
+								if (val1_visible == NULL)
+									{
+										val1_visible = g_strdup ("");
+									}
+								else
+									{
+										val1_visible = g_strdup (val1_visible);
+									}
 								if (val1_sql == NULL
 									|| g_strcmp0 (val1_sql, "NULL") == 0)
 									{
@@ -3723,25 +3756,42 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 										val1_sql = g_strdup (val1_sql);
 									}
 
-								val2 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
-								val2_visible = (gchar *)gdaex_query_editor_iwidget_get_value_visible (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
-								val2_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
-								if (val2 == NULL)
+								if (where_type != GDAEX_QE_WHERE_TYPE_BETWEEN)
 									{
 										val2 = g_strdup ("");
-									}
-								else
-									{
-										val2 = g_strdup (val2);
-									}
-								if (val2_sql == NULL
-									|| g_strcmp0 (val2_sql, "NULL") == 0)
-									{
+										val2_visible = g_strdup ("");
 										val2_sql = g_strdup ("");
 									}
 								else
 									{
-										val2_sql = g_strdup (val2_sql);
+										val2 = (gchar *)gdaex_query_editor_iwidget_get_value (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
+										val2_visible = (gchar *)gdaex_query_editor_iwidget_get_value_visible (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
+										val2_sql = (gchar *)gdaex_query_editor_iwidget_get_value_sql (GDAEX_QUERY_EDITOR_IWIDGET (priv->txt_to));
+										if (val2 == NULL)
+											{
+												val2 = g_strdup ("");
+											}
+										else
+											{
+												val2 = g_strdup (val2);
+											}
+										if (val2_visible == NULL)
+											{
+												val2_visible = g_strdup ("");
+											}
+										else
+											{
+												val2_visible = g_strdup (val2_visible);
+											}
+										if (val2_sql == NULL
+											|| g_strcmp0 (val2_sql, "NULL") == 0)
+											{
+												val2_sql = g_strdup ("");
+											}
+										else
+											{
+												val2_sql = g_strdup (val2_sql);
+											}
 									}
 							}
 						else
@@ -4498,6 +4548,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						{
 							case GDAEX_QE_FIELD_TYPE_TEXT:
 							case GDAEX_QE_FIELD_TYPE_INTEGER:
+							case GDAEX_QE_FIELD_TYPE_BOOLEAN:
 							case GDAEX_QE_FIELD_TYPE_DOUBLE:
 							case GDAEX_QE_FIELD_TYPE_DATE:
 							case GDAEX_QE_FIELD_TYPE_DATETIME:
@@ -4546,6 +4597,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						{
 							case GDAEX_QE_FIELD_TYPE_TEXT:
 							case GDAEX_QE_FIELD_TYPE_INTEGER:
+							case GDAEX_QE_FIELD_TYPE_BOOLEAN:
 							case GDAEX_QE_FIELD_TYPE_DOUBLE:
 							case GDAEX_QE_FIELD_TYPE_DATE:
 							case GDAEX_QE_FIELD_TYPE_DATETIME:

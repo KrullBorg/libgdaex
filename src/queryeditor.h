@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -72,10 +72,11 @@ typedef enum
 	{
 		GDAEX_QE_FIELD_TYPE_TEXT = 1,
 		GDAEX_QE_FIELD_TYPE_INTEGER,
+		GDAEX_QE_FIELD_TYPE_BOOLEAN,
 		GDAEX_QE_FIELD_TYPE_DOUBLE,
 		GDAEX_QE_FIELD_TYPE_DATE,
 		GDAEX_QE_FIELD_TYPE_DATETIME,
-		GDAEX_QE_FIELD_TYPE_TIME,
+		GDAEX_QE_FIELD_TYPE_TIME
 	} GdaExQueryEditorFieldType;
 
 typedef enum
