@@ -4348,24 +4348,26 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			/* if it is the first condition, "link" isn't visibile */
 			if (indices[gtk_tree_path_get_depth (path) - 1] != 0)
 				{
-					if (link_type != 0
-					    && gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb))
+					if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb))
 						{
-							do
+							if (link_type != 0)
 								{
-									gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb,
-									                    0, &link_type_cb,
-									                    -1);
-									if (link_type == link_type_cb)
+									do
 										{
-											gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
-											break;
-										}
-								} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb));
-						}
-					else
-						{
-							gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), NULL);
+											gtk_tree_model_get (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb,
+																0, &link_type_cb,
+																-1);
+											if (link_type == link_type_cb)
+												{
+													gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
+													break;
+												}
+										} while (gtk_tree_model_iter_next (GTK_TREE_MODEL (priv->lstore_link_type), &iter_cb));
+								}
+							else
+								{
+									gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_link_type), &iter_cb);
+								}
 						}
 
 					gtk_widget_show (priv->lbl_link_type);
@@ -4516,11 +4518,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 						{
 							if (where_type == 0)
 								{
-									/* if no where type selected and if only one where type, it is immediately selected */
-									if (gtk_tree_model_iter_n_children (GTK_TREE_MODEL (priv->lstore_where_type), NULL) == 1)
-										{
-											gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
-										}
+									/* if no where type selected the first item it is immediately selected */
+									gtk_combo_box_set_active_iter (GTK_COMBO_BOX (priv->cb_where_type), &iter_cb);
 								}
 							else
 								{
