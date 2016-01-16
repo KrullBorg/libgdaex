@@ -135,6 +135,11 @@ static void gdaex_query_editor_on_trv_fields_row_activated (GtkTreeView *tree_vi
                                                             GtkTreeViewColumn *column,
                                                             gpointer user_data);
 
+static void gdaex_query_editor_on_notebook_switch_page (GtkNotebook *notebook,
+														gpointer page,
+														guint page_num,
+														gpointer user_data);
+
 static void gdaex_query_editor_show_add_iter (GdaExQueryEditor *qe, GtkTreeIter *iter);
 
 static void gdaex_query_editor_on_btn_show_add_clicked (GtkButton *button,
@@ -481,6 +486,8 @@ GdaExQueryEditor
 		}
 
 	priv->notebook = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "notebook1"));
+	g_signal_connect (G_OBJECT (priv->notebook), "switch-page",
+					  G_CALLBACK (gdaex_query_editor_on_notebook_switch_page), (gpointer)gdaex_query_editor);
 
 	priv->trv_fields = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "treeview1"));
 	priv->trv_where = GTK_WIDGET (gtk_builder_get_object (priv->gtkbuilder, "treeview3"));
@@ -3853,6 +3860,30 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 	g_free (val2);
 
 	gtk_widget_hide (priv->vbx_values_container);
+}
+
+static void
+gdaex_query_editor_on_notebook_switch_page (GtkNotebook *notebook,
+											gpointer page,
+											guint page_num,
+											gpointer user_data)
+{
+	GdaExQueryEditorPrivate *priv;
+
+	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE ((GdaExQueryEditor *)user_data);
+
+	if (page_num != GDAEX_QE_PAGE_SHOW)
+		{
+			gtk_tree_selection_unselect_all (priv->sel_show);
+		}
+	if (page_num != GDAEX_QE_PAGE_WHERE)
+		{
+			gtk_tree_selection_unselect_all (priv->sel_where);
+		}
+	if (page_num != GDAEX_QE_PAGE_ORDER)
+		{
+			gtk_tree_selection_unselect_all (priv->sel_order);
+		}
 }
 
 static void
