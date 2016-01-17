@@ -281,9 +281,9 @@ enum
 		COL_WHERE_CONDITION_NOT,
 		COL_WHERE_CONDITION_TYPE,
 		COL_WHERE_CONDITION_TYPE_VISIBLE,
-		COL_WHERE_CONDITION_FROM,
-		COL_WHERE_CONDITION_FROM_VISIBLE,
-		COL_WHERE_CONDITION_FROM_SQL,
+		COL_WHERE_CONDITION_FROM, /* column with exchange value from GtkTreeStore and GFtkWidget */
+		COL_WHERE_CONDITION_FROM_VISIBLE, /* column with the visible eventually formatted value */
+		COL_WHERE_CONDITION_FROM_SQL, /* columne with the value formatted useful for sql */
 		COL_WHERE_CONDITION_TO,
 		COL_WHERE_CONDITION_TO_VISIBLE,
 		COL_WHERE_CONDITION_TO_SQL
@@ -4302,8 +4302,6 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 	guint where_type;
 	gchar *from;
 	gchar *to;
-	gchar *from_sql;
-	gchar *to_sql;
 
 	GdaExQueryEditorTable *table;
 	GdaExQueryEditorField *field;
@@ -4336,9 +4334,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			                    COL_WHERE_CONDITION_NOT, &not,
 			                    COL_WHERE_CONDITION_TYPE, &where_type,
 			                    COL_WHERE_CONDITION_FROM, &from,
-			                    COL_WHERE_CONDITION_FROM_SQL, &from_sql,
 			                    COL_WHERE_CONDITION_TO, &to,
-			                    COL_WHERE_CONDITION_TO_SQL, &to_sql,
 			                    -1);
 
 			is_group = (g_strcmp0 (table_name, GROUP) == 0);
@@ -4648,8 +4644,8 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 							case GDAEX_QE_FIELD_TYPE_DATE:
 							case GDAEX_QE_FIELD_TYPE_DATETIME:
 							case GDAEX_QE_FIELD_TYPE_TIME:
-								gdaex_query_editor_iwidget_set_value (field->iwidget_from, from_sql == NULL ? "" : from_sql);
-								gdaex_query_editor_iwidget_set_value (field->iwidget_to, to_sql == NULL ? "" : to_sql);
+								gdaex_query_editor_iwidget_set_value (field->iwidget_from, from == NULL ? "" : from);
+								gdaex_query_editor_iwidget_set_value (field->iwidget_to, to == NULL ? "" : to);
 								break;
 
 							default:
@@ -4695,6 +4691,10 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
 			if (GTK_IS_WIDGET (priv->txt_from))
 				{
 					gtk_widget_grab_focus (priv->txt_from);
+				}
+			else if (GTK_IS_WIDGET (priv->txt_to))
+				{
+					gtk_widget_grab_focus (priv->txt_to);
 				}
 		}
 }
