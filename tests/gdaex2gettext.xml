@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gdaex2gettext>
+
+  <file filename="articoli.gdaexxml">
+	SELECT * FROM articoli
+  </file>
+
+</gdaex2gettext>

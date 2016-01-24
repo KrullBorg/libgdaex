@@ -49,6 +49,7 @@ PKG_CHECK_MODULES(GDAEX, [gmodule-2.0 >= 2
                           libgda-5.0 >= 5
                           gio-2.0 >= 2.36
                           gtk+-3.0 >= 3
+						  libxml-2.0 >= 2
 						  libzakutils])
 
 AC_SUBST(GDAEX_CFLAGS)
@@ -89,6 +90,7 @@ AC_CONFIG_FILES([
 	docs/Makefile
 	docs/reference/Makefile
 	docs/reference/version.xml
+	gdaex2gettext/Makefile
 	tests/Makefile
 	po/Makefile.in
 ])

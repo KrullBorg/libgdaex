@@ -27,9 +27,11 @@ stamp-it
 mkinstalldirs
 docs/reference/html/
 docs/reference/xml/
-src/.libs/
-src/.deps/
+.libs
+.deps
 src/*marshal.[ch]
+gdaex2gettext/gdaex2gettext
+gdaex2gettext/gdaex2gettext.exe
 tests/.libs/
 tests/.deps/
 po/POTFILES
@@ -44,6 +46,7 @@ intltool*
 libgdaex*tar*
 tests/test_prefix*
 tests/query_editor
+tests/*.gdaexxml
 tests/grid
 tests/fill_liststore
 tests/*.exe

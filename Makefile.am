@@ -1,6 +1,6 @@
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 
-SUBDIRS = data po src docs tests
+SUBDIRS = data po src gdaex2gettext docs tests
 
 ACLOCAL_AMFLAGS = -I m4
 
