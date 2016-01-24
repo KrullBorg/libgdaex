@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<locatingRules>
+	<locatingRule name="GdaEx2Gettext" pattern="*.xml">
+		<documentRule localName="gdaex2gettext" target="gdaex2gettext.its"/>
+	</locatingRule>
+	<locatingRule name="GdaEx2Gettext" pattern="*.gdaexxml" target="gdaex2gettext.its"/>
+</locatingRules>
