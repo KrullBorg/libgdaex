@@ -2,6 +2,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+modulesdir=@libdir@/@PACKAGE@/modules
 
 Name: @PACKAGE_NAME@
 Description: A libgda's "subclass"

@@ -1,7 +1,7 @@
 /*
  *  gdaex.h
  *
- *  Copyright (C) 2005-2014 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -261,6 +261,16 @@ guint gdaex_get_new_id (GdaEx *gdaex,
 gchar *gdaex_format_money (gdouble number,
                      gint decimals,
                      gboolean with_currency_symbol);
+
+gboolean gdaex_save_file_in_blob (GdaEx *gdaex,
+								  const gchar *sql,
+								  const gchar *blob_field_name,
+								  const gchar *filename);
+
+const gchar *gdaex_get_blob (GdaEx *gdaex,
+							 const gchar *sql,
+							 const gchar *filename_field_name,
+							 const gchar *blob_field_name);
 
 
 G_END_DECLS

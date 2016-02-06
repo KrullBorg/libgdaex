@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,6 +53,27 @@ const gchar
 }
 
 const gchar
+*gdaex_query_editor_iwidget_get_value_visible (GdaExQueryEditorIWidget *iwidget)
+{
+	GdaExQueryEditorIWidgetIface *iface;
+
+	gchar *ret;
+
+	ret = NULL;
+
+	g_return_val_if_fail (GDAEX_QUERY_EDITOR_IS_IWIDGET (iwidget), ret);
+
+	iface = GDAEX_QUERY_EDITOR_IWIDGET_GET_IFACE (iwidget);
+
+	if (iface->get_value_visible)
+		{
+			ret = (gchar *)(* iface->get_value_visible) (iwidget);
+		}
+
+	return ret;
+}
+
+const gchar
 *gdaex_query_editor_iwidget_get_value_sql (GdaExQueryEditorIWidget *iwidget)
 {
 	GdaExQueryEditorIWidgetIface *iface;
@@ -86,5 +107,20 @@ gdaex_query_editor_iwidget_set_value (GdaExQueryEditorIWidget *iwidget,
 	if (iface->set_value)
 		{
 			(* iface->set_value) (iwidget, value);
+		}
+}
+
+void
+gdaex_query_editor_xml_parsing (GdaExQueryEditorIWidget *iwidget, xmlNode *xnode)
+{
+	GdaExQueryEditorIWidgetIface *iface;
+
+	g_return_if_fail (GDAEX_QUERY_EDITOR_IS_IWIDGET (iwidget));
+
+	iface = GDAEX_QUERY_EDITOR_IWIDGET_GET_IFACE (iwidget);
+
+	if (iface->xml_parsing)
+		{
+			(* iface->xml_parsing) (iwidget, xnode);
 		}
 }

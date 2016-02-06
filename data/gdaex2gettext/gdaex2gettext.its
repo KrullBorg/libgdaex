@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<its:rules xmlns:its="http://www.w3.org/2005/11/its" version="1.0">
+	<its:translateRule selector="/gda_array" translate="no"/>
+	<its:translateRule selector="//gda_array_field" translate="no"/>
+	<its:translateRule selector="//gda_array_data" translate="no"/>
+	<its:translateRule selector="//gda_array_row" translate="no"/>
+	<its:translateRule selector="//gda_value" translate="yes"/>
+</its:rules>

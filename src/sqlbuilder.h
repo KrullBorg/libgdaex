@@ -21,7 +21,7 @@
  *
  */
 
-#ifndef __GDAEX_SQL_BUILDER_H__
+#ifndef __GDAEX_SQLBUILDER_H__
 #define __GDAEX_SQLBUILDER_H__
 
 #include <glib.h>
@@ -35,7 +35,7 @@ G_BEGIN_DECLS
 #define GDAEX_TYPE_SQLBUILDER                 (gdaex_sql_builder_get_type ())
 #define GDAEX_SQLBUILDER(obj)                 (G_TYPE_CHECK_INSTANCE_CAST ((obj), GDAEX_TYPE_SQLBUILDER, GdaExSqlBuilder))
 #define GDAEX_SQLBUILDER_CLASS(klass)         (G_TYPE_CHECK_CLASS_CAST ((klass), GDAEX_TYPE_SQLBUILDER, GdaExSqlBuilderClass))
-#define GDAEX_IS_SQLBUILDER(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_SQL_BUILDER))
+#define GDAEX_IS_SQLBUILDER(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GDAEX_TYPE_SQLBUILDER))
 #define GDAEX_IS_SQLBUILDER_CLASS(klass)      (G_TYPE_CHECK_CLASS_TYPE ((klass), GDAEX_TYPE_SQLBUILDER))
 #define GDAEX_SQLBUILDER_GET_CLASS(obj)       (G_TYPE_INSTANCE_GET_CLASS ((obj), GDAEX_TYPE_SQLBUILDER, GdaExSqlBuilderClass))
 
@@ -65,6 +65,7 @@ void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 							 GdaSqlSelectJoinType join_type,
 							 ...);
 
+void gdaex_sql_builder_field (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *field_name, const gchar *field_alias, GValue *gval);
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,

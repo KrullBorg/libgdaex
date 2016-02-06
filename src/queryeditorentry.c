@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,10 +40,11 @@ static void gdaex_query_editor_entry_get_property (GObject *object,
                                            GParamSpec *pspec);
 
 static const gchar *gdaex_query_editor_entry_get_value (GdaExQueryEditorIWidget *iwidget);
+static const gchar *gdaex_query_editor_entry_get_value_visible (GdaExQueryEditorIWidget *iwidget);
 static const gchar *gdaex_query_editor_entry_get_value_sql (GdaExQueryEditorIWidget *iwidget);
 static void gdaex_query_editor_entry_set_value (GdaExQueryEditorIWidget *iwidget, const gchar *value);
 
-#define GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_TYPE_MASKED_ENTRY, GdaExQueryEditorEntryPrivate))
+#define GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GTK_TYPE_ENTRY, GdaExQueryEditorEntryPrivate))
 
 typedef struct _GdaExQueryEditorEntryPrivate GdaExQueryEditorEntryPrivate;
 struct _GdaExQueryEditorEntryPrivate
@@ -67,15 +68,16 @@ gdaex_query_editor_entry_class_init (GdaExQueryEditorEntryClass *klass)
 }
 
 static void
-gdaex_query_editor_entry_init (GdaExQueryEditorEntry *masked_entry)
+gdaex_query_editor_entry_init (GdaExQueryEditorEntry *entry)
 {
-	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (masked_entry);
+	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (entry);
 }
 
 static void
 gdaex_query_editor_entry_gdaex_query_editor_iwidget_interface_init (GdaExQueryEditorIWidgetIface *iface)
 {
 	iface->get_value = gdaex_query_editor_entry_get_value;
+	iface->get_value_visible = gdaex_query_editor_entry_get_value_visible;
 	iface->get_value_sql = gdaex_query_editor_entry_get_value_sql;
 	iface->set_value = gdaex_query_editor_entry_set_value;
 }
@@ -96,8 +98,8 @@ gdaex_query_editor_entry_new ()
 static void
 gdaex_query_editor_entry_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
-	GdaExQueryEditorEntry *masked_entry = GDAEX_QUERY_EDITOR_ENTRY (object);
-	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (masked_entry);
+	GdaExQueryEditorEntry *entry = GDAEX_QUERY_EDITOR_ENTRY (object);
+	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (entry);
 
 	switch (property_id)
 		{
@@ -110,8 +112,8 @@ gdaex_query_editor_entry_set_property (GObject *object, guint property_id, const
 static void
 gdaex_query_editor_entry_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
-	GdaExQueryEditorEntry *masked_entry = GDAEX_QUERY_EDITOR_ENTRY (object);
-	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (masked_entry);
+	GdaExQueryEditorEntry *entry = GDAEX_QUERY_EDITOR_ENTRY (object);
+	GdaExQueryEditorEntryPrivate *priv = GDAEX_QUERY_EDITOR_ENTRY_GET_PRIVATE (entry);
 
 	switch (property_id)
 		{
@@ -123,6 +125,12 @@ gdaex_query_editor_entry_get_property (GObject *object, guint property_id, GValu
 
 static const gchar
 *gdaex_query_editor_entry_get_value (GdaExQueryEditorIWidget *iwidget)
+{
+	return gtk_entry_get_text (GTK_ENTRY (iwidget));
+}
+
+static const gchar
+*gdaex_query_editor_entry_get_value_visible (GdaExQueryEditorIWidget *iwidget)
 {
 	return gtk_entry_get_text (GTK_ENTRY (iwidget));
 }

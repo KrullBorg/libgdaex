@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2015 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,217 +19,28 @@
 #include <gdaex.h>
 #include <queryeditor.h>
 
+GdaExQueryEditor *qe;
+
+gchar *xmlfile;
+
+GdaEx *gdaex;
+
 GtkWidget *w;
 
-static void
-on_btn_clean_clicked (GtkButton *button,
-                      gpointer user_data)
-{
-	gdaex_query_editor_clean_choices ((GdaExQueryEditor *)user_data);
-}
+GtkWidget *widget_qe;
+GtkWidget *btn_destroy;
+GtkWidget *btn_clean;
+GtkWidget *btn_get_sql;
+GtkWidget *btn_save_xml;
+GtkWidget *btn_load_xml;
+GtkWidget *btn_ok;
+
+GtkWidget *vbox;
 
 static void
-on_btn_save_xml_clicked (GtkButton *button,
-                      gpointer user_data)
+do_query_editor ()
 {
-	xmlDoc *doc;
-	xmlNode *node;
-	GtkWidget *dialog;
-
-	doc = xmlNewDoc ("1.0");
-	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
-	xmlDocSetRootElement (doc, node);
-
-	dialog = gtk_file_chooser_dialog_new ("Save xml to...",
-	                                      GTK_WINDOW (w),
-	                                      GTK_FILE_CHOOSER_ACTION_SAVE,
-	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-	                                      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-	                                      NULL);
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			gchar *filename;
-			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-			xmlSaveFormatFile (filename, doc, 2);
-			g_free (filename);
-		}
-	gtk_widget_destroy (dialog);
-}
-
-static void
-on_btn_load_xml_clicked (GtkButton *button,
-                      gpointer user_data)
-{
-	GtkWidget *dialog;
-	xmlDoc *doc;
-	xmlNode *node;
-
-	dialog = gtk_file_chooser_dialog_new ("Load xml from...",
-	                                      GTK_WINDOW (w),
-	                                      GTK_FILE_CHOOSER_ACTION_OPEN,
-	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-	                                      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-	                                      NULL);
-	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
-		{
-			gchar *filename;
-			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-			doc = xmlParseFile (filename);
-			if (doc != NULL)
-				{
-					node = xmlDocGetRootElement (doc);
-					if (node != NULL)
-						{
-							gdaex_query_editor_load_choices_from_xml ((GdaExQueryEditor *)user_data, node, TRUE);
-						}
-				}
-			g_free (filename);
-		}
-	gtk_widget_destroy (dialog);
-}
-
-static void
-on_btn_get_sql_clicked (GtkButton *button,
-                      gpointer user_data)
-{
-	xmlDoc *doc;
-	xmlNode *node;
-	xmlChar *buf;
-
-	gchar *sql;
-
-	gint size;
-
-	/* SQL */
-	sql = (gchar *)gdaex_query_editor_get_sql ((GdaExQueryEditor *)user_data);
-	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
-	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                            GTK_MESSAGE_INFO,
-	                                            GTK_BUTTONS_OK,
-	                                            sql);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Sql");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-
-	/* SQL SELECT */
-	sql = (gchar *)gdaex_query_editor_get_sql_select ((GdaExQueryEditor *)user_data);
-	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
-	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                 GTK_MESSAGE_INFO,
-	                                 GTK_BUTTONS_OK,
-	                                 sql);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Select");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-	g_free (sql);
-
-	/* SQL FROM */
-	sql = (gchar *)gdaex_query_editor_get_sql_from ((GdaExQueryEditor *)user_data);
-	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
-	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                 GTK_MESSAGE_INFO,
-	                                 GTK_BUTTONS_OK,
-	                                 sql);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Sql From");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-	g_free (sql);
-
-	/* SQL WHERE */
-	sql = (gchar *)gdaex_query_editor_get_sql_where ((GdaExQueryEditor *)user_data);
-	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
-	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                 GTK_MESSAGE_INFO,
-	                                 GTK_BUTTONS_OK,
-	                                 sql);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Where");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-	g_free (sql);
-
-	/* SQL ORDER */
-	sql = (gchar *)gdaex_query_editor_get_sql_order ((GdaExQueryEditor *)user_data);
-	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
-	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                 GTK_MESSAGE_INFO,
-	                                 GTK_BUTTONS_OK,
-	                                 sql);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Order By");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-	g_free (sql);
-
-	/* XML */
-	doc = xmlNewDoc ("1.0");
-	node = gdaex_query_editor_get_sql_as_xml ((GdaExQueryEditor *)user_data);
-	xmlDocSetRootElement (doc, node);
-	xmlDocDumpMemory (doc, &buf, &size);
-	buf = g_strjoinv ("%%", g_strsplit (buf, "%", -1));
-
-	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
-	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                 GTK_MESSAGE_INFO,
-	                                 GTK_BUTTONS_OK,
-	                                 buf);
-	gtk_window_set_title (GTK_WINDOW (dialog), "Xml");
-	gtk_dialog_run (GTK_DIALOG (dialog));
-	gtk_widget_destroy (dialog);
-}
-
-int
-main (int argc, char *argv[])
-{
-	GError *error;
-
-	GOptionContext *context;
-
-	GdaEx *gdaex;
-	GdaExQueryEditor *qe;
-
 	GdaExQueryEditorField *field;
-
-	GtkWidget *vbox;
-	GtkWidget *widget_qe;
-	GtkWidget *hbtnbox;
-	GtkWidget *btn_clean;
-	GtkWidget *btn_get_sql;
-	GtkWidget *btn_save_xml;
-	GtkWidget *btn_load_xml;
-	GtkWidget *btn_ok;
-
-	gchar *xmlfile;
-
-	xmlfile = NULL;
-
-	GOptionEntry entries[] =
-		{
-			{ "xml-file", 'x', 0, G_OPTION_ARG_FILENAME, &xmlfile, "Xml file", NULL },
-			{ NULL }
-		};
-
-	gtk_init (&argc, &argv);
-
-	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=query_editor.db", TESTSDIR));
-	if (gdaex == NULL)
-		{
-			g_error ("Error on GdaEx initialization.");
-			return 0;
-		}
-
-	error = NULL;
-	context = g_option_context_new ("tests");
-	g_option_context_add_main_entries (context, entries, "tests");
-	g_option_context_add_group (context, gdaex_get_option_group (gdaex));
-	g_option_context_parse (context, &argc, &argv, &error);
-	if (error != NULL)
-		{
-			g_warning ("Error on command line parsing: %s", error->message);
-		}
 
 	qe = gdaex_query_editor_new (gdaex);
 
@@ -372,6 +183,221 @@ main (int argc, char *argv[])
 			g_free (field);
 		}
 
+	widget_qe = gdaex_query_editor_get_widget (qe);
+	gtk_box_pack_start (GTK_BOX (vbox), widget_qe, TRUE, TRUE, 5);
+}
+
+static void
+on_btn_destroy_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	if (widget_qe != NULL)
+		{
+			g_object_unref (G_OBJECT (qe));
+			widget_qe = NULL;
+		}
+	else
+		{
+			do_query_editor ();
+		}
+}
+
+static void
+on_btn_clean_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	gdaex_query_editor_clean_choices (qe);
+}
+
+static void
+on_btn_save_xml_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	xmlDoc *doc;
+	xmlNode *node;
+	GtkWidget *dialog;
+
+	doc = xmlNewDoc ("1.0");
+	node = gdaex_query_editor_get_sql_as_xml (qe);
+	xmlDocSetRootElement (doc, node);
+
+	dialog = gtk_file_chooser_dialog_new ("Save xml to...",
+	                                      GTK_WINDOW (w),
+	                                      GTK_FILE_CHOOSER_ACTION_SAVE,
+	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                                      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	                                      NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			xmlSaveFormatFile (filename, doc, 2);
+			g_free (filename);
+		}
+	gtk_widget_destroy (dialog);
+}
+
+static void
+on_btn_load_xml_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	GtkWidget *dialog;
+	xmlDoc *doc;
+	xmlNode *node;
+
+	dialog = gtk_file_chooser_dialog_new ("Load xml from...",
+	                                      GTK_WINDOW (w),
+	                                      GTK_FILE_CHOOSER_ACTION_OPEN,
+	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+	                                      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+	                                      NULL);
+	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+			doc = xmlParseFile (filename);
+			if (doc != NULL)
+				{
+					node = xmlDocGetRootElement (doc);
+					if (node != NULL)
+						{
+							gdaex_query_editor_load_choices_from_xml (qe, node, TRUE);
+						}
+				}
+			g_free (filename);
+		}
+	gtk_widget_destroy (dialog);
+}
+
+static void
+on_btn_get_sql_clicked (GtkButton *button,
+                      gpointer user_data)
+{
+	xmlDoc *doc;
+	xmlNode *node;
+	xmlChar *buf;
+
+	gchar *sql;
+
+	gint size;
+
+	/* SQL */
+	sql = (gchar *)gdaex_query_editor_get_sql (qe);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                            GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                            GTK_MESSAGE_INFO,
+	                                            GTK_BUTTONS_OK,
+	                                            sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+
+	/* SQL SELECT */
+	sql = (gchar *)gdaex_query_editor_get_sql_select (qe);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Select");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL FROM */
+	sql = (gchar *)gdaex_query_editor_get_sql_from (qe);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql From");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL WHERE */
+	sql = (gchar *)gdaex_query_editor_get_sql_where (qe);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Where");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* SQL ORDER */
+	sql = (gchar *)gdaex_query_editor_get_sql_order (qe);
+	sql = g_strjoinv ("%%", g_strsplit (sql, "%", -1));
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 sql);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Sql Order By");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+	g_free (sql);
+
+	/* XML */
+	doc = xmlNewDoc ("1.0");
+	node = gdaex_query_editor_get_sql_as_xml (qe);
+	xmlDocSetRootElement (doc, node);
+	xmlDocDumpMemory (doc, &buf, &size);
+	buf = g_strjoinv ("%%", g_strsplit (buf, "%", -1));
+
+	dialog = gtk_message_dialog_new (GTK_WINDOW (w),
+	                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                 GTK_MESSAGE_INFO,
+	                                 GTK_BUTTONS_OK,
+	                                 buf);
+	gtk_window_set_title (GTK_WINDOW (dialog), "Xml");
+	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_widget_destroy (dialog);
+}
+
+int
+main (int argc, char *argv[])
+{
+	GError *error;
+
+	GOptionContext *context;
+
+	GtkWidget *hbtnbox;
+
+	xmlfile = NULL;
+
+	GOptionEntry entries[] =
+		{
+			{ "xml-file", 'x', 0, G_OPTION_ARG_FILENAME, &xmlfile, "Xml file", NULL },
+			{ NULL }
+		};
+
+	gtk_init (&argc, &argv);
+
+	gdaex = gdaex_new_from_string (g_strdup_printf ("SQLite://DB_DIR=%s;DB_NAME=query_editor.db", TESTSDIR));
+	if (gdaex == NULL)
+		{
+			g_error ("Error on GdaEx initialization.");
+			return 0;
+		}
+
+	error = NULL;
+	context = g_option_context_new ("tests");
+	g_option_context_add_main_entries (context, entries, "tests");
+	g_option_context_add_group (context, gdaex_get_option_group (gdaex));
+	g_option_context_parse (context, &argc, &argv, &error);
+	if (error != NULL)
+		{
+			g_warning ("Error on command line parsing: %s", error->message);
+		}
+
 	w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size (GTK_WINDOW (w), 610, 400);
 	gtk_window_set_modal (GTK_WINDOW (w), TRUE);
@@ -382,38 +408,42 @@ main (int argc, char *argv[])
 	vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
 	gtk_container_add (GTK_CONTAINER (w), vbox);
 
-	widget_qe = gdaex_query_editor_get_widget (qe);
-	gtk_box_pack_start (GTK_BOX (vbox), widget_qe, TRUE, TRUE, 5);
-
 	hbtnbox = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
 	gtk_button_box_set_layout (GTK_BUTTON_BOX (hbtnbox), GTK_BUTTONBOX_END);
 	gtk_box_set_spacing (GTK_BOX (hbtnbox), 5);
 	gtk_box_pack_start (GTK_BOX (vbox), hbtnbox, FALSE, FALSE, 5);
 
+	btn_destroy = gtk_button_new_with_mnemonic ("_Destroy");
+	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_destroy, TRUE, TRUE, 5);
+	g_signal_connect (G_OBJECT (btn_destroy), "clicked",
+	                  G_CALLBACK (on_btn_destroy_clicked), NULL);
+
 	btn_clean = gtk_button_new_from_stock ("gtk-clear");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_clean, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_clean), "clicked",
-	                  G_CALLBACK (on_btn_clean_clicked), qe);
+	                  G_CALLBACK (on_btn_clean_clicked), NULL);
 
 	btn_get_sql = gtk_button_new_with_mnemonic ("Get _Sql");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_get_sql, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_get_sql), "clicked",
-	                  G_CALLBACK (on_btn_get_sql_clicked), qe);
+	                  G_CALLBACK (on_btn_get_sql_clicked), NULL);
 
 	btn_save_xml = gtk_button_new_from_stock ("gtk-save");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_save_xml, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_save_xml), "clicked",
-	                  G_CALLBACK (on_btn_save_xml_clicked), qe);
+	                  G_CALLBACK (on_btn_save_xml_clicked), NULL);
 
 	btn_load_xml = gtk_button_new_from_stock ("gtk-open");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_load_xml, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_load_xml), "clicked",
-	                  G_CALLBACK (on_btn_load_xml_clicked), qe);
+	                  G_CALLBACK (on_btn_load_xml_clicked), NULL);
 
 	btn_ok = gtk_button_new_from_stock ("gtk-close");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_ok, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_ok), "clicked",
 	                  gtk_main_quit, NULL);
+
+	do_query_editor ();
 
 	gtk_widget_show_all (w);
 

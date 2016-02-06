@@ -4,47 +4,46 @@ AM_CPPFLAGS = -I$(top_srcdir) \
               $(GDAEX_CFLAGS) \
               -DGUIDIR=\""$(guidir)"\" \
               -DLOCALEDIR=\"$(localedir)\" \
+              -DMODULESDIR=\""$(libdir)/$(PACKAGE)/modules"\" \
               -DG_LOG_DOMAIN=\"GdaEx\"
 
 LIBS = $(GDAEX_LIBS)
 
-if LIBREPTOOL_FOUND
-AM_CPPFLAGS += \
-               $(REPTOOL_CFLAGS) \
-               -DREPTOOL_FOUND=1
-
-LIBS += \
-        $(REPTOOL_LIBS)
-endif
-
-if LIBSOLIPA_FOUND
-AM_CPPFLAGS += \
-               $(SOLIPA_CFLAGS) \
-               -DSOLIPA_FOUND=1
-
-LIBS += \
-        $(SOLIPA_LIBS)
-endif
-
 lib_LTLIBRARIES = libgdaex.la
 
+queryeditormarshal.c: queryeditormarshal.h queryeditor_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $(srcdir)/queryeditor_marshal.list --body --prefix=_gdaex_query_editor_marshal > $(srcdir)/$@
+
+queryeditormarshal.h: queryeditor_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $(srcdir)/queryeditor_marshal.list --header --prefix=_gdaex_query_editor_marshal > $(srcdir)/$@
+
 libgdaex_la_SOURCES = gdaex.c \
-                      grid.c \
-                      gridcolumn.c \
+                      queryeditormarshal.c \
                       queryeditor.c \
                       queryeditor_widget_interface.c \
+                      queryeditorcheck.c \
                       queryeditorentry.c \
+                      queryeditorentrydate.c \
                       sqlbuilder.c
 
 libgdaex_la_LDFLAGS = -no-undefined
 
 libgdaex_include_HEADERS = libgdaex.h \
                            gdaex.h \
-                           grid.h \
-                           gridcolumn.h \
                            queryeditor.h \
                            queryeditor_widget_interface.h \
+                           queryeditorcheck.h \
                            queryeditorentry.h \
+                           queryeditorentrydate.h \
                            sqlbuilder.h
 
 libgdaex_includedir = $(includedir)/libgdaex
+
+noinst_HEADERS = \
+                 queryeditormarshal.h
+
+install-exec-hook:
+	mkdir -p "$(libdir)/$(PACKAGE)/modules"
+
+uninstall-hook:
+	rm -rf "$(libdir)/$(PACKAGE)"

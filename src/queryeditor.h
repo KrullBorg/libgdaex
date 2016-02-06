@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Andrea Zagli <azagli@libero.it>
+ * Copyright (C) 2011-2016 Andrea Zagli <azagli@libero.it>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,6 +49,8 @@ struct _GdaExQueryEditor
 struct _GdaExQueryEditorClass
 	{
 		GObjectClass parent_class;
+
+		guint iwidget_init_signal_id;
 	};
 
 GType gdaex_query_editor_get_type (void) G_GNUC_CONST;
@@ -58,9 +60,9 @@ GdaExQueryEditor *gdaex_query_editor_new (GdaEx *gdaex);
 
 GtkWidget *gdaex_query_editor_get_widget (GdaExQueryEditor *qe);
 
-void gdaex_query_editor_set_show_visibile (GdaExQueryEditor *qe, gboolean visibile);
-void gdaex_query_editor_set_where_visibile (GdaExQueryEditor *qe, gboolean visibile);
-void gdaex_query_editor_set_order_visibile (GdaExQueryEditor *qe, gboolean visibile);
+void gdaex_query_editor_set_show_visible (GdaExQueryEditor *qe, gboolean visibile);
+void gdaex_query_editor_set_where_visible (GdaExQueryEditor *qe, gboolean visibile);
+void gdaex_query_editor_set_order_visible (GdaExQueryEditor *qe, gboolean visibile);
 
 gboolean gdaex_query_editor_get_show_visible (GdaExQueryEditor *qe);
 gboolean gdaex_query_editor_get_where_visible (GdaExQueryEditor *qe);
@@ -70,10 +72,11 @@ typedef enum
 	{
 		GDAEX_QE_FIELD_TYPE_TEXT = 1,
 		GDAEX_QE_FIELD_TYPE_INTEGER,
+		GDAEX_QE_FIELD_TYPE_BOOLEAN,
 		GDAEX_QE_FIELD_TYPE_DOUBLE,
 		GDAEX_QE_FIELD_TYPE_DATE,
 		GDAEX_QE_FIELD_TYPE_DATETIME,
-		GDAEX_QE_FIELD_TYPE_TIME,
+		GDAEX_QE_FIELD_TYPE_TIME
 	} GdaExQueryEditorFieldType;
 
 typedef enum
@@ -123,12 +126,12 @@ typedef struct
 		GdaExQueryEditorIWidget *iwidget_from;
 		GdaExQueryEditorIWidget *iwidget_to;
 
-		/* TODO 
+		/* TODO
 		 * to refactor
 		 */
 		gchar *decode_table2;
 		GdaExQueryEditorJoinType decode_join_type;
-		/* TODO 
+		/* TODO
 		GSList *decode_fields1;
 		GSList *decode_fields2;
 		*/

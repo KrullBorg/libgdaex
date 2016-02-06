@@ -1,7 +1,7 @@
 /*
  *  libgdaex.h
  *
- *  Copyright (C) 2005-2011 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -25,8 +25,6 @@
 
 
 #include "gdaex.h"
-#include "grid.h"
-#include "gridcolumn.h"
 #include "queryeditor.h"
 #include "queryeditor_widget_interface.h"
 #include "sqlbuilder.h"

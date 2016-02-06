@@ -31,6 +31,11 @@ GTK_DOC_CHECK(1.0)
 IT_PROG_INTLTOOL
 
 dnl ******************************
+dnl glib-genmarshal
+dnl ******************************
+AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
+
+dnl ******************************
 dnl Translations
 dnl ******************************
 GETTEXT_PACKAGE=libgdaex
@@ -43,32 +48,12 @@ AM_GLIB_GNU_GETTEXT
 PKG_CHECK_MODULES(GDAEX, [gmodule-2.0 >= 2
                           libgda-5.0 >= 5
                           gio-2.0 >= 2.36
-                          gtk+-3.0 >= 3])
+                          gtk+-3.0 >= 3
+						  libxml-2.0 >= 2
+						  libzakutils])
 
 AC_SUBST(GDAEX_CFLAGS)
 AC_SUBST(GDAEX_LIBS)
-
-PKG_CHECK_EXISTS(libreptool >= 0.2.2, [LIBREPTOOL_FOUND=yes], [LIBREPTOOL_FOUND=no])
-
-AM_CONDITIONAL(LIBREPTOOL_FOUND, test $LIBREPTOOL_FOUND = yes)
-
-if test $LIBREPTOOL_FOUND = yes; then
-PKG_CHECK_MODULES(REPTOOL, libreptool >= 0.2.2)
-
-AC_SUBST(REPTOOL_CFLAGS)
-AC_SUBST(REPTOOL_LIBS)
-fi
-
-PKG_CHECK_EXISTS(libsolipa >= 0.4.0, [LIBSOLIPA_FOUND=yes], [LIBSOLIPA_FOUND=no])
-
-AM_CONDITIONAL(LIBSOLIPA_FOUND, test $LIBSOLIPA_FOUND = yes)
-
-if test $LIBSOLIPA_FOUND = yes; then
-PKG_CHECK_MODULES(SOLIPA, libsolipa >= 0.4.0)
-
-AC_SUBST(SOLIPA_CFLAGS)
-AC_SUBST(SOLIPA_LIBS)
-fi
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -105,6 +90,7 @@ AC_CONFIG_FILES([
 	docs/Makefile
 	docs/reference/Makefile
 	docs/reference/version.xml
+	gdaex2gettext/Makefile
 	tests/Makefile
 	po/Makefile.in
 ])

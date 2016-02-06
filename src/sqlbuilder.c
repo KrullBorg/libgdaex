@@ -346,6 +346,24 @@ gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 }
 
 /**
+ * gdaex_sql_builder_field:
+ * @sqlb:
+ * @table_name:
+ * @field_name:
+ * @field_alias:
+ * @gval:
+ *
+ */
+void
+gdaex_sql_builder_field (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *field_name, const gchar *field_alias, GValue *gval)
+{
+	GdaExSqlBuilderTable *t;
+
+	t = gdaex_sql_builder_get_table (sqlb, table_name, NULL, TRUE);
+	gdaex_sql_builder_get_field (sqlb, t, field_name, field_alias, gval, TRUE);
+}
+
+/**
  * gdaex_sql_builder_fields:
  * @sqlb:
  * @...:
@@ -434,7 +452,7 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 	if (priv->stmt_type == GDA_SQL_STATEMENT_INSERT)
 		{
-			return;
+			return -1;
 		}
 
 	va_start (ap, op);
@@ -646,7 +664,7 @@ gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
 	GdaDataModel *dm;
 	gint ret;
 
-	g_return_val_if_fail (IS_GDAEX (gdaex), NULL);
+	g_return_val_if_fail (IS_GDAEX (gdaex), -1);
 
 	sql = gdaex_sql_builder_get_sql (sqlb, (GdaConnection *)gdaex_get_gdaconnection (gdaex), params);
 
