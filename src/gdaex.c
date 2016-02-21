@@ -34,6 +34,7 @@
 
 #include <libgda/sql-parser/gda-sql-parser.h>
 #include <libgda/sql-parser/gda-sql-statement.h>
+#include <libgda/gda-blob-op.h>
 
 #include "gdaex.h"
 
@@ -3572,14 +3573,15 @@ const gchar
 				{
 					blob = gda_value_get_blob (value);
 
-					filename_orig = g_strdup ("");
+					filename_orig = g_strdup ("jdoe");
 					error = NULL;
 					value = gda_data_model_get_value_at (dm,
 					                                     gda_data_model_get_column_index (dm, filename_field_name),
 					                                     0, &error);
-					if (!gda_value_is_null (value))
+					if (value != NULL && !gda_value_is_null (value))
 						{
 							path = g_value_get_string (value);
+							g_free (filename_orig);
 							filename_orig = g_path_get_basename (path);
 						}
 
