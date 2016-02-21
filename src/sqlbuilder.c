@@ -1,7 +1,7 @@
 /*
  *  sql_builder.c
  *
- *  Copyright (C) 2010-2014 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -445,7 +445,8 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 	GdaSqlOperatorType op_expr;
 
-	GdaSqlBuilderId id_expr;
+	GdaSqlBuilderId id_expr1;
+	GdaSqlBuilderId id_expr2;
 	GdaSqlBuilderId id_cond;
 
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
@@ -487,17 +488,56 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 			op_expr = va_arg (ap, guint);
 
-			gval = va_arg (ap, GValue *);
-			if (gval != NULL)
+			id_expr1 = 0;
+			id_expr2 = 0;
+			switch (op_expr)
 				{
-					id_expr = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
-				}
-			else
-				{
+				case GDA_SQL_OPERATOR_TYPE_EQ:
+				case GDA_SQL_OPERATOR_TYPE_IS:
+				case GDA_SQL_OPERATOR_TYPE_LIKE:
+				case GDA_SQL_OPERATOR_TYPE_NOTLIKE:
+				case GDA_SQL_OPERATOR_TYPE_ILIKE:
+				case GDA_SQL_OPERATOR_TYPE_NOTILIKE:
+				case GDA_SQL_OPERATOR_TYPE_GT:
+				case GDA_SQL_OPERATOR_TYPE_LT:
+				case GDA_SQL_OPERATOR_TYPE_GEQ:
+				case GDA_SQL_OPERATOR_TYPE_LEQ:
+				case GDA_SQL_OPERATOR_TYPE_DIFF:
+				case GDA_SQL_OPERATOR_TYPE_REGEXP:
+				case GDA_SQL_OPERATOR_TYPE_REGEXP_CI:
+				case GDA_SQL_OPERATOR_TYPE_NOT_REGEXP:
+				case GDA_SQL_OPERATOR_TYPE_NOT_REGEXP_CI:
+				case GDA_SQL_OPERATOR_TYPE_SIMILAR:
+				case GDA_SQL_OPERATOR_TYPE_REM:
+				case GDA_SQL_OPERATOR_TYPE_DIV:
+				case GDA_SQL_OPERATOR_TYPE_BITAND:
+				case GDA_SQL_OPERATOR_TYPE_BITOR:
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr1 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
+					break;
+
+				case GDA_SQL_OPERATOR_TYPE_ISNULL:
+				case GDA_SQL_OPERATOR_TYPE_ISNOTNULL:
+					break;
+
+				case GDA_SQL_OPERATOR_TYPE_BETWEEN:
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr1 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr2 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
 					break;
 				}
 
-			id_cond = gda_sql_builder_add_cond (priv->sqlb, op_expr, f->id, id_expr, 0);
+			id_cond = gda_sql_builder_add_cond (priv->sqlb, op_expr, f->id, id_expr1, id_expr2);
 			if (priv->id_where != 0)
 				{
 					priv->id_where = gda_sql_builder_add_cond (priv->sqlb, op, priv->id_where, id_cond, 0);
