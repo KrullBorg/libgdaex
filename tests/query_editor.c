@@ -224,8 +224,8 @@ on_btn_save_xml_clicked (GtkButton *button,
 	dialog = gtk_file_chooser_dialog_new ("Save xml to...",
 	                                      GTK_WINDOW (w),
 	                                      GTK_FILE_CHOOSER_ACTION_SAVE,
-	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-	                                      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+	                                      "gtk-cancel", GTK_RESPONSE_CANCEL,
+	                                      "gtk-save", GTK_RESPONSE_ACCEPT,
 	                                      NULL);
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
 		{
@@ -248,8 +248,8 @@ on_btn_load_xml_clicked (GtkButton *button,
 	dialog = gtk_file_chooser_dialog_new ("Load xml from...",
 	                                      GTK_WINDOW (w),
 	                                      GTK_FILE_CHOOSER_ACTION_OPEN,
-	                                      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-	                                      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+	                                      "gtk-cancel", GTK_RESPONSE_CANCEL,
+	                                      "gtk-open", GTK_RESPONSE_ACCEPT,
 	                                      NULL);
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
 		{
@@ -418,7 +418,7 @@ main (int argc, char *argv[])
 	g_signal_connect (G_OBJECT (btn_destroy), "clicked",
 	                  G_CALLBACK (on_btn_destroy_clicked), NULL);
 
-	btn_clean = gtk_button_new_from_stock ("gtk-clear");
+	btn_clean = gtk_button_new_with_mnemonic ("_Clear");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_clean, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_clean), "clicked",
 	                  G_CALLBACK (on_btn_clean_clicked), NULL);
@@ -428,17 +428,17 @@ main (int argc, char *argv[])
 	g_signal_connect (G_OBJECT (btn_get_sql), "clicked",
 	                  G_CALLBACK (on_btn_get_sql_clicked), NULL);
 
-	btn_save_xml = gtk_button_new_from_stock ("gtk-save");
+	btn_save_xml = gtk_button_new_with_mnemonic ("_Save");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_save_xml, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_save_xml), "clicked",
 	                  G_CALLBACK (on_btn_save_xml_clicked), NULL);
 
-	btn_load_xml = gtk_button_new_from_stock ("gtk-open");
+	btn_load_xml = gtk_button_new_with_mnemonic ("_Open");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_load_xml, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_load_xml), "clicked",
 	                  G_CALLBACK (on_btn_load_xml_clicked), NULL);
 
-	btn_ok = gtk_button_new_from_stock ("gtk-close");
+	btn_ok = gtk_button_new_with_mnemonic ("_Close");
 	gtk_box_pack_start (GTK_BOX (hbtnbox), btn_ok, TRUE, TRUE, 5);
 	g_signal_connect (G_OBJECT (btn_ok), "clicked",
 	                  gtk_main_quit, NULL);
