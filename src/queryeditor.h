@@ -102,6 +102,12 @@ typedef enum
 		GDAEX_QE_JOIN_TYPE_LEFT
 	} GdaExQueryEditorJoinType;
 
+typedef enum
+	{
+		GDAEX_QE_ORDER_ASC,
+		GDAEX_QE_ORDER_DESC
+	} GdaExQueryEditorOrderType;
+
 #define GDAEX_QE_WHERE_TYPE_STRING GDAEX_QE_WHERE_TYPE_STARTS | GDAEX_QE_WHERE_TYPE_CONTAINS | GDAEX_QE_WHERE_TYPE_ENDS | GDAEX_QE_WHERE_TYPE_ISTARTS | GDAEX_QE_WHERE_TYPE_ICONTAINS | GDAEX_QE_WHERE_TYPE_IENDS
 
 #define GDAEX_QE_WHERE_TYPE_NUMBER GDAEX_QE_WHERE_TYPE_EQUAL | GDAEX_QE_WHERE_TYPE_GREAT | GDAEX_QE_WHERE_TYPE_GREAT_EQUAL | GDAEX_QE_WHERE_TYPE_LESS | GDAEX_QE_WHERE_TYPE_LESS_EQUAL | GDAEX_QE_WHERE_TYPE_BETWEEN
@@ -122,6 +128,8 @@ typedef struct
 		gboolean for_where;
 		guint available_where_type;
 		gboolean for_order;
+		gboolean always_ordered;
+		GdaExQueryEditorOrderType order_default;
 
 		GdaExQueryEditorIWidget *iwidget_from;
 		GdaExQueryEditorIWidget *iwidget_to;
