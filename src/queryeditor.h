@@ -127,6 +127,8 @@ typedef struct
 		gboolean always_showed;
 		gboolean for_where;
 		guint available_where_type;
+		gboolean where_default_not;
+		GdaExQueryEditorWhereType where_default_type;
 		gboolean for_order;
 		gboolean always_ordered;
 		GdaExQueryEditorOrderType order_default;

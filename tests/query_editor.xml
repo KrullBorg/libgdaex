@@ -32,6 +32,8 @@
 			<description>The client's surname</description>
 			<type>text</type>
 			<available_where_type>string|is_null</available_where_type>
+			<where_default_not>t</where_default_not>
+			<where_default_type>is_null</where_default_type>
 			<always_ordered>true</always_ordered>
 			<order_default>DESC</order_default>
 		</field>
