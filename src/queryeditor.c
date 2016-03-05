@@ -283,9 +283,9 @@ enum
 		COL_WHERE_CONDITION_NOT,
 		COL_WHERE_CONDITION_TYPE,
 		COL_WHERE_CONDITION_TYPE_VISIBLE,
-		COL_WHERE_CONDITION_FROM, /* column with exchange value from GtkTreeStore and GFtkWidget */
-		COL_WHERE_CONDITION_FROM_VISIBLE, /* column with the visible eventually formatted value */
-		COL_WHERE_CONDITION_FROM_SQL, /* columne with the value formatted useful for sql */
+		COL_WHERE_CONDITION_FROM, /* column with exchange value from GtkTreeStore and GtkWidget */
+		COL_WHERE_CONDITION_FROM_VISIBLE, /* column with the visible, eventually formatted, value */
+		COL_WHERE_CONDITION_FROM_SQL, /* column with the value formatted useful for sql */
 		COL_WHERE_CONDITION_TO,
 		COL_WHERE_CONDITION_TO_VISIBLE,
 		COL_WHERE_CONDITION_TO_SQL
@@ -1335,6 +1335,13 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 									field->for_where = TRUE;
 									field->for_order = TRUE;
 
+									field->where_default_from = g_strdup ("");
+									field->where_default_from_visible = g_strdup ("");
+									field->where_default_from_sql = g_strdup ("");
+									field->where_default_to = g_strdup ("");
+									field->where_default_to_visible = g_strdup ("");
+									field->where_default_to_sql = g_strdup ("");
+
 									cur = xfield->children;
 									while (cur != NULL)
 										{
@@ -1389,6 +1396,52 @@ gdaex_query_editor_load_tables_from_xml (GdaExQueryEditor *qe,
 											else if (xmlStrcmp (cur->name, "where_default_type") == 0)
 												{
 													field->where_default_type = gdaex_query_editor_str_to_where_type (xmlNodeGetContent (cur));
+												}
+											else if (xmlStrcmp (cur->name, "where_default_from") == 0)
+												{
+													xmlNode *wfrom;
+
+													wfrom = cur->children;
+													while (wfrom != NULL)
+														{
+															if (xmlStrcmp (wfrom->name, "w_value") == 0)
+																{
+																	field->where_default_from  = xmlNodeGetContent (wfrom);
+																}
+															else if (xmlStrcmp (wfrom->name, "w_visible") == 0)
+																{
+																	field->where_default_from_visible  = xmlNodeGetContent (wfrom);
+																}
+															else if (xmlStrcmp (wfrom->name, "w_sql") == 0)
+																{
+																	field->where_default_from_sql  = xmlNodeGetContent (wfrom);
+																}
+
+															wfrom = wfrom->next;
+														}
+												}
+											else if (xmlStrcmp (cur->name, "where_default_to") == 0)
+												{
+													xmlNode *wto;
+
+													wto = cur->children;
+													while (wto != NULL)
+														{
+															if (xmlStrcmp (wto->name, "w_value") == 0)
+																{
+																	field->where_default_to  = xmlNodeGetContent (wto);
+																}
+															else if (xmlStrcmp (wto->name, "w_visible") == 0)
+																{
+																	field->where_default_to_visible  = xmlNodeGetContent (wto);
+																}
+															else if (xmlStrcmp (wto->name, "w_sql") == 0)
+																{
+																	field->where_default_to_sql  = xmlNodeGetContent (wto);
+																}
+
+															wto = wto->next;
+														}
 												}
 											else if (xmlStrcmp (cur->name, "for_order") == 0)
 												{
@@ -4274,6 +4327,12 @@ gdaex_query_editor_on_btn_where_add_clicked (GtkButton *button,
 								COL_WHERE_CONDITION_NOT, field->where_default_not,
 								COL_WHERE_CONDITION_TYPE, field->where_default_type,
 								COL_WHERE_CONDITION_TYPE_VISIBLE, gdaex_query_editor_get_where_type_str_from_type (field->where_default_type),
+								COL_WHERE_CONDITION_FROM, field->where_default_from,
+								COL_WHERE_CONDITION_FROM_VISIBLE, field->where_default_from_visible,
+								COL_WHERE_CONDITION_FROM_SQL, field->where_default_from_sql,
+								COL_WHERE_CONDITION_TO, field->where_default_to,
+								COL_WHERE_CONDITION_TO_VISIBLE, field->where_default_to_visible,
+								COL_WHERE_CONDITION_TO_SQL, field->where_default_to_sql,
 			                    -1);
 
 			if (with_parent)

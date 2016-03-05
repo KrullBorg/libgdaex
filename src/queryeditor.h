@@ -129,6 +129,12 @@ typedef struct
 		guint available_where_type;
 		gboolean where_default_not;
 		GdaExQueryEditorWhereType where_default_type;
+		gchar *where_default_from;
+		gchar *where_default_from_visible;
+		gchar *where_default_from_sql;
+		gchar *where_default_to;
+		gchar *where_default_to_visible;
+		gchar *where_default_to_sql;
 		gboolean for_order;
 		gboolean always_ordered;
 		GdaExQueryEditorOrderType order_default;
