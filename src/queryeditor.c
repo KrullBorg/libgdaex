@@ -294,7 +294,8 @@ enum
 		COL_ORDER_TABLE_NAME,
 		COL_ORDER_NAME,
 		COL_ORDER_VISIBLE_NAME,
-		COL_ORDER_ORDER
+		COL_ORDER_ORDER,
+		COL_ORDER_ORDER_VISIBLE
 	};
 
 static void
@@ -2874,8 +2875,8 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 												gchar *asc_desc;
 												asc_desc = xmlGetProp (node_field, "asc_desc");
 
-												if (g_strcmp0 (asc_desc, _("ASC")) == 0
-												    || g_strcmp0 (asc_desc, _("DESC")) == 0)
+												if (g_strcmp0 (asc_desc, "ASC") == 0
+												    || g_strcmp0 (asc_desc, "DESC") == 0)
 													{
 														gtk_list_store_append (priv->lstore_order, &iter);
 														gtk_list_store_set (priv->lstore_order, &iter,
@@ -2883,6 +2884,7 @@ gdaex_query_editor_load_choices_from_xml (GdaExQueryEditor *qe, xmlNode *root,
 														                    COL_ORDER_NAME, field_name,
 														                    COL_ORDER_VISIBLE_NAME, name_visible,
 														                    COL_ORDER_ORDER, asc_desc,
+														                    COL_ORDER_ORDER_VISIBLE, g_strcmp0 (asc_desc, "ASC") == 0 ? _("Ascending") : _("Descending"),
 														                    -1);
 													}
 											}
@@ -3642,6 +3644,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 	gchar *val1;
 	gchar *val2;
 	gchar *asc_desc;
+	gchar *asc_desc_visible;
 
 	qe = (GdaExQueryEditor *)user_data;
 	priv = GDAEX_QUERY_EDITOR_GET_PRIVATE (qe);
@@ -3839,15 +3842,18 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 					{
 						if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (priv->opt_asc)))
 							{
-								asc_desc = g_strdup (_("ASC"));
+								asc_desc = g_strdup ("ASC");
+								asc_desc_visible = g_strdup (_("Ascending"));
 							}
 						else
 							{
-								asc_desc = g_strdup (_("DESC"));
+								asc_desc = g_strdup ("DESC");
+								asc_desc_visible = g_strdup (_("Descending"));
 							}
 
 						gtk_list_store_set (priv->lstore_order, &iter,
 						                    COL_ORDER_ORDER, asc_desc,
+						                    COL_ORDER_ORDER_VISIBLE, asc_desc_visible,
 						                    -1);
 
 						gtk_tree_selection_unselect_all (priv->sel_order);
@@ -3856,6 +3862,7 @@ gdaex_query_editor_on_btn_save_clicked (GtkButton *button,
 		}
 
 	g_free (asc_desc);
+	g_free (asc_desc_visible);
 	g_free (val1);
 	g_free (val2);
 
@@ -4736,6 +4743,7 @@ gdaex_query_editor_on_btn_order_add_clicked (GtkButton *button,
 			                    COL_ORDER_NAME, field_name,
 			                    COL_ORDER_VISIBLE_NAME, g_strconcat (table->name_visible, " - ", field->name_visible, NULL),
 			                    COL_ORDER_ORDER, "ASC",
+			                    COL_ORDER_ORDER_VISIBLE, _("Ascending"),
 			                    -1);
 
 			wpage = gtk_notebook_get_nth_page (GTK_NOTEBOOK (priv->notebook), GDAEX_QE_PAGE_ORDER);
