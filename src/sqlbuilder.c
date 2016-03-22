@@ -675,6 +675,167 @@ gchar
 }
 
 /**
+ * gdaex_sql_builder_get_sql_select:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_select (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "SELECT");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "FROM");
+	if (end == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 7, strlen (sql) - 8 - strlen (end));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_from:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_from (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "FROM");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "WHERE");
+	if (end == NULL)
+		{
+			end = g_strstr_len (sql, -1, "ORDER BY");
+		}
+
+	ret = g_strndup (start + 5, strlen (start) - (end != NULL ? 6 : 5) - (end != NULL ? strlen (end) : 0));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_where:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_where (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "WHERE");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "ORDER BY");
+
+	ret = g_strndup (start + 6, strlen (start) - (end != NULL ? 7 : 6) - (end != NULL ? strlen (end) : 0));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_order:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_order (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "ORDER BY");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 9, strlen (start) - 9);
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
  * gdaex_sql_builder_query:
  * @sqlb:
  * @gdaex:
