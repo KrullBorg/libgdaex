@@ -1,0 +1,22 @@
+From: Andrea Zagli <azagli@libero.it>
+Date: Mon, 23 May 2016 16:53:07 +0200
+Subject: Gtk old version - gtk_label_set_xalign.
+
+---
+ src/queryeditor.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/queryeditor.c b/src/queryeditor.c
+index d08fac3..5c64973 100644
+--- a/src/queryeditor.c
++++ b/src/queryeditor.c
+@@ -4610,8 +4610,7 @@ gdaex_query_editor_on_sel_where_changed (GtkTreeSelection *treeselection,
+ 					                  G_CALLBACK (gdaex_query_editor_on_cb_where_type_changed), user_data);
+ 
+ 					priv->lbl_to = gtk_label_new (_("and"));
+-					gtk_label_set_xalign (GTK_LABEL (priv->lbl_to), 1.0);
+-					gtk_label_set_yalign (GTK_LABEL (priv->lbl_to), 0.5);
++					gtk_misc_set_alignment (GTK_MISC (priv->lbl_to), 1.0, 0.5);
+ 					gtk_grid_attach (GTK_GRID (priv->tbl), priv->lbl_to, 5, 1, 1, 1);
+ 				}
+ 

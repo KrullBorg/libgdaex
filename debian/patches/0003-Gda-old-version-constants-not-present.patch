@@ -1,0 +1,22 @@
+From: Andrea Zagli <azagli@libero.it>
+Date: Mon, 23 May 2016 16:31:13 +0200
+Subject: Gda old version - constants not present.
+
+---
+ src/sqlbuilder.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/sqlbuilder.c b/src/sqlbuilder.c
+index feaf3d6..377eb73 100644
+--- a/src/sqlbuilder.c
++++ b/src/sqlbuilder.c
+@@ -495,9 +495,7 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
+ 				case GDA_SQL_OPERATOR_TYPE_EQ:
+ 				case GDA_SQL_OPERATOR_TYPE_IS:
+ 				case GDA_SQL_OPERATOR_TYPE_LIKE:
+-				case GDA_SQL_OPERATOR_TYPE_NOTLIKE:
+ 				case GDA_SQL_OPERATOR_TYPE_ILIKE:
+-				case GDA_SQL_OPERATOR_TYPE_NOTILIKE:
+ 				case GDA_SQL_OPERATOR_TYPE_GT:
+ 				case GDA_SQL_OPERATOR_TYPE_LT:
+ 				case GDA_SQL_OPERATOR_TYPE_GEQ:

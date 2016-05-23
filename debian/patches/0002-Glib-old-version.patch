@@ -1,0 +1,34 @@
+From: Andrea Zagli <azagli@libero.it>
+Date: Mon, 23 May 2016 16:26:40 +0200
+Subject: Glib old version.
+
+---
+ configure.ac   | 2 +-
+ libgdaex.pc.in | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 0f4b99a..74ac3a4 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -47,7 +47,7 @@ AM_GLIB_GNU_GETTEXT
+ # Checks for libraries.
+ PKG_CHECK_MODULES(GDAEX, [gmodule-2.0 >= 2
+                           libgda-5.0 >= 5
+-                          gio-2.0 >= 2.36
++                          gio-2.0 >= 2.32
+                           gtk+-3.0 >= 3
+ 						  libxml-2.0 >= 2
+ 						  libzakutils])
+diff --git a/libgdaex.pc.in b/libgdaex.pc.in
+index 7f64fdf..a61eda9 100644
+--- a/libgdaex.pc.in
++++ b/libgdaex.pc.in
+@@ -7,6 +7,6 @@ modulesdir=@libdir@/@PACKAGE@/modules
+ Name: @PACKAGE_NAME@
+ Description: A libgda's "subclass"
+ Version: @PACKAGE_VERSION@
+-Requires: libgda-5.0 gio-2.0 >= 2.36 gtk+-3.0
++Requires: libgda-5.0 gio-2.0 >= 2.32 gtk+-3.0 libxml-2.0 libzakutils
+ Libs: -L${libdir} -lgdaex
+ Cflags: -I${includedir}
