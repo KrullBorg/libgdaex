@@ -1,5 +1,11 @@
-libgdaex (0.6.0-1) UNRELEASED; urgency=medium
+libgdaex (0.6.0-2~1.gbp360fd2) UNRELEASED; urgency=medium
 
+  ** SNAPSHOT build @360fd28aa9455e789e3ce03d5f31b71885c95410 **
+
+  [ Andrea Zagli ]
   * Initial release
+  * Debian package: adjustments for wheezy.
 
- -- Andrea Zagli <azagli@libero.it>  Sun, 22 May 2016 12:33:13 +0200
+  [ tux ]
+
+ -- Andrea Zagli <azagli@libero.it>  Thu, 28 Jul 2016 15:08:33 +0200
