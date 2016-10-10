@@ -1,7 +1,7 @@
 /*
  *  gdaex.h
  *
- *  Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -214,25 +214,58 @@ const gchar *gdaex_get_guifile (GdaEx *gdaex);
 
 GtkBuilder *gdaex_get_gtkbuilder (GdaEx *gdaex);
 
+typedef void (*GdaExFillTreeModelMissingFunc) (GtkTreeModel *store, GtkTreeIter *iter, gpointer user_data);
+
+void gdaex_fill_treemodel_from_sql_with_missing_func (GdaEx *gdaex,
+                                                      GtkTreeModel *store,
+                                                      const gchar *sql,
+                                                      guint *cols_formatted,
+                                                      gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                      GdaExFillTreeModelMissingFunc missing_func, gpointer user_data);
+void gdaex_fill_treemodel_from_datamodel_with_missing_func (GdaEx *gdaex,
+                                                            GtkTreeModel *store,
+                                                            GdaDataModel *dm,
+                                                            guint *cols_formatted,
+                                                            gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                            GdaExFillTreeModelMissingFunc missing_func, gpointer user_data);
+void gdaex_fill_treemodel_from_sql (GdaEx *gdaex,
+                                    GtkTreeModel *store,
+                                    const gchar *sql,
+                                    guint *cols_formatted,
+                                    gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+void gdaex_fill_treemodel_from_datamodel (GdaEx *gdaex,
+                                          GtkTreeModel *store,
+                                          GdaDataModel *dm,
+                                          guint *cols_formatted,
+                                          gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+
+G_DEPRECATED_FOR (GdaExFillTreeModelMissingFunc)
 typedef void (*GdaExFillListStoreMissingFunc) (GtkListStore *lstore, GtkTreeIter *iter, gpointer user_data);
 
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_sql_with_missing_func)
 void gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
                                                       GtkListStore *lstore,
                                                       const gchar *sql,
                                                       guint *cols_formatted,
                                                       gchar *(*cols_format_func) (GdaDataModelIter *, guint),
                                                       GdaExFillListStoreMissingFunc missing_func, gpointer user_data);
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_datamodel_with_missing_func)
 void gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
                                                             GtkListStore *lstore,
                                                             GdaDataModel *dm,
                                                             guint *cols_formatted,
                                                             gchar *(*cols_format_func) (GdaDataModelIter *, guint),
                                                             GdaExFillListStoreMissingFunc missing_func, gpointer user_data);
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_sql)
 void gdaex_fill_liststore_from_sql (GdaEx *gdaex,
                                     GtkListStore *lstore,
                                     const gchar *sql,
                                     guint *cols_formatted,
                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint));
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_datamodel)
 void gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
                                           GtkListStore *lstore,
                                           GdaDataModel *dm,
