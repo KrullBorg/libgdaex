@@ -1,7 +1,7 @@
 /*
  *  gdaex.c
  *
- *  Copyright (C) 2005-2015 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2005-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -2934,12 +2934,12 @@ GtkBuilder
 }
 
 void
-gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
-                                                 GtkListStore *lstore,
+gdaex_fill_treemodel_from_sql_with_missing_func (GdaEx *gdaex,
+                                                 GtkTreeModel *store,
                                                  const gchar *sql,
                                                  guint *cols_formatted,
                                                  gchar *(*cols_format_func) (GdaDataModelIter *, guint),
-                                                 GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
+                                                 GdaExFillTreeModelMissingFunc missing_func, gpointer user_data)
 {
 	GdaDataModel *dm;
 
@@ -2954,17 +2954,17 @@ gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
 
 	dm = gdaex_query (gdaex, _sql);
 	g_free (_sql);
-	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, missing_func, user_data);
+	gdaex_fill_treemodel_from_datamodel_with_missing_func (gdaex, store, dm, cols_formatted, cols_format_func, missing_func, user_data);
 	g_object_unref (dm);
 }
 
 void
-gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
-                                                       GtkListStore *lstore,
+gdaex_fill_treemodel_from_datamodel_with_missing_func (GdaEx *gdaex,
+                                                       GtkTreeModel *store,
                                                        GdaDataModel *dm,
                                                        guint *cols_formatted,
                                                        gchar *(*cols_format_func) (GdaDataModelIter *, guint),
-                                                       GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
+                                                       GdaExFillTreeModelMissingFunc missing_func, gpointer user_data)
 {
 	GtkTreeIter iter;
 
@@ -2988,12 +2988,19 @@ gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
 	GDateTime *gdatetime;
 
 	g_return_if_fail (IS_GDAEX (gdaex));
-	g_return_if_fail (GTK_IS_LIST_STORE (lstore));
+	g_return_if_fail (GTK_IS_TREE_MODEL (store));
 	g_return_if_fail (GDA_IS_DATA_MODEL (dm));
 
-	gtk_list_store_clear (lstore);
+	if (GTK_IS_LIST_STORE (store))
+		{
+			gtk_list_store_clear (GTK_LIST_STORE (store));
+		}
+	else /* GTK_IS_TREE_STORE */
+		{
+			gtk_tree_store_clear (GTK_TREE_STORE (store));
+		}
 
-	cols = gtk_tree_model_get_n_columns (GTK_TREE_MODEL (lstore));
+	cols = gtk_tree_model_get_n_columns (store);
 	if (cols == 0)
 		{
 			return;
@@ -3016,7 +3023,7 @@ gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
 	/* caching of columns types */
 	for (col = 0; col < cols; col++)
 		{
-			col_gtypes[col] = gtk_tree_model_get_column_type (GTK_TREE_MODEL (lstore), col);
+			col_gtypes[col] = gtk_tree_model_get_column_type (store, col);
 
 			gdacolumn = gda_data_model_describe_column (dm, col);
 			if (gdacolumn == NULL)
@@ -3034,7 +3041,14 @@ gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
 
 	while (gda_data_model_iter_move_next (gda_iter))
 		{
-			gtk_list_store_append (lstore, &iter);
+			if (GTK_IS_LIST_STORE (store))
+				{
+					gtk_list_store_append (GTK_LIST_STORE (store), &iter);
+				}
+			else /* GTK_IS_TREE_STORE */
+				{
+					gtk_tree_store_append (GTK_TREE_STORE (store), &iter, NULL);
+				}
 
 			for (col = 0; col < cols; col++)
 				{
@@ -3150,15 +3164,81 @@ gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
 						}
 				}
 
-			gtk_list_store_set_valuesv (lstore, &iter, columns, values, cols);
+			if (GTK_IS_LIST_STORE (store))
+				{
+					gtk_list_store_set_valuesv (GTK_LIST_STORE (store), &iter, columns, values, cols);
+				}
+			else /* GTK_IS_TREE_STORE */
+				{
+					gtk_tree_store_set_valuesv (GTK_TREE_STORE (store), &iter, columns, values, cols);
+				}
 			if (call_missing_func
 			    && missing_func != NULL)
 				{
-					missing_func (lstore, &iter, user_data);
+					missing_func (store, &iter, user_data);
 				}
 		}
 }
 
+void
+gdaex_fill_treemodel_from_sql (GdaEx *gdaex,
+                               GtkTreeModel *store,
+                               const gchar *sql,
+                               guint *cols_formatted,
+                               gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	gdaex_fill_treemodel_from_sql_with_missing_func (gdaex, store, sql, cols_formatted, cols_format_func, NULL, NULL);
+}
+
+void
+gdaex_fill_treemodel_from_datamodel (GdaEx *gdaex,
+                                     GtkTreeModel *store,
+                                     GdaDataModel *dm,
+                                     guint *cols_formatted,
+                                     gchar *(*cols_format_func) (GdaDataModelIter *, guint))
+{
+	gdaex_fill_treemodel_from_datamodel_with_missing_func (gdaex, store, dm, cols_formatted, cols_format_func, NULL, NULL);
+}
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_sql_with_missing_func)
+void
+gdaex_fill_liststore_from_sql_with_missing_func (GdaEx *gdaex,
+                                                 GtkListStore *lstore,
+                                                 const gchar *sql,
+                                                 guint *cols_formatted,
+                                                 gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                 GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
+{
+	GdaDataModel *dm;
+
+	gchar *_sql;
+
+	g_return_if_fail (IS_GDAEX (gdaex));
+	g_return_if_fail (sql != NULL);
+
+	_sql = g_strstrip (g_strdup (sql));
+
+	g_return_if_fail (g_strcmp0 (_sql, "") != 0);
+
+	dm = gdaex_query (gdaex, _sql);
+	g_free (_sql);
+	gdaex_fill_liststore_from_datamodel_with_missing_func (gdaex, lstore, dm, cols_formatted, cols_format_func, missing_func, user_data);
+	g_object_unref (dm);
+}
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_datamodel_with_missing_func)
+void
+gdaex_fill_liststore_from_datamodel_with_missing_func (GdaEx *gdaex,
+                                                       GtkListStore *lstore,
+                                                       GdaDataModel *dm,
+                                                       guint *cols_formatted,
+                                                       gchar *(*cols_format_func) (GdaDataModelIter *, guint),
+                                                       GdaExFillListStoreMissingFunc missing_func, gpointer user_data)
+{
+	gdaex_fill_treemodel_from_datamodel_with_missing_func (gdaex, GTK_TREE_MODEL (lstore), dm, cols_formatted, cols_format_func, missing_func, user_data);
+}
+
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_sql)
 void
 gdaex_fill_liststore_from_sql (GdaEx *gdaex,
                                GtkListStore *lstore,
@@ -3169,6 +3249,7 @@ gdaex_fill_liststore_from_sql (GdaEx *gdaex,
 	gdaex_fill_liststore_from_sql_with_missing_func (gdaex, lstore, sql, cols_formatted, cols_format_func, NULL, NULL);
 }
 
+G_DEPRECATED_FOR (gdaex_fill_treemodel_from_datamodel)
 void
 gdaex_fill_liststore_from_datamodel (GdaEx *gdaex,
                                      GtkListStore *lstore,
