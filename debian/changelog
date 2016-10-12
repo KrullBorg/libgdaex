@@ -1,5 +1,10 @@
-libgdaex (0.6.0-1) UNRELEASED; urgency=medium
+libgdaex (0.6.0-1~1.gbp076d33) UNRELEASED; urgency=medium
 
+  ** SNAPSHOT build @076d333232f3684d5153d4212ebf822fb5391fc0 **
+
+  [ Andrea Zagli ]
   * Initial release
+
+  [ tux ]
 
  -- Andrea Zagli <azagli@libero.it>  Sun, 22 May 2016 12:33:13 +0200
