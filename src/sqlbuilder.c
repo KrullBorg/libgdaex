@@ -162,14 +162,21 @@ static GdaExSqlBuilderTable
 	if (t == NULL && add)
 		{
 			t = g_new0 (GdaExSqlBuilderTable, 1);
-			if (priv->stmt_type == GDA_SQL_STATEMENT_SELECT)
+			if (g_strcmp0 (table_name, "") == 0)
 				{
-					t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), table_alias);
+					t->id = 0;
 				}
 			else
 				{
-					t->id = 0;
-					gda_sql_builder_set_table (priv->sqlb, table_name);
+					if (priv->stmt_type == GDA_SQL_STATEMENT_SELECT)
+						{
+							t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), table_alias);
+						}
+					else
+						{
+							t->id = 0;
+							gda_sql_builder_set_table (priv->sqlb, table_name);
+						}
 				}
 			t->name = g_strdup (table_name);
 			if (table_alias != NULL)
@@ -862,7 +869,6 @@ gint
 gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
 {
 	gchar *sql;
-	GdaDataModel *dm;
 	gint ret;
 
 	g_return_val_if_fail (IS_GDAEX (gdaex), -1);
