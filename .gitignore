@@ -54,3 +54,4 @@ tests/select
 tests/getsql
 tests/sqlbuilder
 *~
+build/

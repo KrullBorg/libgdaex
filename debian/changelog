@@ -1,10 +1,15 @@
-libgdaex (0.6.0-1~1.gbp076d33) UNRELEASED; urgency=medium
+libgdaex (0.6.0-1~2.gbp052f31) UNRELEASED; urgency=medium
 
-  ** SNAPSHOT build @076d333232f3684d5153d4212ebf822fb5391fc0 **
+  ** SNAPSHOT build @052f31e2c4092856596cec8c73bcdf9b16216981 **
 
   [ Andrea Zagli ]
   * Initial release
 
   [ tux ]
 
- -- Andrea Zagli <azagli@libero.it>  Sun, 22 May 2016 12:33:13 +0200
+  [ Andrea Zagli ]
+  * SqlBuilder: don't add table with empty name.
+
+  [ tux ]
+
+ -- tux <tux@develop64.comune.scandicci.fi.it>  Wed, 01 Mar 2017 15:19:33 +0100
