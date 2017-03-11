@@ -1,10 +1,16 @@
-libgdaex (0.6.0-1~1.gbp4d298d) UNRELEASED; urgency=medium
+libgdaex (0.6.0-1~2.gbpa15e04) UNRELEASED; urgency=medium
 
-  ** SNAPSHOT build @4d298debde14f45be5d8a51691db1fcb8a7d447d **
+  ** SNAPSHOT build @a15e0435c17adcf86907338a0b3ba7f92b154624 **
 
   [ Andrea Zagli ]
   * Initial release
 
   [ tux ]
 
- -- Andrea Zagli <azagli@libero.it>  Sun, 22 May 2016 12:33:13 +0200
+  [ Andrea Zagli ]
+  * Added functions GdaEx::fill_treemodel_*.
+  * SqlBuilder: don't add table with empty name.
+
+  [ tux ]
+
+ -- tux <tux@develop64.comune.scandicci.fi.it>  Sat, 11 Mar 2017 10:29:39 +0100
