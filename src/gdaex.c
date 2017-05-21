@@ -3530,20 +3530,13 @@ gchar
 	return ret;
 }
 
-/**
- * gdaex_save_file_in_blob:
- * @gdaex:
- * @sql:
- * @blob_field_name:
- * @filename:
- *
- * Returns:
- */
 gboolean
-gdaex_save_file_in_blob (GdaEx *gdaex,
-						 const gchar *sql,
-						 const gchar *blob_field_name,
-						 const gchar *filename)
+_gdaex_save_data_file_in_blob (GdaEx *gdaex,
+                               const gchar *sql,
+                               const gchar *blob_field_name,
+                               const guchar *data,
+                               glong size,
+                               const gchar *filename)
 {
 	GdaConnection *gda_con;
 	GdaSqlParser *parser;
@@ -3578,7 +3571,16 @@ gdaex_save_file_in_blob (GdaEx *gdaex,
 	gda_connection_begin_transaction (gda_con, NULL, 0, NULL);
 
 	param = gda_set_get_holder (plist, blob_field_name);
-	value = gda_value_new_blob_from_file (filename);
+
+	if (data != NULL)
+		{
+			value = gda_value_new_blob (data, size);
+		}
+	else
+		{
+			value = gda_value_new_blob_from_file (filename);
+		}
+
 	error = NULL;
 	if (!gda_holder_take_value (param, value, &error))
 		{
@@ -3611,7 +3613,50 @@ gdaex_save_file_in_blob (GdaEx *gdaex,
 			gda_connection_commit_transaction (gda_con, NULL, NULL);
 		}
 
+	if (value != NULL)
+		{
+			g_value_unset (value);
+		}
+
 	return TRUE;
+}
+
+/**
+ * gdaex_save_file_in_blob:
+ * @gdaex:
+ * @sql:
+ * @blob_field_name:
+ * @data:
+ * @size:
+ *
+ * Returns:
+ */
+gboolean
+gdaex_save_data_in_blob (GdaEx *gdaex,
+                         const gchar *sql,
+                         const gchar *blob_field_name,
+                         const guchar *data,
+                         glong size)
+{
+	return _gdaex_save_data_file_in_blob (gdaex, sql, blob_field_name, data, size, NULL);
+}
+
+/**
+ * gdaex_save_file_in_blob:
+ * @gdaex:
+ * @sql:
+ * @blob_field_name:
+ * @filename:
+ *
+ * Returns:
+ */
+gboolean
+gdaex_save_file_in_blob (GdaEx *gdaex,
+                         const gchar *sql,
+                         const gchar *blob_field_name,
+                         const gchar *filename)
+{
+	return _gdaex_save_data_file_in_blob (gdaex, sql, blob_field_name, NULL, 0, filename);
 }
 
 /**
