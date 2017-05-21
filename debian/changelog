@@ -1,6 +1,6 @@
-libgdaex (0.6.0-1~2.gbp052f31) UNRELEASED; urgency=medium
+libgdaex (0.6.0-1~3.gbp793de1) UNRELEASED; urgency=medium
 
-  ** SNAPSHOT build @052f31e2c4092856596cec8c73bcdf9b16216981 **
+  ** SNAPSHOT build @793de1e02e4d38d7479735e1e8442f978b6c16dc **
 
   [ Andrea Zagli ]
   * Initial release
@@ -12,4 +12,10 @@ libgdaex (0.6.0-1~2.gbp052f31) UNRELEASED; urgency=medium
 
   [ tux ]
 
- -- tux <tux@develop64.comune.scandicci.fi.it>  Wed, 01 Mar 2017 15:19:33 +0100
+  [ Andrea Zagli ]
+  * Debian pkg: update from upstream.
+  * Added function save_data_in_blob.
+
+  [ tux ]
+
+ -- tux <tux@develop64.comune.scandicci.fi.it>  Sun, 21 May 2017 10:26:59 +0200
