@@ -47,3 +47,29 @@ install-exec-hook:
 
 uninstall-hook:
 	rm -rf "$(libdir)/$(PACKAGE)"
+
+CLEANFILES =
+
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir) --warn-all --accept-unprefixed --identifier-prefix=""
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+
+if HAVE_INTROSPECTION
+introspection_sources = $(libgdaex_la_SOURCES) $(libgdaex_include_HEADERS)
+
+Gdaex-1.0.gir: libgdaex.la
+Gdaex_1_0_gir_INCLUDES = GObject-2.0 GLib-2.0 Gda-5.0
+Gdaex_1_0_gir_CFLAGS = $(AM_CPPFLAGS)
+Gdaex_1_0_gir_LIBS = libgdaex.la
+Gdaex_1_0_gir_FILES = $(introspection_sources)
+INTROSPECTION_GIRS += Gdaex-1.0.gir
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+CLEANFILES += $(gir_DATA) $(typelib_DATA)
+endif

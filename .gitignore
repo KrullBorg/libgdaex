@@ -54,4 +54,6 @@ tests/select
 tests/getsql
 tests/sqlbuilder
 *~
+*.gir
+*.typelib
 build/
