@@ -1,6 +1,6 @@
-libgdaex (0.6.0-1~3.gbp793de1) UNRELEASED; urgency=medium
+libgdaex (0.6.0-1~4.gbpe808c6) UNRELEASED; urgency=medium
 
-  ** SNAPSHOT build @793de1e02e4d38d7479735e1e8442f978b6c16dc **
+  ** SNAPSHOT build @e808c62e9a87fa572fae05f500ca543545a39d72 **
 
   [ Andrea Zagli ]
   * Initial release
@@ -18,4 +18,10 @@ libgdaex (0.6.0-1~3.gbp793de1) UNRELEASED; urgency=medium
 
   [ tux ]
 
- -- tux <tux@develop64.comune.scandicci.fi.it>  Sun, 21 May 2017 10:26:59 +0200
+  [ Andrea Zagli ]
+  * Debian pkg: added updates from upstream.
+  * Enabled gir.
+
+  [ tux ]
+
+ -- tux <tux@develop64.example.tst>  Sat, 24 Jun 2017 08:52:57 +0200

@@ -18,8 +18,8 @@ index 0f4b99a..74ac3a4 100644
 -                          gio-2.0 >= 2.36
 +                          gio-2.0 >= 2.32
                            gtk+-3.0 >= 3
- 						  libxml-2.0 >= 2
- 						  libzakutils])
+                           libxml-2.0 >= 2
+                           libzakutils])
 diff --git a/libgdaex.pc.in b/libgdaex.pc.in
 index 7f64fdf..a61eda9 100644
 --- a/libgdaex.pc.in
