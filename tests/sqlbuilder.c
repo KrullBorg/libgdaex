@@ -75,6 +75,43 @@ main (int argc, char **argv)
 
 	g_object_unref (sqlb);
 
+	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_SELECT);
+
+	gdaex_sql_builder_from (sqlb, "pippo", "");
+
+	gdaex_sql_builder_fields (sqlb,
+							  "pippo", "id", "", NULL,
+							  "pippo", "name", "the_name", NULL,
+							  NULL);
+
+	gval = g_new0 (GValue, 1);
+	g_value_init (gval, G_TYPE_INT);
+	g_value_set_int (gval, 44);
+	gdaex_sql_builder_where (sqlb, 0,
+							 "pippo", "id", "",
+							 GDA_SQL_OPERATOR_TYPE_ISNULL,
+							 gval,
+							 NULL);
+	g_value_unset (gval);
+
+	gval = g_new0 (GValue, 1);
+	g_value_init (gval, G_TYPE_INT);
+	g_value_set_int (gval, 44);
+	GValue *gval2 = g_new0 (GValue, 1);
+	g_value_init (gval2, G_TYPE_INT);
+	g_value_set_int (gval2, 8877);
+	gdaex_sql_builder_where (sqlb, 0,
+							 "pippo", "id", "",
+							 GDA_SQL_OPERATOR_TYPE_BETWEEN,
+							 gval, gval2,
+							 NULL);
+	g_value_unset (gval);
+	g_value_unset (gval2);
+
+	g_message ("sql: %s", gdaex_sql_builder_get_sql (sqlb, NULL, NULL));
+
+	g_object_unref (sqlb);
+
 	sqlb = gdaex_sql_builder_new (GDA_SQL_STATEMENT_DELETE);
 
 	gdaex_sql_builder_from_v (sqlb,

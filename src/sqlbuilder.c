@@ -1,7 +1,7 @@
 /*
  *  sql_builder.c
  *
- *  Copyright (C) 2010-2014 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2010-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -162,14 +162,21 @@ static GdaExSqlBuilderTable
 	if (t == NULL && add)
 		{
 			t = g_new0 (GdaExSqlBuilderTable, 1);
-			if (priv->stmt_type == GDA_SQL_STATEMENT_SELECT)
+			if (g_strcmp0 (table_name, "") == 0)
 				{
-					t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), table_alias);
+					t->id = 0;
 				}
 			else
 				{
-					t->id = 0;
-					gda_sql_builder_set_table (priv->sqlb, table_name);
+					if (priv->stmt_type == GDA_SQL_STATEMENT_SELECT)
+						{
+							t->id = gda_sql_builder_select_add_target_id (priv->sqlb, gda_sql_builder_add_id (priv->sqlb, table_name), table_alias);
+						}
+					else
+						{
+							t->id = 0;
+							gda_sql_builder_set_table (priv->sqlb, table_name);
+						}
 				}
 			t->name = g_strdup (table_name);
 			if (table_alias != NULL)
@@ -445,7 +452,8 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 	GdaSqlOperatorType op_expr;
 
-	GdaSqlBuilderId id_expr;
+	GdaSqlBuilderId id_expr1;
+	GdaSqlBuilderId id_expr2;
 	GdaSqlBuilderId id_cond;
 
 	GdaExSqlBuilderPrivate *priv = GDAEX_SQLBUILDER_GET_PRIVATE (sqlb);
@@ -487,17 +495,56 @@ gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op, ...)
 
 			op_expr = va_arg (ap, guint);
 
-			gval = va_arg (ap, GValue *);
-			if (gval != NULL)
+			id_expr1 = 0;
+			id_expr2 = 0;
+			switch (op_expr)
 				{
-					id_expr = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
-				}
-			else
-				{
+				case GDA_SQL_OPERATOR_TYPE_EQ:
+				case GDA_SQL_OPERATOR_TYPE_IS:
+				case GDA_SQL_OPERATOR_TYPE_LIKE:
+				case GDA_SQL_OPERATOR_TYPE_NOTLIKE:
+				case GDA_SQL_OPERATOR_TYPE_ILIKE:
+				case GDA_SQL_OPERATOR_TYPE_NOTILIKE:
+				case GDA_SQL_OPERATOR_TYPE_GT:
+				case GDA_SQL_OPERATOR_TYPE_LT:
+				case GDA_SQL_OPERATOR_TYPE_GEQ:
+				case GDA_SQL_OPERATOR_TYPE_LEQ:
+				case GDA_SQL_OPERATOR_TYPE_DIFF:
+				case GDA_SQL_OPERATOR_TYPE_REGEXP:
+				case GDA_SQL_OPERATOR_TYPE_REGEXP_CI:
+				case GDA_SQL_OPERATOR_TYPE_NOT_REGEXP:
+				case GDA_SQL_OPERATOR_TYPE_NOT_REGEXP_CI:
+				case GDA_SQL_OPERATOR_TYPE_SIMILAR:
+				case GDA_SQL_OPERATOR_TYPE_REM:
+				case GDA_SQL_OPERATOR_TYPE_DIV:
+				case GDA_SQL_OPERATOR_TYPE_BITAND:
+				case GDA_SQL_OPERATOR_TYPE_BITOR:
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr1 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
+					break;
+
+				case GDA_SQL_OPERATOR_TYPE_ISNULL:
+				case GDA_SQL_OPERATOR_TYPE_ISNOTNULL:
+					break;
+
+				case GDA_SQL_OPERATOR_TYPE_BETWEEN:
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr1 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
+					gval = va_arg (ap, GValue *);
+					if (gval != NULL)
+						{
+							id_expr2 = gda_sql_builder_add_expr_value (priv->sqlb, NULL, gval);
+						}
 					break;
 				}
 
-			id_cond = gda_sql_builder_add_cond (priv->sqlb, op_expr, f->id, id_expr, 0);
+			id_cond = gda_sql_builder_add_cond (priv->sqlb, op_expr, f->id, id_expr1, id_expr2);
 			if (priv->id_where != 0)
 				{
 					priv->id_where = gda_sql_builder_add_cond (priv->sqlb, op, priv->id_where, id_cond, 0);
@@ -635,6 +682,167 @@ gchar
 }
 
 /**
+ * gdaex_sql_builder_get_sql_select:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_select (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "SELECT");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "FROM");
+	if (end == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 7, strlen (sql) - 8 - strlen (end));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_from:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_from (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "FROM");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "WHERE");
+	if (end == NULL)
+		{
+			end = g_strstr_len (sql, -1, "ORDER BY");
+		}
+
+	ret = g_strndup (start + 5, strlen (start) - (end != NULL ? 6 : 5) - (end != NULL ? strlen (end) : 0));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_where:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_where (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+	gchar *end;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "WHERE");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	end = g_strstr_len (sql, -1, "ORDER BY");
+
+	ret = g_strndup (start + 6, strlen (start) - (end != NULL ? 7 : 6) - (end != NULL ? strlen (end) : 0));
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
+ * gdaex_sql_builder_get_sql_order:
+ * @sqlb:
+ * @cnc:
+ * @params:
+ *
+ */
+gchar
+*gdaex_sql_builder_get_sql_order (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params)
+{
+	gchar *ret;
+	gchar *sql;
+
+	gchar *start;
+
+	ret = NULL;
+
+	sql = gdaex_sql_builder_get_sql (sqlb, cnc, params);
+	if (sql == NULL)
+		{
+			return ret;
+		}
+
+	start = g_strstr_len (sql, -1, "ORDER BY");
+	if (start == NULL)
+		{
+			return ret;
+		}
+
+	ret = g_strndup (start + 9, strlen (start) - 9);
+
+	g_free (sql);
+
+	return ret;
+}
+
+/**
  * gdaex_sql_builder_query:
  * @sqlb:
  * @gdaex:
@@ -661,7 +869,6 @@ gint
 gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params)
 {
 	gchar *sql;
-	GdaDataModel *dm;
 	gint ret;
 
 	g_return_val_if_fail (IS_GDAEX (gdaex), -1);

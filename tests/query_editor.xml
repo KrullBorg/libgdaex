@@ -31,7 +31,21 @@
 			<name_visible>Surname</name_visible>
 			<description>The client's surname</description>
 			<type>text</type>
-			<available_where_type>string|is_null</available_where_type>
+			<available_where_type>string|is_null|between</available_where_type>
+			<where_default_not>t</where_default_not>
+			<where_default_type>between</where_default_type>
+			<where_default_from>
+			  <w_value>jon</w_value>
+			  <w_visible>jon</w_visible>
+			  <w_sql>'jon'</w_sql>
+			</where_default_from>
+			<where_default_to>
+			  <w_value>jane</w_value>
+			  <w_visible>jane</w_visible>
+			  <w_sql>'jane'</w_sql>
+			</where_default_to>
+			<always_ordered>true</always_ordered>
+			<order_default>DESC</order_default>
 		</field>
 		<field>
 			<name>age</name>
@@ -74,6 +88,7 @@
 			<description>If married</description>
 			<type>boolean</type>
 			<available_where_type>equal</available_where_type>
+			<order_default>DESC</order_default>
 		</field>
 	</fields>
 

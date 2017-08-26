@@ -13,7 +13,7 @@
 	table_name CDATA #REQUIRED
 >
 
-<!ELEMENT field (name, name_visible?, description?, alias?, type, for_show, always_showed, for_where, available_where_type, for_order, decode)>
+<!ELEMENT field (name, name_visible?, description?, alias?, type, for_show, always_showed, for_where, available_where_type, where_default_not, where_default_type, where_default_from, where_default_to, for_order, always_ordered, order_default, decode)>
 
 <!ELEMENT table_name (#PCDATA)>
 <!ELEMENT name_visible (#PCDATA)>
@@ -24,7 +24,17 @@
 <!ELEMENT always_showed (#PCDATA)>
 <!ELEMENT for_where (#PCDATA)>
 <!ELEMENT available_where_type (#PCDATA)>
+<!ELEMENT where_default_not (#PCDATA)>
+<!ELEMENT where_default_type (#PCDATA)>
+<!ELEMENT where_default_from (w_value, w_visible, w_sql)>
+<!ELEMENT where_default_to (w_value, w_visible, w_sql)>
 <!ELEMENT for_order (#PCDATA)>
+<!ELEMENT always_ordered (#PCDATA)>
+<!ELEMENT order_default (#PCDATA)>
+
+<!ELEMENT w_value (#PCDATA)>
+<!ELEMENT w_visible (#PCDATA)>
+<!ELEMENT w_sql (#PCDATA)>
 
 <!ELEMENT decode (table_name, join_type, field_name_to_join, field_name_to_show, alias)>
 

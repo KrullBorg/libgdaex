@@ -1,7 +1,7 @@
 /*
  *  sqlbuilder.h
  *
- *  Copyright (C) 2015 Andrea Zagli <azagli@libero.it>
+ *  Copyright (C) 2015-2016 Andrea Zagli <azagli@libero.it>
  *
  *  This file is part of libgdaex.
  *
@@ -68,13 +68,17 @@ void gdaex_sql_builder_join (GdaExSqlBuilder *sqlb,
 void gdaex_sql_builder_field (GdaExSqlBuilder *sqlb, const gchar *table_name, const gchar *field_name, const gchar *field_alias, GValue *gval);
 void gdaex_sql_builder_fields (GdaExSqlBuilder *sqlb, ...);
 
-GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqln, GdaSqlOperatorType op,
+GdaSqlBuilderId gdaex_sql_builder_where (GdaExSqlBuilder *sqlb, GdaSqlOperatorType op,
 										 ...);
 
 void gdaex_sql_builder_order (GdaExSqlBuilder *sqlb, ...);
 
 GdaSqlBuilder *gdaex_sql_builder_get_gda_sql_builder (GdaExSqlBuilder *sqlb);
 gchar *gdaex_sql_builder_get_sql (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+gchar *gdaex_sql_builder_get_sql_select (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+gchar *gdaex_sql_builder_get_sql_from (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+gchar *gdaex_sql_builder_get_sql_where (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
+gchar *gdaex_sql_builder_get_sql_order (GdaExSqlBuilder *sqlb, GdaConnection *cnc, GdaSet *params);
 
 GdaDataModel *gdaex_sql_builder_query (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params);
 gint gdaex_sql_builder_execute  (GdaExSqlBuilder *sqlb, GdaEx *gdaex, GdaSet *params);
